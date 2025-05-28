@@ -62,12 +62,7 @@
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type"
 
-# Configurazione Edge Functions (opzionale, per il futuro)
-[edge_functions]
-  # Path per edge functions avanzate
-  # directory = "netlify/edge-functions"
-
 # Plugin (per funzionalità avanzate future)
-[[plugins]]
-  # Plugin per scheduled functions (cron jobs)
-  package = "@netlify/plugin-scheduled-functions"
+# [[plugins]]
+#   # Plugin per scheduled functions (cron jobs) - commentato per ora
+#   package = "@netlify/plugin-scheduled-functions"
