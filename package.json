@@ -1,0 +1,37 @@
+{
+  "name": "supply-chain-hub",
+  "version": "1.0.0",
+  "description": "Sistema di gestione spedizioni con database PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Build completed - static files ready'",
+    "deploy": "netlify deploy --prod",
+    "test": "echo 'Testing API functions...'"
+  },
+  "keywords": [
+    "supply-chain",
+    "logistics",
+    "shipping",
+    "management",
+    "supabase",
+    "netlify"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "papaparse": "^5.4.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.10.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TUO-USERNAME/supply-chain-hub.git"
+  }
+}
