@@ -11,7 +11,7 @@
 
 [build.environment]
   # Versione Node.js da usare
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   
   # Variabili di build
   NPM_FLAGS = "--production=false"
