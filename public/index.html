@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Hub - API Ready</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; text-align: center; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .status { color: #28a745; font-size: 24px; margin-bottom: 20px; }
+        .api-links { text-align: left; margin: 20px 0; }
+        .api-links a { display: block; padding: 10px; margin: 5px 0; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .api-links a:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ Supply Chain Hub API Attivo!</div>
+        <p>Il tuo backend è operativo e pronto per l'uso.</p>
+        
+        <div class="api-links">
+            <h3>🔗 Test API Endpoints:</h3>
+            <a href="/.netlify/functions/shipments" target="_blank">📦 Spedizioni API</a>
+            <a href="/.netlify/functions/carriers" target="_blank">🚚 Spedizionieri API</a>
+            <a href="/.netlify/functions/dashboard-stats" target="_blank">📊 Statistiche Dashboard</a>
+        </div>
+        
+        <p><strong>Prossimo step:</strong> Collegare il frontend alle API!</p>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #666;">
+            <p>Database: Supabase PostgreSQL ✅</p>
+            <p>Backend: Netlify Functions ✅</p>
+            <p>CORS: Configurato ✅</p>
+        </div>
+    </div>
+</body>
+</html>
