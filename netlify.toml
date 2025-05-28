@@ -1,0 +1,73 @@
+# Configurazione Netlify per Supply Chain Hub
+[build]
+  # Cartella delle functions serverless
+  functions = "netlify/functions"
+  
+  # Cartella da pubblicare (static files)
+  publish = "public"
+  
+  # Comando di build (opzionale per progetti statici)
+  command = "npm run build"
+
+[build.environment]
+  # Versione Node.js da usare
+  NODE_VERSION = "18"
+  
+  # Variabili di build
+  NPM_FLAGS = "--production=false"
+
+# Redirects per API routing
+[[redirects]]
+  # Tutte le chiamate /api/* vanno alle functions
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  # Redirect root alla dashboard
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# Configurazione sviluppo locale
+[dev]
+  # Framework per sviluppo locale
+  framework = "#static"
+  
+  # Porta per dev server
+  targetPort = 8080
+  
+  # Auto-open browser
+  autoLaunch = true
+
+# Headers di sicurezza
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # CORS headers
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers specifici per le API
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+# Configurazione Edge Functions (opzionale, per il futuro)
+[edge_functions]
+  # Path per edge functions avanzate
+  # directory = "netlify/edge-functions"
+
+# Plugin (per funzionalità avanzate future)
+[[plugins]]
+  # Plugin per scheduled functions (cron jobs)
+  package = "@netlify/plugin-scheduled-functions"
