@@ -1,4 +1,4 @@
-// ===== NETLIFY FUNCTION: SHIPMENTS API =====
+// ===== NETLIFY FUNCTION: SHIPMENTS API - VERSIONE CORRETTA =====
 // Gestisce tutte le operazioni CRUD per le spedizioni
 // Endpoint: /.netlify/functions/shipments
 
@@ -64,10 +64,7 @@ async function handleGet(event) {
       // Ottieni singola spedizione
       const { data, error } = await supabase
         .from('shipments')
-        .select(`
-          *,
-          articles_database!left(descrizione, descrizione_estesa, categoria)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -82,10 +79,7 @@ async function handleGet(event) {
       // Ottieni tutte le spedizioni
       const { data, error } = await supabase
         .from('shipments')
-        .select(`
-          *,
-          articles_database!left(descrizione, descrizione_estesa, categoria)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(1000); // Limite per performance
 
@@ -129,10 +123,7 @@ async function handlePost(event) {
     const { data, error } = await supabase
       .from('shipments')
       .insert([cleanData])
-      .select(`
-        *,
-        articles_database!left(descrizione, descrizione_estesa, categoria)
-      `)
+      .select()
       .single();
 
     if (error) {
@@ -192,10 +183,7 @@ async function handlePut(event) {
       .from('shipments')
       .update(updateData)
       .eq('id', id)
-      .select(`
-        *,
-        articles_database!left(descrizione, descrizione_estesa, categoria)
-      `)
+      .select()
       .single();
 
     if (error) {
@@ -355,8 +343,8 @@ function transformShipmentData(dbData) {
     nOda: dbData.n_oda,
     anno: dbData.anno,
     codArt: dbData.cod_art,
-    descrizione: dbData.descrizione || dbData.articles_database?.descrizione || '',
-    descrizioneEstesa: dbData.descrizione_estesa || dbData.articles_database?.descrizione_estesa || '',
+    descrizione: dbData.descrizione || '',
+    descrizioneEstesa: dbData.descrizione_estesa || '',
     fornitore: dbData.fornitore,
     um: dbData.um || 'PZ',
     qty: dbData.qty,
