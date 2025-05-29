@@ -17,11 +17,9 @@
             --danger: #ea4335;
             --success: #34a853;
             --white: #ffffff;
-            
             --dark-glass-bg: rgba(30, 41, 59, 0.7);
             --dark-glass-border: rgba(255, 255, 255, 0.1);
             --dark-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            
             --text-white: #ffffff;
             --text-muted: rgba(255, 255, 255, 0.7);
         }
@@ -34,15 +32,7 @@
             color: var(--text-white);
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .header {
-            background: var(--dark-glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--dark-glass-border);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 32px;
-            box-shadow: var(--dark-glass-shadow);
-        }
+        .header { background: var(--dark-glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--dark-glass-border); border-radius: 16px; padding: 24px; margin-bottom: 32px; box-shadow: var(--dark-glass-shadow); }
         .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
         .logo-section { display: flex; align-items: center; gap: 16px; }
         .logo { width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
@@ -51,44 +41,26 @@
         .header-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #1a73e8; transform: translateY(-2px); }
+        .btn-primary:hover { background: #1a73e8; }
         .btn-secondary { background: var(--dark-glass-bg); color: var(--text-white); border: 1px solid var(--dark-glass-border); }
-        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
-        
-        /* Stili per il Dropdown Impostazioni */
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
         .dropdown { position: relative; display: inline-block; }
-        .dropdown-menu { 
-            display: none; 
-            position: absolute; 
-            right: 0;
-            background-color: #2d3748; 
-            min-width: 200px; 
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
-            z-index: 1;
-            border-radius: 8px;
-            padding: 8px 0;
-            border: 1px solid var(--dark-glass-border);
-        }
-        .dropdown-item {
-            color: var(--text-white);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            font-size: 0.9rem;
-        }
+        .dropdown-menu { display: none; position: absolute; right: 0; background-color: #2d3748; min-width: 200px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3); z-index: 1; border-radius: 8px; padding: 8px 0; border: 1px solid var(--dark-glass-border); }
+        .dropdown-item { color: var(--text-white); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
         .dropdown-item:hover { background-color: rgba(255, 255, 255, 0.05); }
         .dropdown:hover .dropdown-menu { display: block; }
-
-        /* Aggiungo altri stili che potrebbero mancare dalla tua versione */
-        .kpi-grid, .charts-section, .tables-section { display: grid; gap: 24px; margin-bottom: 32px; }
-        .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-        .charts-section { grid-template-columns: 2fr 1fr; }
-        .tables-section { grid-template-columns: 1fr 1fr; }
+        .kpi-grid { display: grid; gap: 24px; margin-bottom: 32px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .charts-section { display: grid; gap: 24px; margin-bottom: 32px; grid-template-columns: 2fr 1fr; }
+        .tables-section { display: grid; gap: 24px; margin-bottom: 32px; grid-template-columns: 1fr 1fr; }
         .kpi-card, .chart-card, .table-card { background: var(--dark-glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--dark-glass-border); border-radius: 16px; padding: 24px; }
-        
-        @media (max-width: 1024px) {
-            .charts-section, .tables-section { grid-template-columns: 1fr; }
-        }
+        .loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 0.9rem; }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255, 255, 255, 0.3); border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .kpi-value { font-size: 2.5rem; font-weight: 700; line-height: 1; margin-bottom: 8px; }
+        .kpi-label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        @media (max-width: 1024px) { .charts-section, .tables-section { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -102,7 +74,6 @@
                         <p class="header-subtitle">Dashboard Operativo in Tempo Reale</p>
                     </div>
                 </div>
-                
                 <div class="header-actions">
                     <a href="backend-spedizioni.html" class="btn btn-primary">
                         <i class="fas fa-list-alt"></i> Gestione Spedizioni
@@ -110,7 +81,6 @@
                     <a href="import-file.html" class="btn btn-secondary">
                         <i class="fas fa-download"></i> Importa
                     </a>
-
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle">
                             <i class="fas fa-cog"></i>
@@ -119,16 +89,128 @@
                             <a href="api-management.html" class="dropdown-item">
                                 <i class="fas fa-network-wired" style="width: 20px;"></i> API Management
                             </a>
-                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </header>
 
-        </div>
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value" id="totalShipments"><div class="loading"><div class="spinner"></div></div></div>
+                <div class="kpi-label">Spedizioni Totali</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="inTransit"><div class="loading"><div class="spinner"></div></div></div>
+                <div class="kpi-label">In Transito</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="delivered"><div class="loading"><div class="spinner"></div></div></div>
+                <div class="kpi-label">Consegnate</div>
+            </div>
+             <div class="kpi-card">
+                <div class="kpi-value" id="totalCosts"><div class="loading"><div class="spinner"></div></div></div>
+                <div class="kpi-label">Costi Totali</div>
+            </div>
+        </section>
+
+        <section class="charts-section">
+            <div class="chart-card">
+                <h3>Andamento Spedizioni</h3>
+                <canvas id="shipmentsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Distribuzione per Tipo</h3>
+                <canvas id="typeChart"></canvas>
+            </div>
+        </section>
+
+        <section class="tables-section">
+            <div class="table-card">
+                <h3>Spedizioni Recenti</h3>
+                 <table class="data-table">
+                    <thead><tr><th>RIF.</th><th>Stato</th></tr></thead>
+                    <tbody id="recentShipmentsTable"></tbody>
+                </table>
+            </div>
+             <div class="table-card">
+                <h3>Performance Spedizionieri</h3>
+                <table class="data-table">
+                    <thead><tr><th>Spedizioniere</th><th>Attivo</th></tr></thead>
+                    <tbody id="carriersTable"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        //...
+        document.addEventListener('DOMContentLoaded', loadAllData);
+        const API_BASE = 'https://supply-chain-hub.netlify.app/.netlify/functions';
+
+        async function loadAllData() {
+            try {
+                const [stats, carriers, shipments] = await Promise.all([
+                    fetch(`${API_BASE}/dashboard-stats`).then(res => res.json()),
+                    fetch(`${API_BASE}/carriers`).then(res => res.json()),
+                    fetch(`${API_BASE}/shipments`).then(res => res.json())
+                ]);
+                
+                updateKPICards(stats.overview);
+                updateCarriersTable(carriers.carriers);
+                updateRecentShipments(shipments.shipments);
+                renderCharts(stats.overview);
+
+            } catch (error) {
+                console.error("Errore caricamento dati dashboard:", error);
+            }
+        }
+
+        function updateKPICards(overview = {}) {
+            document.getElementById('totalShipments').textContent = overview.totalShipments || 0;
+            document.getElementById('inTransit').textContent = overview.inTransit || 0;
+            document.getElementById('delivered').textContent = overview.delivered || 0;
+            document.getElementById('totalCosts').textContent = `€${(overview.totalCost || 0).toLocaleString('it-IT')}`;
+        }
+        
+        function updateCarriersTable(carriers = []) {
+            const tableBody = document.getElementById('carriersTable');
+            tableBody.innerHTML = carriers.slice(0, 5).map(c => `<tr><td>${c.name}</td><td>${c.isActive ? 'Sì' : 'No'}</td></tr>`).join('');
+        }
+
+        function updateRecentShipments(shipments = []) {
+            const tableBody = document.getElementById('recentShipmentsTable');
+            tableBody.innerHTML = shipments.slice(0, 5).map(s => `<tr><td>${s.rifSpedizione}</td><td>${s.statoSpedizione}</td></tr>`).join('');
+        }
+
+        function renderCharts(overview = {}) {
+            const byType = overview.byType || {};
+            const shipmentsCtx = document.getElementById('shipmentsChart').getContext('2d');
+            new Chart(shipmentsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag'],
+                    datasets: [{
+                        label: 'Spedizioni Mensili',
+                        data: [12, 19, 3, 5, 2, 3], // Dati statici, da sostituire con dati reali
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.1
+                    }]
+                }
+            });
+
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(byType),
+                    datasets: [{
+                        data: Object.values(byType),
+                        backgroundColor: ['#4285f4', '#34a853', '#fbbc04', '#ea4335'],
+                    }]
+                }
+            });
+        }
     </script>
 </body>
 </html>
