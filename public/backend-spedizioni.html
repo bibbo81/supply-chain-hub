@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Spedizioni - Gestione Completa</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4285f4;
+            --primary-rgb: 66, 133, 244;
+            --primary-dark: #1a73e8;
+            --secondary: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --success: #34a853;
+            --white: #ffffff;
+            --light: #f8f9fa;
+            
+            /* Dark Glass Theme */
+            --universal-glass-bg: rgba(35, 45, 60, 0.75);
+            --universal-glass-blur: 15px;
+            --universal-glass-border-color: rgba(255, 255, 255, 0.12);
+            --universal-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            
+            --radius-main-elements: 16px;
+            --radius-nested-elements: 12px;
+            --radius-inputs: 8px;
+            
+            --nested-glass-bg: rgba(45, 58, 75, 0.7);
+            --nested-glass-border-color: rgba(255, 255, 255, 0.1);
+            
+            --text-on-dark-glass: rgba(230, 235, 245, 0.95);
+            --text-on-dark-glass-strong: var(--white);
+            --text-on-dark-glass-muted: rgba(170, 180, 200, 0.85);
+            --text-shadow-for-readability: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: var(--text-on-dark-glass);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--universal-glass-bg);
+            backdrop-filter: blur(var(--universal-glass-blur));
+            -webkit-backdrop-filter: blur(var(--universal-glass-blur));
+            border: 1px solid var(--universal-glass-border-color);
+            box-shadow: var(--universal-glass-shadow);
+            border-radius: var(--radius-main-elements);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header h1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-on-dark-glass-strong);
+            text-shadow: var(--text-shadow-for-readability);
+        }
+
+        .header-logo-container {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--radius-inputs);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-on-dark-glass);
+            border: 1px solid var(--nested-glass-border-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: var(--nested-glass-bg);
+            border-color: var(--primary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+            border: 1px solid var(--success);
+        }
+
+        .btn-success:hover {
+            background: #2d8f43;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 168, 83, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #d33;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.4);
+        }
+
+        .controls-container {
+            background: var(--universal-glass-bg);
+            backdrop-filter: blur(var(--universal-glass-blur));
+            -webkit-backdrop-filter: blur(var(--universal-glass-blur));
+            border: 1px solid var(--universal-glass-border-color);
+            box-shadow: var(--universal-glass-shadow);
+            border-radius: var(--radius-main-elements);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--nested-glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--nested-glass-border-color);
+            border-radius: var(--radius-inputs);
+            color: var(--text-on-dark-glass);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.3);
+            background: rgba(50, 63, 80, 0.8);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-on-dark-glass-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-on-dark-glass-muted);
+        }
+
+        .table-container {
+            background: var(--universal-glass-bg);
+            backdrop-filter: blur(var(--universal-glass-blur));
+            -webkit-backdrop-filter: blur(var(--universal-glass-blur));
+            border: 1px solid var(--universal-glass-border-color);
+            box-shadow: var(--universal-glass-shadow);
+            border-radius: var(--radius-main-elements);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--universal-glass-border-color);
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-on-dark-glass-strong);
+            text-shadow: var(--text-shadow-for-readability);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 70vh;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: var(--nested-glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-on-dark-glass-strong);
+            font-weight: 700;
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--nested-glass-border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+
+        .data-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .editable-cell {
+            background: var(--nested-glass-bg) !important;
+            border: 1px solid var(--nested-glass-border-color);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: var(--text-on-dark-glass);
+            font-family: inherit;
+            font-size: 0.9rem;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .editable-cell:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+            background: rgba(50, 63, 80, 0.9);
+        }
+
+        .editable-cell.invalid {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 2px rgba(234, 67, 53, 0.3);
+        }
+
+        .readonly-cell {
+            color: var(--text-on-dark-glass-muted);
+            font-style: italic;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 6px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-edit {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-save:hover {
+            background: #2d8f43;
+        }
+
+        .btn-cancel {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-cancel:hover {
+            background: #e0a000;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-delete:hover {
+            background: #d33;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: var(--radius-inputs);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .status-success {
+            background: rgba(52, 168, 83, 0.2);
+            border-color: var(--success);
+            color: var(--white);
+        }
+
+        .status-error {
+            background: rgba(234, 67, 53, 0.2);
+            border-color: var(--danger);
+            color: var(--white);
+        }
+
+        .status-loading {
+            background: rgba(66, 133, 244, 0.2);
+            border-color: var(--primary);
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid var(--white);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .new-row {
+            background: rgba(52, 168, 83, 0.15) !important;
+            border: 1px solid var(--success);
+        }
+
+        .modified-row {
+            background: rgba(251, 188, 4, 0.15) !important;
+            border: 1px solid var(--warning);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-content {
+            background: var(--universal-glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: var(--radius-main-elements);
+            text-align: center;
+            border: 1px solid var(--universal-glass-border-color);
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            .table-wrapper {
+                max-height: 60vh;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 6px 4px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <div class="header-logo-container">
+                        <i class="fas fa-shipping-fast" style="color: white; font-size: 24px;"></i>
+                    </div>
+                    Backend Spedizioni
+                </h1>
+                <div class="header-actions">
+                    <button class="btn btn-success" onclick="addNewRow()">
+                        <i class="fas fa-plus"></i> Nuova Spedizione
+                    </button>
+                    <button class="btn btn-primary" onclick="syncData()">
+                        <i class="fas fa-sync-alt"></i> Sincronizza
+                    </button>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls-container">
+            <div class="controls-grid">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" 
+                           placeholder="Cerca per RIF. Spedizione, ODA, Fornitore, COD. ART...">
+                </div>
+                <button class="btn btn-primary" onclick="saveAllChanges()">
+                    <i class="fas fa-save"></i> Salva Tutte
+                </button>
+                <button class="btn btn-secondary" onclick="cancelAllChanges()">
+                    <i class="fas fa-undo"></i> Annulla
+                </button>
+                <button class="btn btn-secondary" onclick="exportToCSV()">
+                    <i class="fas fa-download"></i> Esporta CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">
+                    <i class="fas fa-table"></i>
+                    Registro Centrale Spedizioni
+                    <span id="recordCount" style="font-size: 0.8rem; color: var(--text-on-dark-glass-muted); margin-left: 12px;">
+                        Caricamento...
+                    </span>
+                </h2>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="shipmentsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 130px;">🚢 RIF. SPEDIZIONE</th>
+                            <th style="width: 100px;">#️⃣ N. ODA</th>
+                            <th style="width: 80px;">🔢 ANNO</th>
+                            <th style="width: 100px;">🏷️ COD. ART.</th>
+                            <th style="width: 150px;">ℹ️ DESCRIZIONE</th>
+                            <th style="width: 180px;">🏭 FORNITORE</th>
+                            <th style="width: 60px;">📏 U.M.</th>
+                            <th style="width: 80px;">🔢 QTY</th>
+                            <th style="width: 150px;">🧾 FATTURA FORNITORE</th>
+                            <th style="width: 120px;">💰 COSTO TRASPORTO €</th>
+                            <th style="width: 120px;">📦 COSTO UN. (€/PZ)</th>
+                            <th style="width: 120px;">⏱️ TRANSIT TIME (gg)</th>
+                            <th style="width: 100px;">⚠️ RITARDO (gg)</th>
+                            <th style="width: 120px;">📊 STATO</th>
+                            <th style="width: 120px;">🛫 DATA PARTENZA</th>
+                            <th style="width: 120px;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentsTableBody">
+                        <tr>
+                            <td colspan="16" style="text-align: center; padding: 40px;">
+                                <div class="spinner" style="margin: 0 auto 16px;"></div>
+                                <div>Caricamento spedizioni...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Indicator -->
+    <div id="statusIndicator" class="status-indicator">
+        <div class="spinner" id="statusSpinner" style="display: none;"></div>
+        <i id="statusIcon" class="fas fa-check"></i>
+        <span id="statusMessage">Operazione completata</span>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner" style="margin: 0 auto 20px; width: 40px; height: 40px;"></div>
+            <h3>Elaborazione in corso...</h3>
+            <p>Attendere prego...</p>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURAZIONE API =====
+        const API_BASE_URL = 'https://supply-chain-hub.netlify.app/.netlify/functions/shipments';
+        
+        // ===== VARIABILI GLOBALI =====
+        let shipmentsData = [];
+        let nextId = 1000; // ID temporaneo per nuove righe
+        
+        // Database articoli per validazione
+        const articleDatabase = [
+            '00001234', '00005678', '00009876', '00001111', '00002222',
+            '00003333', '00004444', '00005555', '00006666', '00007777'
+        ];
+        
+        // Fornitori per autocomplete
+        const suppliers = [
+            'Fornitore ABC S.r.l.',
+            'Tech Solutions Inc.',
+            'Global Import Export Co.',
+            'Manufacturing Partner S.r.l.',
+            'Quality Supplies Ltd.',
+            'Industrial Components SpA'
+        ];
+        
+        // Campi editabili
+        const editableColumns = [
+            'rifSpedizione', 'nOda', 'anno', 'codArt', 'fornitore', 
+            'qty', 'fatturaFornitore', 'costoTrasporto'
+        ];
+
+        // ===== INIZIALIZZAZIONE =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Backend spedizioni inizializzato');
+            loadShipmentsData();
+            setupSearch();
+            setupKeyboardShortcuts();
+        });
+
+        // ===== CARICAMENTO DATI =====
+        async function loadShipmentsData() {
+            try {
+                showLoadingOverlay();
+                
+                const response = await fetch(API_BASE_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📦 Dati ricevuti dal server:', data);
+                
+                // Trasforma i dati nel formato interno
+                shipmentsData = (data.shipments || []).map((item, index) => ({
+                    id: item.id,
+                    rifSpedizione: item.rifSpedizione || '',
+                    nOda: item.nOda || '',
+                    anno: item.anno || '',
+                    codArt: item.codArt || '',
+                    descrizione: item.descrizione || '',
+                    fornitore: item.fornitore || '',
+                    um: item.um || 'PZ',
+                    qty: item.qty || '',
+                    fatturaFornitore: item.fatturaFornitore || '',
+                    costoTrasporto: item.costoTrasporto || 0,
+                    costoUnitario: item.costoUnitario || 0,
+                    transitTime: item.transitTime || '',
+                    ritardo: item.ritardo || 0,
+                    statoSpedizione: item.statoSpedizione || '',
+                    dataPartenza: item.dataPartenza || '',
+                    isEditing: false,
+                    isNew: false,
+                    isModified: false
+                }));
+                
+                // Aggiorna nextId
+                if (shipmentsData.length > 0) {
+                    nextId = Math.max(...shipmentsData.map(s => s.id)) + 1;
+                }
+                
+                hideLoadingOverlay();
+                renderTable();
+                updateRecordCount();
+                showStatus('success', 'Dati caricati', `${shipmentsData.length} spedizioni caricate dal database`);
+                
+            } catch (error) {
+                console.error('❌ Errore caricamento dati:', error);
+                hideLoadingOverlay();
+                showStatus('error', 'Errore caricamento', 'Impossibile caricare i dati dal database');
+            }
+        }
+
+        // ===== RENDERING TABELLA =====
+        function renderTable() {
+            const tbody = document.getElementById('shipmentsTableBody');
+            tbody.innerHTML = '';
+
+            if (shipmentsData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="16" style="text-align: center; padding: 40px; color: var(--text-on-dark-glass-muted);">
+                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <div>Nessuna spedizione trovata</div>
+                            <button class="btn btn-primary" onclick="addNewRow()" style="margin-top: 16px;">
+                                <i class="fas fa-plus"></i> Aggiungi Prima Spedizione
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            shipmentsData.forEach(row => {
+                const tr = createTableRow(row);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function createTableRow(rowData) {
+            const tr = document.createElement('tr');
+            if (rowData.isNew) tr.classList.add('new-row');
+            if (rowData.isModified) tr.classList.add('modified-row');
+
+            const columns = [
+                'rifSpedizione', 'nOda', 'anno', 'codArt', 'descrizione',
+                'fornitore', 'um', 'qty', 'fatturaFornitore', 'costoTrasporto',
+                'costoUnitario', 'transitTime', 'ritardo', 'statoSpedizione', 'dataPartenza'
+            ];
+
+            columns.forEach(column => {
+                const td = document.createElement('td');
+                const isEditable = editableColumns.includes(column);
+                
+                if (isEditable && rowData.isEditing) {
+                    td.appendChild(createEditableInput(rowData, column));
+                } else {
+                    const value = formatCellValue(rowData[column], column);
+                    td.textContent = value;
+                    if (!isEditable) {
+                        td.classList.add('readonly-cell');
+                    }
+                }
+                
+                tr.appendChild(td);
+            });
+
+            // Colonna azioni
+            const actionsTd = document.createElement('td');
+            actionsTd.appendChild(createActionsButtons(rowData));
+            tr.appendChild(actionsTd);
+
+            return tr;
+        }
+
+        function createEditableInput(rowData, column) {
+            const input = document.createElement('input');
+            input.className = 'editable-cell';
+            input.value = rowData[column] || '';
+            input.dataset.column = column;
+            input.dataset.rowId = rowData.id;
+
+            // Configurazione input specifica per colonna
+            switch(column) {
+                case 'anno':
+                    input.type = 'number';
+                    input.min = '2020';
+                    input.max = '2030';
+                    break;
+                case 'qty':
+                    input.type = 'number';
+                    input.min = '1';
+                    input.step = '1';
+                    break;
+                case 'costoTrasporto':
+                    input.type = 'number';
+                    input.min = '0';
+                    input.step = '0.01';
+                    break;
+                case 'codArt':
+                    input.maxLength = 8;
+                    input.placeholder = '00000000';
+                    input.addEventListener('input', handleArticleCodeInput);
+                    input.addEventListener('blur', validateArticleCode);
+                    break;
+            }
+
+            // Eventi comuni
+            input.addEventListener('input', function() {
+                markRowAsModified(rowData.id);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveRow(rowData.id);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelRowEdit(rowData.id);
+                }
+            });
+
+            return input;
+        }
+
+        function handleArticleCodeInput(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 8) {
+                value = value.substring(0, 8);
+            }
+            e.target.value = value.padStart(8, '0');
+        }
+
+        function validateArticleCode(e) {
+            const code = e.target.value;
+            const isValid = articleDatabase.includes(code);
+            
+            if (!isValid && code.length === 8) {
+                e.target.classList.add('invalid');
+                showStatus('error', 'Codice Articolo non valido', 'Il codice non esiste nel database');
+            } else {
+                e.target.classList.remove('invalid');
+            }
+        }
+
+        function createActionsButtons(rowData) {
+            const container = document.createElement('div');
+            container.className = 'actions-cell';
+
+            if (rowData.isEditing) {
+                // Pulsanti salva/annulla
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'action-btn btn-save';
+                saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+                saveBtn.title = 'Salva';
+                saveBtn.onclick = () => saveRow(rowData.id);
+                container.appendChild(saveBtn);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'action-btn btn-cancel';
+                cancelBtn.innerHTML = '<i class="fas fa-times"></i>';
+                cancelBtn.title = 'Annulla';
+                cancelBtn.onclick = () => cancelRowEdit(rowData.id);
+                container.appendChild(cancelBtn);
+            } else {
+                // Pulsanti modifica/elimina
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn btn-edit';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.title = 'Modifica';
+                editBtn.onclick = () => editRow(rowData.id);
+                container.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn btn-delete';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = 'Elimina';
+                deleteBtn.onclick = () => deleteRow(rowData.id);
+                container.appendChild(deleteBtn);
+            }
+
+            return container;
+        }
+
+        function formatCellValue(value, column) {
+            if (value === null || value === undefined || value === '') {
+                return '-';
+            }
+
+            switch(column) {
+                case 'costoTrasporto':
+                case 'costoUnitario':
+                    return `€${parseFloat(value).toLocaleString('it-IT', {minimumFractionDigits: 2})}`;
+                case 'codArt':
+                    return value.toString().padStart(8, '0');
+                case 'dataPartenza':
+                    if (value) {
+                        const date = new Date(value);
+                        return date.toLocaleDateString('it-IT');
+                    }
+                    return '-';
+                case 'ritardo':
+                case 'transitTime':
+                    return value > 0 ? `${value}` : '-';
+                default:
+                    return value;
+            }
+        }
+
+        // ===== OPERAZIONI RIGA =====
+        function editRow(id) {
+            const row = shipmentsData.find(r => r.id === id);
+            if (row) {
+                // Cancella altre modifiche in corso
+                shipmentsData.forEach(r => r.isEditing = false);
+                
+                row.isEditing = true;
+                renderTable();
+            }
+        }
+
+        async function saveRow(id) {
+            const row = shipmentsData.find(r => r.id === id);
+            if (!row) return;
+
+            // Raccogli dati dai campi input
+            const inputs = document.querySelectorAll(`input[data-row-id="${id}"]`);
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                const column = input.dataset.column;
+                let value = input.value;
+
+                // Validazioni specifiche
+                switch(column) {
+                    case 'codArt':
+                        if (!articleDatabase.includes(value)) {
+                            input.classList.add('invalid');
+                            isValid = false;
+                            return;
+                        }
+                        break;
+                    case 'anno':
+                        const year = parseInt(value);
+                        if (year < 2020 || year > 2030) {
+                            input.classList.add('invalid');
+                            isValid = false;
+                            return;
+                        }
+                        value = year;
+                        break;
+                    case 'qty':
+                        const qty = parseInt(value);
+                        if (qty < 1) {
+                            input.classList.add('invalid');
+                            isValid = false;
+                            return;
+                        }
+                        value = qty;
+                        break;
+                    case 'costoTrasporto':
+                        const cost = parseFloat(value);
+                        if (cost < 0) {
+                            input.classList.add('invalid');
+                            isValid = false;
+                            return;
+                        }
+                        value = cost;
+                        break;
+                }
+
+                // Controllo campi obbligatori
+                if (editableColumns.includes(column) && (!value || value === '')) {
+                    input.classList.add('invalid');
+                    isValid = false;
+                    return;
+                }
+
+                row[column] = value;
+                input.classList.remove('invalid');
+            });
+
+            if (!isValid) {
+                showStatus('error', 'Errore di validazione', 'Correggi i campi evidenziati in rosso');
+                return;
+            }
+
+            // Salva sul server
+            try {
+                if (row.isNew) {
+                    await createShipmentAPI(row);
+                } else {
+                    await updateShipmentAPI(row);
+                }
+                
+                row.isEditing = false;
+                row.isNew = false;
+                row.isModified = false;
+                
+                // Ricarica dati aggiornati
+                await loadShipmentsData();
+                showStatus('success', 'Spedizione salvata', 'Dati salvati nel database');
+                
+            } catch (error) {
+                console.error('❌ Errore salvataggio:', error);
+                showStatus('error', 'Errore salvataggio', 'Impossibile salvare nel database');
+            }
+        }
+
+        function cancelRowEdit(id) {
+            const row = shipmentsData.find(r => r.id === id);
+            if (!row) return;
+
+            if (row.isNew) {
+                // Rimuovi riga nuova
+                shipmentsData = shipmentsData.filter(r => r.id !== id);
+            } else {
+                // Stop editing
+                row.isEditing = false;
+            }
+            
+            renderTable();
+            updateRecordCount();
+        }
+
+        async function deleteRow(id) {
+            if (confirm('Sei sicuro di voler eliminare questa spedizione?')) {
+                try {
+                    await deleteShipmentAPI(id);
+                    
+                    // Rimuovi dal frontend
+                    shipmentsData = shipmentsData.filter(r => r.id !== id);
+                    renderTable();
+                    updateRecordCount();
+                    showStatus('success', 'Spedizione eliminata', 'Rimossa dal database');
+                    
+                } catch (error) {
+                    console.error('❌ Errore eliminazione:', error);
+                    showStatus('error', 'Errore eliminazione', 'Impossibile eliminare dal database');
+                }
+            }
+        }
+
+        function markRowAsModified(id) {
+            const row = shipmentsData.find(r => r.id === id);
+            if (row && !row.isNew) {
+                row.isModified = true;
+            }
+        }
+
+        // ===== OPERAZIONI NUOVA RIGA =====
+        function addNewRow() {
+            // Cancella editing in corso
+            shipmentsData.forEach(r => r.isEditing = false);
+
+            const newRow = {
+                id: nextId++,
+                rifSpedizione: '',
+                nOda: '',
+                anno: new Date().getFullYear(),
+                codArt: '',
+                descrizione: '',
+                fornitore: '',
+                um: 'PZ',
+                qty: 1,
+                fatturaFornitore: '',
+                costoTrasporto: 0,
+                costoUnitario: 0,
+                transitTime: '',
+                ritardo: 0,
+                statoSpedizione: '',
+                dataPartenza: '',
+                isEditing: true,
+                isNew: true,
+                isModified: false
+            };
+
+            shipmentsData.unshift(newRow);
+            renderTable();
+            updateRecordCount();
+            
+            // Focus sul primo campo
+            setTimeout(() => {
+                const firstInput = document.querySelector(`input[data-row-id="${newRow.id}"]`);
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        // ===== API FUNCTIONS =====
+        async function createShipmentAPI(shipmentData) {
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rif_spedizione: shipmentData.rifSpedizione,
+                    n_oda: shipmentData.nOda,
+                    anno: shipmentData.anno,
+                    cod_art: shipmentData.codArt,
+                    fornitore: shipmentData.fornitore,
+                    um: shipmentData.um,
+                    qty: shipmentData.qty,
+                    fattura_fornitore: shipmentData.fatturaFornitore,
+                    costo_trasporto: shipmentData.costoTrasporto
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            shipmentData.id = result.shipment.id; // Aggiorna con ID dal server
+            return result;
+        }
+
+        async function updateShipmentAPI(shipmentData) {
+            const response = await fetch(API_BASE_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: shipmentData.id,
+                    rif_spedizione: shipmentData.rifSpedizione,
+                    n_oda: shipmentData.nOda,
+                    anno: shipmentData.anno,
+                    cod_art: shipmentData.codArt,
+                    fornitore: shipmentData.fornitore,
+                    um: shipmentData.um,
+                    qty: shipmentData.qty,
+                    fattura_fornitore: shipmentData.fatturaFornitore,
+                    costo_trasporto: shipmentData.costoTrasporto
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+
+        async function deleteShipmentAPI(id) {
+            const response = await fetch(`${API_BASE_URL}?id=${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+
+        // ===== OPERAZIONI BULK =====
+        async function saveAllChanges() {
+            const modifiedRows = shipmentsData.filter(r => r.isModified || r.isNew);
+            
+            if (modifiedRows.length === 0) {
+                showStatus('info', 'Nessuna modifica', 'Non ci sono modifiche da salvare');
+                return;
+            }
+
+            showStatus('loading', 'Salvataggio in corso...', `Salvando ${modifiedRows.length} spedizioni...`);
+            
+            try {
+                for (const row of modifiedRows) {
+                    if (row.isNew) {
+                        await createShipmentAPI(row);
+                        row.isNew = false;
+                    } else if (row.isModified) {
+                        await updateShipmentAPI(row);
+                        row.isModified = false;
+                    }
+                }
+                
+                await loadShipmentsData(); // Ricarica dati aggiornati
+                showStatus('success', 'Tutte le modifiche salvate', `${modifiedRows.length} spedizioni aggiornate nel database`);
+                
+            } catch (error) {
+                console.error('❌ Errore salvataggio bulk:', error);
+                showStatus('error', 'Errore salvataggio', 'Alcune modifiche potrebbero non essere state salvate');
+            }
+        }
+
+        function cancelAllChanges() {
+            if (confirm('Sei sicuro di voler annullare tutte le modifiche non salvate?')) {
+                shipmentsData = shipmentsData.filter(r => !r.isNew);
+                shipmentsData.forEach(r => {
+                    r.isModified = false;
+                    r.isEditing = false;
+                });
+                
+                renderTable();
+                updateRecordCount();
+                showStatus('success', 'Modifiche annullate', 'Tutte le modifiche non salvate sono state annullate');
+            }
+        }
+
+        async function syncData() {
+            showLoadingOverlay();
+            await loadShipmentsData();
+            hideLoadingOverlay();
+            showStatus('success', 'Dati sincronizzati', 'Tabella aggiornata con i dati più recenti');
+        }
+
+        // ===== RICERCA =====
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterTable(this.value);
+                }, 300);
+            });
+        }
+
+        function filterTable(searchTerm) {
+            const rows = document.querySelectorAll('#shipmentsTableBody tr');
+            const term = searchTerm.toLowerCase();
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const shouldShow = term === '' || text.includes(term);
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+            
+            updateRecordCount(visibleCount, searchTerm);
+        }
+
+        // ===== EXPORT =====
+        function exportToCSV() {
+            const csvContent = generateCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `spedizioni_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatus('success', 'Export completato', 'File CSV scaricato');
+        }
+
+        function generateCSV() {
+            const headers = [
+                'RIF_SPEDIZIONE', 'N_ODA', 'ANNO', 'COD_ART', 'DESCRIZIONE',
+                'FORNITORE', 'UM', 'QTY', 'FATTURA_FORNITORE', 'COSTO_TRASPORTO',
+                'COSTO_UNITARIO', 'TRANSIT_TIME', 'RITARDO', 'STATO', 'DATA_PARTENZA'
+            ];
+            
+            let csv = headers.join(',') + '\n';
+            
+            shipmentsData.forEach(row => {
+                const values = [
+                    row.rifSpedizione, row.nOda, row.anno, row.codArt, row.descrizione,
+                    row.fornitore, row.um, row.qty, row.fatturaFornitore, row.costoTrasporto,
+                    row.costoUnitario, row.transitTime, row.ritardo, row.statoSpedizione, row.dataPartenza
+                ].map(val => `"${val || ''}"`);
+                
+                csv += values.join(',') + '\n';
+            });
+            
+            return csv;
+        }
+
+        // ===== UTILITY =====
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    addNewRow();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveAllChanges();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                    e.preventDefault();
+                    syncData();
+                }
+                
+                if (e.key === 'Escape') {
+                    const searchInput = document.getElementById('searchInput');
+                    if (document.activeElement === searchInput) {
+                        searchInput.value = '';
+                        filterTable('');
+                        searchInput.blur();
+                    }
+                }
+            });
+        }
+
+        function updateRecordCount(visibleCount = null, searchTerm = '') {
+            const recordCount = document.getElementById('recordCount');
+            const total = shipmentsData.length;
+            
+            if (searchTerm) {
+                recordCount.textContent = `${visibleCount} di ${total} spedizioni (filtrate)`;
+            } else {
+                recordCount.textContent = `${total} spedizioni totali`;
+            }
+        }
+
+        function showStatus(type, title, message) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusSpinner = document.getElementById('statusSpinner');
+
+            statusIndicator.className = `status-indicator status-${type}`;
+            statusMessage.textContent = `${title}: ${message}`;
+            
+            if (type === 'loading') {
+                statusSpinner.style.display = 'block';
+                statusIcon.style.display = 'none';
+            } else {
+                statusSpinner.style.display = 'none';
+                statusIcon.style.display = 'block';
+                
+                switch(type) {
+                    case 'success':
+                        statusIcon.className = 'fas fa-check-circle';
+                        break;
+                    case 'error':
+                        statusIcon.className = 'fas fa-exclamation-circle';
+                        break;
+                    case 'info':
+                        statusIcon.className = 'fas fa-info-circle';
+                        break;
+                    default:
+                        statusIcon.className = 'fas fa-info-circle';
+                }
+            }
+            
+            statusIndicator.style.display = 'flex';
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    statusIndicator.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
