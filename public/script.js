@@ -1,10 +1,23 @@
-// Supply Chain Hub - Main JavaScript
+// Supply Chain Hub - Main JavaScript (Fixed)
 // Global variables
 let charts = {};
 const API_BASE = 'https://supply-chain-hub.netlify.app/api';
 
+// Wait for Chart.js to load before initializing
+function waitForChart() {
+    return new Promise((resolve) => {
+        if (typeof Chart !== 'undefined') {
+            resolve();
+        } else {
+            setTimeout(() => waitForChart().then(resolve), 100);
+        }
+    });
+}
+
 // Initialize dashboard
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Wait for Chart.js to load
+    await waitForChart();
     initializeDashboard();
 });
 
@@ -15,8 +28,7 @@ async function initializeDashboard() {
             loadDashboardStats(),
             loadAnalytics(),
             loadCarrierPerformance(),
-            loadAIInsights(),
-            loadMobileSummary()
+            loadAIInsights()
         ]);
         hideLoadingState();
         console.log('Dashboard initialized successfully');
@@ -27,7 +39,6 @@ async function initializeDashboard() {
 }
 
 function showLoadingState() {
-    // Add loading animations
     document.body.style.cursor = 'wait';
 }
 
@@ -44,7 +55,7 @@ async function loadDashboardStats() {
         updateKPIs(data);
         updateHeaderStats(data);
     } catch (error) {
-        console.error('Error loading dashboard stats:', error);
+        console.warn('Using fallback data for dashboard stats');
         // Use fallback data
         const fallbackData = {
             total_revenue: 2500000,
@@ -77,12 +88,17 @@ function updateKPIs(data) {
 }
 
 function updateHeaderStats(data) {
-    document.getElementById('totalOrders').textContent = data.total_shipments?.toLocaleString() || '15,420';
-    document.getElementById('activeCarriers').textContent = data.active_carriers || '28';
+    const totalOrdersEl = document.getElementById('totalOrders');
+    const activeCarriersEl = document.getElementById('activeCarriers');
+    
+    if (totalOrdersEl) totalOrdersEl.textContent = data.total_shipments?.toLocaleString() || '15,420';
+    if (activeCarriersEl) activeCarriersEl.textContent = data.active_carriers || '28';
 }
 
 function animateValue(elementId, start, end, suffix = '', prefix = false, decimals = 0) {
     const element = document.getElementById(elementId);
+    if (!element) return;
+    
     const duration = 2000; // 2 seconds
     const startTime = performance.now();
     
@@ -113,13 +129,17 @@ function easeOutCubic(t) {
 
 function updateTrend(elementId, value) {
     const element = document.getElementById(elementId);
+    if (!element) return;
+    
     const isPositive = value > 0;
     
     element.textContent = `${isPositive ? '+' : ''}${value.toFixed(1)}%`;
     element.parentElement.className = `kpi-trend ${isPositive ? 'trend-positive' : 'trend-negative'}`;
     
     const icon = element.parentElement.querySelector('i');
-    icon.className = `fas fa-arrow-${isPositive ? 'up' : 'down'}`;
+    if (icon) {
+        icon.className = `fas fa-arrow-${isPositive ? 'up' : 'down'}`;
+    }
 }
 
 async function loadAnalytics() {
@@ -136,13 +156,14 @@ async function loadAnalytics() {
         createShipmentChart(data.shipment_data || []);
         createPerformanceChart(data.performance_data || []);
     } catch (error) {
-        console.error('Error loading analytics:', error);
+        console.warn('Using demo charts for analytics');
         createDemoCharts();
     }
 }
 
 function createRevenueChart(data) {
-    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
     
     if (charts.revenue) {
         charts.revenue.destroy();
@@ -199,7 +220,8 @@ function createRevenueChart(data) {
 }
 
 function createShipmentChart(data) {
-    const ctx = document.getElementById('shipmentChart').getContext('2d');
+    const ctx = document.getElementById('shipmentChart');
+    if (!ctx) return;
     
     if (charts.shipment) {
         charts.shipment.destroy();
@@ -242,7 +264,8 @@ function createShipmentChart(data) {
 }
 
 function createPerformanceChart(data) {
-    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const ctx = document.getElementById('performanceChart');
+    if (!ctx) return;
     
     if (charts.performance) {
         charts.performance.destroy();
@@ -281,7 +304,8 @@ function createPerformanceChart(data) {
 }
 
 function createGeoChart() {
-    const ctx = document.getElementById('geoChart').getContext('2d');
+    const ctx = document.getElementById('geoChart');
+    if (!ctx) return;
     
     if (charts.geo) {
         charts.geo.destroy();
@@ -334,7 +358,7 @@ async function loadCarrierPerformance() {
         const data = await response.json();
         displayCarrierPerformance(data.carriers || []);
     } catch (error) {
-        console.error('Error loading carrier performance:', error);
+        console.warn('Using fallback data for carrier performance');
         displayCarrierPerformance([
             { name: 'DHL Express', rating: 4.8, deliveries: 2840, on_time: 96.2 },
             { name: 'FedEx International', rating: 4.6, deliveries: 2156, on_time: 94.8 },
@@ -346,6 +370,7 @@ async function loadCarrierPerformance() {
 
 function displayCarrierPerformance(carriers) {
     const container = document.getElementById('carrierPerformanceContainer');
+    if (!container) return;
     
     const tableHTML = `
         <table class="performance-table">
@@ -381,7 +406,7 @@ async function loadAIInsights() {
         const data = await response.json();
         displayAIInsights(data.insights || []);
     } catch (error) {
-        console.error('Error loading AI insights:', error);
+        console.warn('Using fallback data for AI insights');
         displayAIInsights([
             {
                 title: 'Route Optimization Opportunity',
@@ -404,6 +429,7 @@ async function loadAIInsights() {
 
 function displayAIInsights(insights) {
     const container = document.getElementById('aiInsightsContainer');
+    if (!container) return;
     
     const insightsHTML = insights.map(insight => `
         <div class="insight-item">
@@ -413,19 +439,6 @@ function displayAIInsights(insights) {
     `).join('');
     
     container.innerHTML = insightsHTML;
-}
-
-async function loadMobileSummary() {
-    try {
-        const response = await fetch(`${API_BASE}/mobile/summary`);
-        if (!response.ok) throw new Error('Failed to load mobile summary');
-        
-        const data = await response.json();
-        // Mobile-specific optimizations can be applied here
-        console.log('Mobile summary loaded:', data);
-    } catch (error) {
-        console.error('Error loading mobile summary:', error);
-    }
 }
 
 function createDemoCharts() {
@@ -444,7 +457,7 @@ function handleError(error) {
 // Initialize geo chart after page load
 setTimeout(() => {
     createGeoChart();
-}, 1000);
+}, 2000);
 
 // Auto-refresh every 5 minutes
 setInterval(() => {
