@@ -30,7 +30,7 @@
             background-attachment: fixed;
             min-height: 100vh;
             color: var(--text-white);
-            overflow-x: hidden;
+            overflow-x: hidden; 
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .header { background: var(--dark-glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--dark-glass-border); border-radius: 16px; padding: 24px; margin-bottom: 32px; box-shadow: var(--dark-glass-shadow); }
@@ -69,21 +69,19 @@
         
         .chart-container {
             position: relative;
-            height: 300px; /* Altezza fissa per i contenitori dei grafici */
-            overflow-x: auto; /* Abilita scorrimento per grafico a linee se necessario */
+            height: 300px; 
+            overflow-x: auto; /* Necessario solo se il contenuto interno (canvas) forza una larghezza minima */
             -webkit-overflow-scrolling: touch;
         }
-        .chart-container canvas {
-            /* Per il grafico a linee, una larghezza minima per lo scorrimento */
-            /* Non strettamente necessario per il doughnut se maintainAspectRatio = true */
-             min-width: 600px; 
+        /* Applica min-width solo al grafico a linee per lo scorrimento */
+        #shipmentsChart {
+            min-width: 600px; 
         }
-        /* Assicuriamo che il canvas del doughnut non ecceda il contenitore e mantenga le proporzioni */
+        /* Per il grafico a ciambella, assicurati che si adatti al contenitore mantenendo le proporzioni */
         #typeChart {
             max-width: 100%;
-            max-height: 100%;
+            max-height: 100%; /* L'altezza sarà definita dal contenitore e da maintainAspectRatio */
         }
-
 
         .tables-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         .table-card .table-wrapper { 
@@ -97,7 +95,7 @@
         .status-in-transit { background: rgba(66, 133, 244, 0.2); color: #4285f4; }
         .status-delivered { background: rgba(52, 168, 83, 0.2); color: #34a853; }
         .status-delayed { background: rgba(234, 67, 53, 0.2); color: #ea4335; }
-        .loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); padding: 20px; }
+        .loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); padding: 20px; text-align: center; }
         .spinner { width: 20px; height: 20px; border: 2px solid rgba(255, 255, 255, 0.3); border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 1024px) { .charts-section, .tables-section { grid-template-columns: 1fr; } }
@@ -165,7 +163,9 @@
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead><tr><th>RIF.</th><th>Fornitore</th><th>Stato</th><th>Costo</th></tr></thead>
-                        <tbody id="recentShipmentsTable"><div class="loading"><div class="spinner"></div> Caricamento...</div></tbody>
+                        <tbody id="recentShipmentsTable">
+                            <tr><td colspan="4" class="loading"><div class="spinner"></div> Caricamento...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -174,7 +174,9 @@
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead><tr><th>Spedizioniere</th><th>Tipo</th><th>Attivo</th></tr></thead>
-                        <tbody id="carriersTable"><div class="loading"><div class="spinner"></div> Caricamento...</div></tbody>
+                        <tbody id="carriersTable">
+                            <tr><td colspan="3" class="loading"><div class="spinner"></div> Caricamento...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -201,7 +203,11 @@
                 updateCharts(statsData);
             } catch (error) {
                 console.error('Errore caricamento dashboard:', error);
-                // Potresti voler mostrare un errore all'utente qui
+                // Gestione errore tabelle
+                const recentTbody = document.getElementById('recentShipmentsTable');
+                if(recentTbody) recentTbody.innerHTML = '<tr><td colspan="4" class="loading" style="color:var(--danger);">Errore caricamento spedizioni</td></tr>';
+                const carriersTbody = document.getElementById('carriersTable');
+                if(carriersTbody) carriersTbody.innerHTML = '<tr><td colspan="3" class="loading" style="color:var(--danger);">Errore caricamento spedizionieri</td></tr>';
             }
         }
 
@@ -213,13 +219,17 @@
             document.getElementById('delayed').textContent = overview.delayed || 0;
             document.getElementById('totalCosts').textContent = `€${(overview.totalCost || 0).toLocaleString('it-IT')}`;
             document.getElementById('avgTransitTime').textContent = overview.avgTransitTime || 0;
-            // Qui potresti aggiungere logica per popolare i kpi-trend se i dati lo permettono
         }
 
         function updateRecentShipmentsTable(data) {
             const tbody = document.getElementById('recentShipmentsTable');
             if (!tbody) return;
-            tbody.innerHTML = (data.shipments || []).slice(0, 5).map(s => `
+            const shipments = data.shipments || [];
+            if(shipments.length === 0 && !data.error) {
+                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nessuna spedizione recente.</td></tr>';
+                 return;
+            }
+            tbody.innerHTML = shipments.slice(0, 5).map(s => `
                 <tr>
                     <td>${s.rifSpedizione || 'N/A'}</td>
                     <td>${s.fornitore || 'N/A'}</td>
@@ -231,7 +241,12 @@
         function updateCarriersTable(data) {
             const tbody = document.getElementById('carriersTable');
             if (!tbody) return;
-            tbody.innerHTML = (data.carriers || []).slice(0, 5).map(c => `
+            const carriers = data.carriers || [];
+            if(carriers.length === 0 && !data.error) {
+                 tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nessuno spedizioniere.</td></tr>';
+                 return;
+            }
+            tbody.innerHTML = carriers.slice(0, 5).map(c => `
                 <tr>
                     <td>${c.name || 'N/A'}</td>
                     <td>${(c.shippingTypes || []).join(', ') || 'N/A'}</td>
@@ -243,22 +258,21 @@
             const overview = stats.overview || {};
             const byType = overview.byType || {};
             
-            // Grafico a Linee - Andamento Spedizioni
             const shipmentsCtx = document.getElementById('shipmentsChart').getContext('2d');
             if (shipmentsChartInstance) shipmentsChartInstance.destroy();
             shipmentsChartInstance = new Chart(shipmentsCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag'], // Esempio di etichette
+                    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag'], 
                     datasets: [
-                        { label: 'MARE', data: [ (byType.MARE_HIST || [])[0] || 20, (byType.MARE_HIST || [])[1] || 30, (byType.MARE_HIST || [])[2] || 25, (byType.MARE_HIST || [])[3] || 40, (byType.MARE_HIST || [])[4] || 35], borderColor: '#4285f4', tension: 0.4, fill: false },
-                        { label: 'AEREA', data: [ (byType.AEREA_HIST || [])[0] || 15, (byType.AEREA_HIST || [])[1] || 10, (byType.AEREA_HIST || [])[2] || 30, (byType.AEREA_HIST || [])[3] || 20, (byType.AEREA_HIST || [])[4] || 22], borderColor: '#34a853', tension: 0.4, fill: false },
-                        { label: 'PARCEL', data: [ (byType.PARCEL_HIST || [])[0] || 5, (byType.PARCEL_HIST || [])[1] || 12, (byType.PARCEL_HIST || [])[2] || 8, (byType.PARCEL_HIST || [])[3] || 10, (byType.PARCEL_HIST || [])[4] || 14], borderColor: '#fbbc04', tension: 0.4, fill: false }
-                    ] // Nota: i dati storici andrebbero forniti dall'API /dashboard-stats
+                        { label: 'MARE', data: [20, 30, 25, 40, 35], borderColor: '#4285f4', tension: 0.4, fill: false },
+                        { label: 'AEREA', data: [15, 10, 30, 20, 22], borderColor: '#34a853', tension: 0.4, fill: false },
+                        { label: 'PARCEL', data: [5, 12, 8, 10, 14], borderColor: '#fbbc04', tension: 0.4, fill: false }
+                    ] 
                 },
                 options: { 
                     responsive: true, 
-                    maintainAspectRatio: false, // Importante per il corretto ridimensionamento nel container
+                    maintainAspectRatio: false, 
                     plugins: { legend: { labels: { color: 'var(--text-muted)' } } },
                     scales: { 
                         y: { ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--dark-glass-border)' } }, 
@@ -267,7 +281,6 @@
                 }
             });
 
-            // Grafico a Ciambella - Distribuzione per Tipo
             const typeCtx = document.getElementById('typeChart').getContext('2d');
             if (typeChartInstance) typeChartInstance.destroy();
             typeChartInstance = new Chart(typeCtx, {
@@ -277,13 +290,13 @@
                     datasets: [{
                         data: [byType.MARE || 0, byType.AEREA || 0, byType.PARCEL || 0, byType.NON_SPECIFICATO || 0],
                         backgroundColor: ['#4285f4', '#34a853', '#fbbc04', '#ea4335'],
-                        borderColor: 'var(--dark-glass-bg)', // Per separare un po' gli spicchi
+                        borderColor: 'var(--dark-glass-bg)',
                         borderWidth: 2
                     }]
                 },
                 options: { 
                     responsive: true, 
-                    maintainAspectRatio: true, // CAMBIATO A TRUE per il doughnut
+                    maintainAspectRatio: true, // Mantiene le proporzioni del doughnut
                     plugins: { legend: { position: 'bottom', labels: { color: 'var(--text-muted)' } } }
                 }
             });
