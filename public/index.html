@@ -289,14 +289,14 @@
         /* Charts Section */
         .charts-section {
             display: grid;
-            grid-template-columns: 2fr 1fr; /* Modificato per dare più spazio al grafico a linee */
+            grid-template-columns: 2fr 1fr; 
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
-        .chart-container.glass-container { /* Applica stili glass anche ai contenitori dei grafici */
+        .chart-container.glass-container { 
              padding: 2rem;
-             min-height: 400px; /* Aumentata altezza minima */
+             min-height: 400px; 
              position: relative;
         }
         
@@ -312,14 +312,11 @@
 
         .chart-wrapper {
             position: relative;
-            height: 350px; /* Altezza specifica per il wrapper del canvas */
+            height: 350px; 
         }
         
         /* Insights Panel */
-        .insights-panel {
-            padding: 2rem;
-            animation: slideInLeft 0.8s ease-out;
-        }
+        .insights-panel { padding: 2rem; animation: slideInLeft 0.8s ease-out; }
         .insight-item { padding: 1rem; margin-bottom: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; cursor: pointer; }
         .insight-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); transform: translateX(5px); }
         .insight-title { font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
@@ -331,7 +328,7 @@
         .alert-critical { background: rgba(255,71,87,0.1); border-left-color: var(--accent-red); border: 1px solid rgba(255,71,87,0.2); }
         .alert-warning { background: rgba(255,183,77,0.1); border-left-color: var(--accent-orange); border: 1px solid rgba(255,183,77,0.2); }
         .alert-info { background: rgba(0,212,255,0.1); border-left-color: var(--accent-blue); border: 1px solid rgba(0,212,255,0.2); }
-        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; } /* changed from justify-content: between */
+        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .alert-priority { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .priority-high { background: rgba(255,71,87,0.2); color: var(--accent-red); }
         .priority-medium { background: rgba(255,183,77,0.2); color: var(--accent-orange); }
@@ -339,7 +336,7 @@
 
         /* Data Tables */
         .data-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        .data-table.glass-container { padding: 2rem; } /* Applica stili glass anche ai contenitori delle tabelle */
+        .data-table.glass-container { padding: 2rem; } 
         .table-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--glass-border); }
         table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); }
@@ -357,7 +354,7 @@
         /* Loading States */
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-radius: 50%; border-top-color: var(--accent-blue); animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; } /* Added border-radius */
+        .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; }
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         /* Responsive Design */
@@ -537,7 +534,10 @@
                         params.append('refresh', 'true');
                     }
                     
-                    const response = await fetch(`<span class="math-inline">\{this\.apiEndpoint\}?</span>{params}`);
+                    const fullApiUrl = `${this.apiEndpoint}?${params}`;
+                    // console.log("Attempting to fetch:", fullApiUrl); // Aggiunto per debugging, rimuovere o commentare se non serve
+
+                    const response = await fetch(fullApiUrl);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -603,7 +603,7 @@
                 
                 this.updateStatusBanner();
                 this.updateKPIs();
-                this.updateCharts(); // Make sure this calls the doughnut chart creation
+                this.updateCharts(); 
                 this.updateInsights();
                 this.updateAlerts();
                 this.updateTables();
@@ -670,7 +670,7 @@
                     return;
                 }
                 this.createShipmentChart();
-                this.createDistributionChart(); // Added call to create doughnut chart
+                this.createDistributionChart(); 
             }
 
             createShipmentChart() {
@@ -697,44 +697,54 @@
                 });
             }
 
-            createDistributionChart() { // New function for doughnut chart
-                const ctx = document.getElementById('distributionChart'); // ASSUMING YOU HAVE A CANVAS WITH id="distributionChart"
+            createDistributionChart() { 
+                // NOTA: Nel tuo HTML "Dark Glass Theme" non c'è un canvas con id 'distributionChart'.
+                // Questa funzione cerca 'distributionChart'. Se vuoi un grafico a ciambella
+                // per 'this.data.status.distribution', dovrai aggiungere un <canvas id="distributionChart"></canvas>
+                // nell'HTML, probabilmente nella sezione '.insights-panel' o in una nuova '.chart-container'.
+
+                const ctx = document.getElementById('distributionChart'); 
                 if (!ctx) {
-                    // If you don't have a distribution chart canvas in this new theme,
-                    // you might want to get the type data from this.data.status.distribution instead
-                    // and render it differently or skip this chart.
-                    // For now, I'll assume you want to create a doughnut if the data exists.
                     const distributionData = this.data.status?.distribution;
                     if(distributionData && (distributionData.consegnato || distributionData.in_transito || distributionData.arrivato)) {
-                        // If you decide to add a canvas for it later, it would be like this:
-                        // const typeCtx = document.getElementById('typeChartCanvasId').getContext('2d');
-                        // if (this.charts.type) this.charts.type.destroy();
-                        // this.charts.type = new Chart(typeCtx, {
-                        //     type: 'doughnut',
-                        //     data: {
-                        //         labels: ['Consegnato', 'In Transito', 'Arrivato'],
-                        //         datasets: [{
-                        //             data: [distributionData.consegnato, distributionData.in_transito, distributionData.arrivato],
-                        //             backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)'],
-                        //             borderColor: 'var(--bg-secondary)',
-                        //             borderWidth: 2
-                        //         }]
-                        //     },
-                        //     options: {
-                        //         responsive: true,
-                        //         maintainAspectRatio: true,
-                        //         plugins: {
-                        //             legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}
-                        //         }
-                        //     }
-                        // });
-                        console.log("Data for distribution chart found, but no canvas with id 'distributionChart'.");
+                        console.log("Data for distribution chart found, but no canvas with id 'distributionChart' in HTML. Skipping chart creation.");
                     } else {
-                        console.warn("Distribution chart data is missing or empty.");
+                        console.warn("Distribution chart data is missing or empty, and no canvas found.");
                     }
                     return; 
                 }
-                // The rest of this function would be the chart creation code if 'distributionChart' canvas exists
+
+                if (this.charts.distribution) this.charts.distribution.destroy();
+
+                const distributionData = this.data.status?.distribution;
+                if (!distributionData || (!distributionData.consegnato && !distributionData.in_transito && !distributionData.arrivato)) {
+                     console.warn("Distribution chart data is missing or effectively empty.");
+                     return;
+                }
+
+                this.charts.distribution = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Consegnato', 'In Transito', 'Arrivato'], // Assicurati che questi label corrispondano
+                        datasets: [{
+                            data: [
+                                distributionData.consegnato || 0, 
+                                distributionData.in_transito || 0, 
+                                distributionData.arrivato || 0
+                            ],
+                            backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)'],
+                            borderColor: 'var(--bg-secondary)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}
+                        }
+                    }
+                });
             }
 
             updateInsights() {
@@ -770,7 +780,7 @@
                 if (alerts.length === 0) return;
                 alerts.forEach(alert => {
                     const alertEl = document.createElement('div'); alertEl.className = `alert-item alert-${alert.type}`;
-                    alertEl.innerHTML = `<div class="alert-header"><strong><span class="math-inline">\{alert\.message\}</strong\><span class\="alert\-priority priority\-</span>{alert.priority}"><span class="math-inline">\{alert\.priority\}</span\></div\><div style\="margin\-top\: 0\.5rem; color\: var\(\-\-text\-secondary\);"\></span>{alert.action}</div>${alert.impact ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);"><strong>Impact:</strong> ${alert.impact}</div>` : ''}`;
+                    alertEl.innerHTML = `<div class="alert-header"><strong>${alert.message}</strong><span class="alert-priority priority-${alert.priority}">${alert.priority}</span></div><div style="margin-top: 0.5rem; color: var(--text-secondary);">${alert.action}</div>${alert.impact ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);"><strong>Impact:</strong> ${alert.impact}</div>` : ''}`;
                     section.appendChild(alertEl);
                 });
             }
@@ -788,7 +798,7 @@
                 tbody.innerHTML = '';
                 carriers.slice(0, 5).forEach(carrier => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td><strong><span class="math-inline">\{carrier\.carrier\_name\}</strong\></td\><td\></span>{carrier.total_shipments}</td><td>€<span class="math-inline">\{parseFloat\(carrier\.avg\_cost\)\.toFixed\(2\)\}</td\><td\><span class\="</span>{(carrier.delivery_rate * 100) >= 90 ? 'growth-positive' : (carrier.delivery_rate * 100) >= 80 ? 'growth-neutral' : 'growth-negative'}"><span class="math-inline">\{\(carrier\.delivery\_rate \* 100\)\.toFixed\(1\)\}%</span\></td\><td\></span>{parseFloat(carrier.market_share).toFixed(1)}%</td>`;
+                    row.innerHTML = `<td><strong>${carrier.carrier_name}</strong></td><td>${carrier.total_shipments}</td><td>€${parseFloat(carrier.avg_cost).toFixed(2)}</td><td><span class="${(carrier.delivery_rate * 100) >= 90 ? 'growth-positive' : (carrier.delivery_rate * 100) >= 80 ? 'growth-neutral' : 'growth-negative'}">${(carrier.delivery_rate * 100).toFixed(1)}%</span></td><td>${parseFloat(carrier.market_share).toFixed(1)}%</td>`;
                     tbody.appendChild(row);
                 });
                 if (carriers.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No carrier performance data available</td></tr>'; }
@@ -804,7 +814,7 @@
                     const row = document.createElement('tr');
                     const statusClass = shipment.status === 'CONSEGNATO' ? 'growth-positive' : shipment.status === 'IN TRANSITO' ? 'growth-neutral' : 'growth-negative';
                     const formattedDate = shipment.shippedDate ? new Date(shipment.shippedDate).toLocaleDateString() : '--';
-                    row.innerHTML = `<td><strong><span class="math-inline">\{shipment\.orderNumber \|\| shipment\.id\}</strong\></td\><td\></span>{shipment.carrier || '--'}</td><td><span class="<span class="math-inline">\{statusClass\}"\></span>{shipment.status || '--'}</span></td><td>€<span class="math-inline">\{\(shipment\.cost \|\| 0\)\.toFixed\(2\)\}</td\><td\></span>{formattedDate}</td>`;
+                    row.innerHTML = `<td><strong>${shipment.orderNumber || shipment.id}</strong></td><td>${shipment.carrier || '--'}</td><td><span class="${statusClass}">${shipment.status || '--'}</span></td><td>€${(shipment.cost || 0).toFixed(2)}</td><td>${formattedDate}</td>`;
                     tbody.appendChild(row);
                 });
                 if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No recent shipments available</td></tr>'; }
@@ -833,7 +843,6 @@
             showLoading() {
                 const elements = document.querySelectorAll('.kpi-value');
                 elements.forEach(el => el.classList.add('pulse'));
-                // You might want to add skeleton loaders for tables/charts here too
             }
 
             hideLoading() {
