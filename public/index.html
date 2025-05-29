@@ -57,8 +57,21 @@
         .kpi-label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
         .kpi-trend { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
         .charts-section { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px; }
+        .chart-header { margin-bottom: 1rem; }
+        
+        /* REGOLE PER GRAFICI RESPONSIVE */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .chart-container canvas {
+            min-width: 600px;
+        }
+        /* FINE REGOLE PER GRAFICI */
+
         .tables-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .chart-container { height: 300px; position: relative; }
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th, .data-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
