@@ -47,7 +47,7 @@
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
-            transition: margin-left 0.3s ease; /* Per animare il push del contenuto */
+            transition: margin-left 0.3s ease; 
         }
 
         body.sidebar-open {
@@ -67,7 +67,7 @@
             overflow-x: hidden;
             padding-top: 20px;
             transition: transform 0.3s ease;
-            transform: translateX(-100%); /* Nascosta di default */
+            transform: translateX(-100%); 
             box-shadow: 5px 0px 15px rgba(0,0,0,0.2);
         }
 
@@ -114,7 +114,7 @@
         }
 
         .sidebar a i {
-            width: 24px; /* Allinea le icone */
+            width: 24px; 
             margin-right: 10px;
         }
 
@@ -124,124 +124,99 @@
             border-left: 3px solid var(--accent-blue);
         }
         
-        .content-pusher { /* Contenitore che si sposta quando la sidebar è aperta */
+        .content-pusher { 
             transition: margin-left 0.3s ease;
         }
 
-        /* Animated Background */
-        body::before { /* ... come prima ... */ }
-        @keyframes backgroundPulse { /* ... come prima ... */ }
-        .glass-container { /* ... come prima ... */ }
-        .glass-container:hover { /* ... come prima ... */ }
-
-        /* Header */
-        .header {
-            padding: 1.5rem 2rem; /* Leggermente ridotto il padding per l'icona menu */
-            border-bottom: 1px solid var(--glass-border);
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 60%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: -1; animation: backgroundPulse 10s ease-in-out infinite alternate;
         }
-
-        .header-content {
-            max-width: 100%; /* Adattato per includere l'icona menu */
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .menu-icon {
-            font-size: 1.8rem;
-            color: var(--text-primary);
-            cursor: pointer;
-            padding: 0.5rem;
-            transition: color 0.2s ease;
-        }
-        .menu-icon:hover {
-            color: var(--accent-blue);
-        }
-
-        .header-title { /* ... come prima ... */ }
-        .header-title h1 { /* ... come prima ... */ }
-        .header-logo { /* ... come prima ... */ }
-        @keyframes logoFloat { /* ... come prima ... */ }
-        .header-controls { /* ... come prima ... */ }
-        .control-button { /* ... come prima ... */ }
-        .control-button:hover { /* ... come prima ... */ }
-        .control-button.refresh-btn { /* ... come prima ... */ }
-        .control-button.refresh-btn:hover { /* ... come prima ... */ }
-        .main-content { /* ... come prima ... */ }
-        .status-banner { /* ... come prima ... */ }
-        .status-content { /* ... come prima ... */ }
-        .status-info h2 { /* ... come prima ... */ }
-        .status-meta { /* ... come prima ... */ }
-        .kpi-grid { /* ... come prima ... */ }
-        .kpi-card { /* ... come prima ... */ }
-        .kpi-card::before { /* ... come prima ... */ }
-        .kpi-card:hover::before { /* ... come prima ... */ }
-        .kpi-header { /* ... come prima ... */ }
-        .kpi-title { /* ... come prima ... */ }
-        .kpi-icon { /* ... come prima ... */ }
-        .kpi-value { /* ... come prima ... */ }
-        .kpi-growth { /* ... come prima ... */ }
-        .growth-positive { /* ... come prima ... */ }
-        .growth-negative { /* ... come prima ... */ }
-        .growth-neutral { /* ... come prima ... */ }
-        .charts-section { /* ... come prima ... */ }
-        .chart-container.glass-container { /* ... come prima ... */ }
-        .chart-title { /* ... come prima ... */ }
-        .chart-wrapper { /* ... come prima ... */ }
-        .insights-panel { /* ... come prima ... */ }
-        .insight-item { /* ... come prima ... */ }
-        .insight-item:hover { /* ... come prima ... */ }
-        .insight-title { /* ... come prima ... */ }
-        .insight-description { /* ... come prima ... */ }
-        .alerts-section { /* ... come prima ... */ }
-        .alert-item { /* ... come prima ... */ }
-        .alert-critical { /* ... come prima ... */ }
-        .alert-warning { /* ... come prima ... */ }
-        .alert-info { /* ... come prima ... */ }
-        .alert-header { /* ... come prima ... */ }
-        .alert-priority { /* ... come prima ... */ }
-        .priority-high { /* ... come prima ... */ }
-        .priority-medium { /* ... come prima ... */ }
-        .priority-low { /* ... come prima ... */ }
-        .data-section { /* ... come prima ... */ }
-        .data-table.glass-container { /* ... come prima ... */ }
-        .table-title { /* ... come prima ... */ }
-        .table-container { /* ... come prima ... */ }
-        table { /* ... come prima ... */ }
-        th, td { /* ... come prima ... */ }
-        th { /* ... come prima ... */ }
-        td { /* ... come prima ... */ }
-        tr:hover { /* ... come prima ... */ }
-        .footer { /* ... come prima ... */ }
-        .footer-content { /* ... come prima ... */ }
-        .footer-info { /* ... come prima ... */ }
-        .footer-version { /* ... come prima ... */ }
-        .loading-spinner { /* ... come prima ... */ }
-        @keyframes spin { /* ... come prima ... */ }
-        .loading-skeleton { /* ... come prima ... */ }
-        @keyframes loading { /* ... come prima ... */ }
-        @media (max-width: 1200px) { /* ... come prima ... */ }
-        @media (max-width: 768px) { /* ... come prima ... */ }
-        @keyframes fadeInUp { /* ... come prima ... */ }
-        @keyframes slideInDown { /* ... come prima ... */ }
-        @keyframes slideInLeft { /* ... come prima ... */ }
-        @keyframes slideInRight { /* ... come prima ... */ }
-        @keyframes countUp { /* ... come prima ... */ }
-        .pulse { /* ... come prima ... */ }
-        @keyframes pulse { /* ... come prima ... */ }
-        .hidden { /* ... come prima ... */ }
-        .error-state { /* ... come prima ... */ }
-        .error-state h3 { /* ... come prima ... */ }
+        @keyframes backgroundPulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        .glass-container { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--border-radius); box-shadow: var(--shadow-lg); transition: all 0.3s ease; }
+        .glass-container:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); box-shadow: var(--shadow-xl); transform: translateY(-2px); }
+        .header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--glass-border); background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(139,92,246,0.1) 100%); }
+        .header-content { max-width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .menu-icon { font-size: 1.8rem; color: var(--text-primary); cursor: pointer; padding: 0.5rem; transition: color 0.2s ease; }
+        .menu-icon:hover { color: var(--accent-blue); }
+        .header-title { display: flex; align-items: center; gap: 1rem; }
+        .header-title h1 { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header-logo { width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,212,255,0.3); animation: logoFloat 3s ease-in-out infinite; }
+        @keyframes logoFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+        .header-controls { display: flex; align-items: center; gap: 1rem; }
+        .control-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.75rem 1.5rem; color: var(--text-primary); font-weight: 600; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+        .control-button:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-blue); box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+        .control-button.refresh-btn { background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%); border: none; box-shadow: 0 4px 15px rgba(0,255,136,0.3); }
+        .control-button.refresh-btn:hover { box-shadow: 0 6px 25px rgba(0,255,136,0.4); transform: translateY(-2px); }
+        .main-content { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .status-banner { margin-bottom: 2rem; padding: 1.5rem 2rem; border-radius: var(--border-radius-lg); background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,212,255,0.1) 100%); border: 1px solid rgba(0,255,136,0.2); animation: slideInDown 0.8s ease-out; }
+        .status-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .status-info h2 { font-size: 1.5rem; font-weight: 700; color: var(--accent-green); margin-bottom: 0.5rem; }
+        .status-meta { display: flex; align-items: center; gap: 2rem; font-size: 0.9rem; color: var(--text-secondary); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .kpi-card { padding: 2rem; position: relative; overflow: hidden; animation: fadeInUp 0.8s ease-out; }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 100%); transition: all 0.3s ease; }
+        .kpi-card:hover::before { height: 6px; box-shadow: 0 0 20px rgba(0,212,255,0.5); }
+        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .kpi-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .kpi-value { font-size: 2.5rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.5rem; animation: countUp 1.5s ease-out; }
+        .kpi-growth { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; }
+        .growth-positive { color: var(--accent-green); }
+        .growth-negative { color: var(--accent-red); }
+        .growth-neutral { color: var(--text-muted); }
+        .charts-section { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-container.glass-container { padding: 2rem; min-height: 400px; position: relative; }
+        .chart-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chart-wrapper { position: relative; height: 350px; }
+        .insights-panel.glass-container { padding: 2rem; animation: slideInLeft 0.8s ease-out; } /* Assicurato che anche insights panel abbia la classe glass */
+        .insight-item { padding: 1rem; margin-bottom: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; cursor: pointer; }
+        .insight-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .insight-title { font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .insight-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+        .alerts-section { margin-bottom: 2rem; }
+        .alert-item { padding: 1.5rem; margin-bottom: 1rem; border-radius: var(--border-radius); border-left: 4px solid; animation: slideInRight 0.8s ease-out; }
+        .alert-critical { background: rgba(255,71,87,0.1); border-left-color: var(--accent-red); border: 1px solid rgba(255,71,87,0.2); }
+        .alert-warning { background: rgba(255,183,77,0.1); border-left-color: var(--accent-orange); border: 1px solid rgba(255,183,77,0.2); }
+        .alert-info { background: rgba(0,212,255,0.1); border-left-color: var(--accent-blue); border: 1px solid rgba(0,212,255,0.2); }
+        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .alert-priority { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .priority-high { background: rgba(255,71,87,0.2); color: var(--accent-red); }
+        .priority-medium { background: rgba(255,183,77,0.2); color: var(--accent-orange); }
+        .priority-low { background: rgba(0,212,255,0.2); color: var(--accent-blue); }
+        .data-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .data-table.glass-container { padding: 2rem; } 
+        .table-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--glass-border); }
+        table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.05); font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: var(--text-primary); }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .footer { padding: 2rem; text-align: center; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); margin-top: 2rem; }
+        .footer-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .footer-info { color: var(--text-muted); font-size: 0.9rem; }
+        .footer-version { background: var(--glass-bg); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--text-secondary); }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-radius: 50%; border-top-color: var(--accent-blue); animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @media (max-width: 1200px) { .charts-section, .data-section { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .main-content { padding: 1rem; } .header-content, .status-content { flex-direction: column; text-align: center; } .header-title h1 { font-size: 2rem; } .kpi-grid { grid-template-columns: 1fr; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes countUp { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .hidden { display: none !important; }
+        .error-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .error-state h3 { color: var(--accent-red); margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -249,13 +224,13 @@
         <div class="sidebar-header">
             <div class="logo-sidebar">SC</div>
             <h2>Hub Menu</h2>
-             <span class="menu-icon" id="closeSidebarIcon" style="font-size: 1.5rem; cursor:pointer;">&times;</span>
+            <span class="menu-icon" id="closeSidebarIcon" style="font-size: 1.5rem; cursor:pointer;">&times;</span>
         </div>
         <a href="index.html" class="active"><i class="fas fa-chart-pie"></i> Dashboard Analytics</a>
         <a href="backend-spedizioni.html"><i class="fas fa-boxes-packing"></i> Gestione Spedizioni</a>
         <a href="import-file.html"><i class="fas fa-file-import"></i> Importazione Dati</a>
         <a href="api-management.html"><i class="fas fa-cogs"></i> Configurazione API</a>
-        </div>
+    </div>
 
     <div class="content-pusher" id="mainContent">
         <header class="header">
@@ -282,82 +257,99 @@
 
         <main class="main-content">
             <section id="statusBanner" class="status-banner glass-container">
-                </section>
+                <div class="status-content">
+                    <div class="status-info">
+                        <h2 id="statusTitle">Loading Analytics...</h2>
+                        <p id="statusDescription">Fetching latest supply chain data</p>
+                    </div>
+                    <div class="status-meta">
+                        <span id="lastUpdated">Updated: --</span>
+                        <span id="dataQuality">Quality: --</span>
+                        <span id="systemHealth">System: --</span>
+                    </div>
+                </div>
+            </section>
 
             <section class="kpi-grid">
-                </section>
+                <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Total Shipments</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);">📦</div></div><div class="kpi-value" id="totalShipments">--</div><div class="kpi-growth" id="shipmentsGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+                <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Total Revenue</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);">💰</div></div><div class="kpi-value" id="totalRevenue">--</div><div class="kpi-growth" id="revenueGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+                <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Average Cost</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);">📊</div></div><div class="kpi-value" id="avgCost">--</div><div class="kpi-growth" id="costGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+                <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Delivery Rate</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-yellow) 100%);">🎯</div></div><div class="kpi-value" id="deliveryRate">--</div><div class="kpi-growth" id="deliveryGrowth"><span class="growth-indicator">--</span><span>performance</span></div></div>
+            </section>
 
             <section class="charts-section">
-                 <div class="chart-container glass-container">
+                <div class="chart-container glass-container">
                     <h3 class="chart-title">📈 Shipment Trends</h3>
                     <div class="chart-wrapper">
                         <canvas id="shipmentChart"></canvas>
                     </div>
                 </div>
-                 <div class="insights-panel glass-container">
-                    <h3 class="chart-title">🤖 AI Insights</h3>
+                <div class="insights-panel glass-container"> 
+                    <h3 class="chart-title">📊 Status Distribution / AI Insights</h3>
+                    <div class="chart-wrapper" style="height: 200px; margin-bottom: 1rem;"> <canvas id="distributionChart"></canvas>
+                    </div>
                     <div id="insightsContainer">
-                        </div>
+                        <div class="insight-item loading-skeleton" style="height: 60px; border-radius: 12px;"></div>
+                        <div class="insight-item loading-skeleton" style="height: 60px; border-radius: 12px; margin-top: 1rem;"></div>
+                    </div>
                 </div>
             </section>
 
-            <section id="alertsSection" class="alerts-section">
-                 </section>
+            <section id="alertsSection" class="alerts-section"></section>
 
             <section class="data-section">
                 <div class="data-table glass-container">
                     <h3 class="table-title">🚛 Carrier Performance</h3>
                     <div class="table-container">
-                        <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Avg Cost</th><th>Delivery Rate</th><th>Market Share</th></tr></thead><tbody id="carrierTableBody"></tbody></table>
+                        <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Avg Cost</th><th>Delivery Rate</th><th>Market Share</th></tr></thead><tbody id="carrierTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
                     </div>
                 </div>
                 <div class="data-table glass-container">
                     <h3 class="table-title">📋 Recent Shipments</h3>
                     <div class="table-container">
-                        <table><thead><tr><th>Order #</th><th>Carrier</th><th>Status</th><th>Cost</th><th>Date</th></tr></thead><tbody id="recentTableBody"></tbody></table>
+                        <table><thead><tr><th>Order #</th><th>Carrier</th><th>Status</th><th>Cost</th><th>Date</th></tr></thead><tbody id="recentTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
                     </div>
                 </div>
             </section>
         </main>
 
         <footer class="footer">
-            </footer>
-    </div> {/* Chiusura di content-pusher */}
+            <div class="footer-content">
+                <div class="footer-info"><p>&copy; 2025 Supply Chain Hub. Advanced Analytics Platform v2.0</p><p>Powered by Dark Glass Theme & AI-Driven Insights</p></div>
+                <div class="footer-version"><span id="apiVersion">API v2.0.0</span> | <span id="lastRefresh">Cache: --</span></div>
+            </div>
+        </footer>
+    </div> 
 
     <script>
         // JavaScript per la Sidebar
         const menuIcon = document.getElementById('menuIcon');
         const closeSidebarIcon = document.getElementById('closeSidebarIcon');
         const sidebar = document.getElementById('sidebar');
-        const mainContentPusher = document.getElementById('mainContent'); // Il div che spinge il contenuto
+        const mainContentPusher = document.getElementById('mainContent'); 
         const body = document.body;
 
-        menuIcon.addEventListener('click', () => {
-            sidebar.classList.add('open');
-            mainContentPusher.style.marginLeft = 'var(--sidebar-width)'; // Sposta il contenuto
-            body.style.marginLeft = 'var(--sidebar-width)'; // Sposta il body per evitare doppio scroll
-        });
-        
-        closeSidebarIcon.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            mainContentPusher.style.marginLeft = '0';
-            body.style.marginLeft = '0';
-        });
-
-        // Chiudi la sidebar se si clicca fuori (opzionale ma buona UX)
-        document.addEventListener('click', (event) => {
-            if (!sidebar.contains(event.target) && !menuIcon.contains(event.target) && sidebar.classList.contains('open')) {
+        if (menuIcon && sidebar && mainContentPusher && closeSidebarIcon) {
+            menuIcon.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                body.classList.add('sidebar-open'); // Aggiungo la classe al body per spostare tutto
+            });
+            
+            closeSidebarIcon.addEventListener('click', () => {
                 sidebar.classList.remove('open');
-                mainContentPusher.style.marginLeft = '0';
-                body.style.marginLeft = '0';
-            }
-        });
+                body.classList.remove('sidebar-open');
+            });
 
+            document.addEventListener('click', (event) => {
+                if (!sidebar.contains(event.target) && !menuIcon.contains(event.target) && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    body.classList.remove('sidebar-open');
+                }
+            });
+        } else {
+            console.error("Sidebar elements not found");
+        }
 
-        // ====================================================================
-        // SUPPLY CHAIN HUB - FRONTEND JAVASCRIPT (IL TUO CODICE ESISTENTE)
-        // Dark Glass Theme with Advanced Analytics
-        // ====================================================================
         class SupplyChainDashboard {
             constructor() {
                 this.apiEndpoint = '/.netlify/functions/dashboard-stats';
@@ -400,7 +392,7 @@
                 const monthSelector = document.getElementById('monthSelector');
                 if (!yearSelector || !monthSelector) return;
 
-                yearSelector.innerHTML = '<option value="">Select Year</option>'; // Pulisci opzioni precedenti
+                yearSelector.innerHTML = '<option value="">Anno</option>'; 
                 for (let year = this.currentYear; year >= this.currentYear - 2; year--) {
                     const option = document.createElement('option');
                     option.value = year;
@@ -409,7 +401,7 @@
                     yearSelector.appendChild(option);
                 }
                 
-                monthSelector.innerHTML = '<option value="">Select Month</option>'; // Pulisci opzioni precedenti
+                monthSelector.innerHTML = '<option value="">Mese</option>'; 
                 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 months.forEach((month, index) => {
                     const option = document.createElement('option');
@@ -427,15 +419,25 @@
                     if (refresh) params.append('refresh', 'true');
                     
                     const fullApiUrl = `${this.apiEndpoint}?${params}`;
+                    console.log("Attempting to fetch:", fullApiUrl); // Per debugging
+
                     const response = await fetch(fullApiUrl);
                     
-                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    if (!response.ok) {
+                         const errorText = await response.text(); // Leggi il corpo dell'errore se presente
+                         console.error("API response not OK:", response.status, response.statusText, errorText);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                    }
                     
                     this.data = await response.json();
-                    if (!this.data.success) throw new Error(this.data.message || 'API returned error');
+                    if (!this.data.success) {
+                        console.error("API returned success:false", this.data);
+                        throw new Error(this.data.message || 'API returned an error structure');
+                    }
                     
                     this.updateDashboard();
                     console.log('Dashboard data loaded successfully:', this.data);
+                    
                 } catch (error) {
                     console.error('Error loading dashboard data:', error);
                     this.showError(error.message);
@@ -445,18 +447,177 @@
             }
 
             async refreshData() {
-                // ... (la tua funzione refreshData come prima) ...
+                const btn = document.getElementById('refreshBtn');
+                const text = document.getElementById('refreshText');
+                if (!btn || !text) return;
+                
+                btn.disabled = true;
+                text.innerHTML = '<span class="loading-spinner"></span> Refreshing...';
+                
+                try {
+                    await this.loadData(true); // true per forzare il refresh della cache API
+                    text.textContent = '✅ Refreshed!';
+                    setTimeout(() => {
+                        text.textContent = '🔄 Refresh Data';
+                        btn.disabled = false;
+                    }, 2000);
+                } catch (error) {
+                    text.textContent = '❌ Failed';
+                     setTimeout(() => {
+                        text.textContent = '🔄 Refresh Data';
+                        btn.disabled = false;
+                    }, 3000);
+                }
             }
-            changeYear(year) { /* ... come prima ... */ }
-            changeMonth(month) { /* ... come prima ... */ }
-            updateDashboard() { /* ... come prima ... */ }
-            updateStatusBanner() { /* ... come prima ... */ }
-            updateKPIs() { /* ... come prima ... */ }
-            updateGrowthIndicator(elementId, growth, trend) { /* ... come prima ... */ }
-            updateDeliveryPerformance(elementId, rate) { /* ... come prima ... */ }
-            updateCharts() { /* ... come prima, assicurati che chiami createShipmentChart e createDistributionChart (se esiste) ... */ }
-            createShipmentChart() { /* ... come prima ... */ }
-            createDistributionChart() { /* ... come prima, controlla ID canvas ... */ }
+
+            changeYear(year) {
+                if (year && parseInt(year) !== this.currentYear) {
+                    this.currentYear = parseInt(year);
+                    this.loadData();
+                }
+            }
+
+            changeMonth(month) {
+                 if (month && parseInt(month) !== this.currentMonth) {
+                    this.currentMonth = parseInt(month);
+                    this.loadData();
+                }
+            }
+
+            updateDashboard() {
+                if (!this.data) {
+                    console.error("No data to update dashboard.");
+                    this.showError("No data received from API.");
+                    return;
+                }
+                this.updateStatusBanner();
+                this.updateKPIs();
+                this.updateCharts(); 
+                this.updateInsights();
+                this.updateAlerts();
+                this.updateTables();
+                this.updateFooter();
+            }
+
+            updateStatusBanner() {
+                const { period, insights, performance } = this.data;
+                if(!period || !insights || !performance) return;
+                const statusTitleEl = document.getElementById('statusTitle');
+                const statusDescEl = document.getElementById('statusDescription');
+                const lastUpdatedEl = document.getElementById('lastUpdated');
+                const dataQualityEl = document.getElementById('dataQuality');
+                const systemHealthEl = document.getElementById('systemHealth');
+
+                if(statusTitleEl) statusTitleEl.textContent = insights.summary || 'Analytics Updated';
+                if(statusDescEl) statusDescEl.textContent = `${period.monthName} ${period.year} Performance Summary`;
+                
+                const lastUpdated = new Date(this.data.timestamp).toLocaleString('it-IT');
+                const dataQuality = performance.dataQuality?.score || 0;
+                const systemHealth = performance.systemHealth || 'unknown';
+
+                if(lastUpdatedEl) lastUpdatedEl.textContent = `Updated: ${lastUpdated}`;
+                if(dataQualityEl) dataQualityEl.textContent = `Quality: ${dataQuality.toFixed(0)}%`;
+                if(systemHealthEl) systemHealthEl.textContent = `System: ${systemHealth}`;
+            }
+
+            updateKPIs() {
+                const { current, growth } = this.data;
+                if(!current || !current.month || !growth || !growth.mom ) return;
+                this.animateValue('totalShipments', current.month.shipments);
+                this.updateGrowthIndicator('shipmentsGrowth', growth.mom.shipments);
+                this.animateValue('totalRevenue', `€${this.formatNumber(current.month.revenue)}`);
+                this.updateGrowthIndicator('revenueGrowth', growth.mom.revenue);
+                this.animateValue('avgCost', `€${(current.month.avgCost || 0).toFixed(2)}`);
+                this.updateGrowthIndicator('costGrowth', growth.mom.avgCost);
+                this.animateValue('deliveryRate', `${(current.month.deliveryRate || 0).toFixed(1)}%`);
+                this.updateDeliveryPerformance('deliveryGrowth', current.month.deliveryRate);
+            }
+
+            updateGrowthIndicator(elementId, growth) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                const indicator = element.querySelector('.growth-indicator');
+                if (!indicator) return;
+                
+                growth = growth || 0; // Default to 0 if undefined
+                let className = 'growth-neutral';
+                let symbol = '→';
+                if (growth > 0) { className = 'growth-positive'; symbol = '↗'; }
+                else if (growth < 0) { className = 'growth-negative'; symbol = '↘'; }
+                element.className = `kpi-growth ${className}`;
+                indicator.textContent = `${symbol} ${Math.abs(growth).toFixed(1)}%`;
+            }
+
+            updateDeliveryPerformance(elementId, rate) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                const indicator = element.querySelector('.growth-indicator');
+                if (!indicator) return;
+                rate = rate || 0;
+
+                let className = 'growth-neutral';
+                let text = 'Stable';
+                if (rate >= 95) { className = 'growth-positive'; text = 'Excellent'; }
+                else if (rate >= 85) { className = 'growth-positive'; text = 'Good'; }
+                else if (rate >= 75) { className = 'growth-neutral'; text = 'Fair'; }
+                else { className = 'growth-negative'; text = 'Poor'; }
+                element.className = `kpi-growth ${className}`;
+                indicator.textContent = text;
+            }
+
+            updateCharts() {
+                if (!this.data.charts) { console.warn("Chart data is missing from API response."); return; }
+                this.createShipmentChart();
+                this.createDistributionChart(); 
+            }
+
+            createShipmentChart() {
+                const ctx = document.getElementById('shipmentChart');
+                if (!ctx) { console.error("Canvas with id 'shipmentChart' not found!"); return; }
+                if (this.charts.shipment) this.charts.shipment.destroy();
+                
+                const { labels, shipments } = this.data.charts;
+                if (!labels || !shipments || !shipments.current || !shipments.previous) {
+                    console.warn("Shipment chart data is incomplete.");
+                    return;
+                }
+
+                this.charts.shipment = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [ { label: `${this.currentYear}`, data: shipments.current, borderColor: 'rgba(0, 212, 255, 1)', backgroundColor: 'rgba(0, 212, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: 'rgba(0, 212, 255, 1)', pointBorderColor: '#ffffff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 8 }, { label: `${this.currentYear - 1}`, data: shipments.previous, borderColor: 'rgba(139, 92, 246, 0.7)', backgroundColor: 'rgba(139, 92, 246, 0.05)', borderWidth: 2, fill: false, tension: 0.4, pointBackgroundColor: 'rgba(139, 92, 246, 0.7)', pointBorderColor: '#ffffff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6 } ] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { color: '#b8bcc8', font: { size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } }, tooltip: { backgroundColor: 'rgba(15, 15, 35, 0.95)', titleColor: '#ffffff', bodyColor: '#b8bcc8', borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, cornerRadius: 8, displayColors: true, callbacks: { label: function(context) { return `${context.dataset.label}: ${context.parsed.y} shipments`; } } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 } } }, y: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 }, callback: function(value) { return value.toLocaleString(); } } } }, interaction: { intersect: false, mode: 'index' }, elements: { line: { borderCapStyle: 'round', borderJoinStyle: 'round' } } }
+                });
+            }
+
+            createDistributionChart() { 
+                const ctx = document.getElementById('distributionChart'); 
+                if (!ctx) { console.warn("Canvas with id 'distributionChart' not found. Skipping doughnut chart."); return; }
+                if (this.charts.distribution) this.charts.distribution.destroy();
+
+                const distributionData = this.data.status?.distribution;
+                if (!distributionData || (!distributionData.consegnato && !distributionData.in_transito && !distributionData.arrivato && !distributionData.other)) { // Added other
+                     console.warn("Distribution chart data is missing or empty.");
+                     // Optionally, clear the canvas or show a message
+                     ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+                     return;
+                }
+                
+                this.charts.distribution = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Consegnato', 'In Transito', 'Arrivato', 'Altro'], 
+                        datasets: [{
+                            data: [ distributionData.consegnato || 0, distributionData.in_transito || 0, distributionData.arrivato || 0, distributionData.other || 0 ],
+                            backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)', 'var(--text-muted)'],
+                            borderColor: 'var(--bg-secondary)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}}
+                    }
+                });
+            }
+
             updateInsights() { /* ... come prima ... */ }
             addInsightItem(container, title, description, type) { /* ... come prima ... */ }
             updateAlerts() { /* ... come prima ... */ }
@@ -474,11 +635,22 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             window.dashboard = new SupplyChainDashboard();
-            // Inizializza gli event listener per la sidebar qui se non sono già in SupplyChainDashboard
-            // (per ora li ho messi fuori dalla classe per semplicità)
         });
-         // Event listener per card e button hover/click (come prima)
-        document.addEventListener('DOMContentLoaded', () => { /* ... come prima ... */ });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.glass-container');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px) scale(1.01)'; });
+                card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0) scale(1)'; });
+            });
+            const buttons = document.querySelectorAll('.control-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => { button.style.transform = 'scale(1)'; }, 150);
+                });
+            });
+        });
     </script>
 </body>
 </html>
