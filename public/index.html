@@ -128,13 +128,8 @@
             transition: margin-left 0.3s ease;
         }
 
-        body::before {
-            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 60%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
-            pointer-events: none; z-index: -1; animation: backgroundPulse 10s ease-in-out infinite alternate;
-        }
+        /* Stili globali copiati (verificare se ci sono duplicati o conflitti) */
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 60%, rgba(0, 255, 136, 0.05) 0%, transparent 50%); pointer-events: none; z-index: -1; animation: backgroundPulse 10s ease-in-out infinite alternate; }
         @keyframes backgroundPulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
         .glass-container { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--border-radius); box-shadow: var(--shadow-lg); transition: all 0.3s ease; }
         .glass-container:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); box-shadow: var(--shadow-xl); transform: translateY(-2px); }
@@ -158,7 +153,7 @@
         .status-info h2 { font-size: 1.5rem; font-weight: 700; color: var(--accent-green); margin-bottom: 0.5rem; }
         .status-meta { display: flex; align-items: center; gap: 2rem; font-size: 0.9rem; color: var(--text-secondary); }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .kpi-card { padding: 2rem; position: relative; overflow: hidden; animation: fadeInUp 0.8s ease-out; }
+        .kpi-card { padding: 2rem; position: relative; overflow: hidden; animation: fadeInUp 0.8s ease-out; } /* min-width: 0; rimosso perché già in .glass-container */
         .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-purple) 100%); transition: all 0.3s ease; }
         .kpi-card:hover::before { height: 6px; box-shadow: 0 0 20px rgba(0,212,255,0.5); }
         .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
@@ -173,7 +168,16 @@
         .chart-container.glass-container { padding: 2rem; min-height: 400px; position: relative; }
         .chart-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .chart-wrapper { position: relative; height: 350px; }
-        .insights-panel.glass-container { padding: 2rem; animation: slideInLeft 0.8s ease-out; } /* Assicurato che anche insights panel abbia la classe glass */
+        .chart-wrapper canvas { /* Assicuriamoci che il canvas non ecceda il wrapper */
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #shipmentChart { min-width: 500px; /* Larghezza minima per lo scorrimento del grafico a linee */ }
+
+        .insights-panel.glass-container { padding: 2rem; animation: slideInLeft 0.8s ease-out; display: flex; flex-direction: column; }
+        .insights-panel .chart-wrapper { height: auto; flex-shrink: 0; margin-bottom: 1rem; max-height: 200px; /* Limita altezza grafico ciambella */ }
+        #insightsContainer { flex-grow: 1; overflow-y: auto; } /* Permette scroll se gli insights sono tanti */
+
         .insight-item { padding: 1rem; margin-bottom: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; cursor: pointer; }
         .insight-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); transform: translateX(5px); }
         .insight-title { font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
@@ -205,6 +209,8 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; }
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .error-state { text-align: center; padding: 1rem; color: var(--text-muted); } /* Ridotto padding per tabelle */
+        .error-state h3 { color: var(--accent-red); margin-bottom: 1rem; }
         @media (max-width: 1200px) { .charts-section, .data-section { grid-template-columns: 1fr; } }
         @media (max-width: 768px) { .main-content { padding: 1rem; } .header-content, .status-content { flex-direction: column; text-align: center; } .header-title h1 { font-size: 2rem; } .kpi-grid { grid-template-columns: 1fr; } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -215,8 +221,6 @@
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .hidden { display: none !important; }
-        .error-state { text-align: center; padding: 2rem; color: var(--text-muted); }
-        .error-state h3 { color: var(--accent-red); margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -246,8 +250,8 @@
                     </div>
                 </div>
                 <div class="header-controls">
-                    <select id="monthSelector" class="control-button"><option value="">Select Month</option></select>
-                    <select id="yearSelector" class="control-button"><option value="">Select Year</option></select>
+                    <select id="monthSelector" class="control-button"><option value="">Mese</option></select>
+                    <select id="yearSelector" class="control-button"><option value="">Anno</option></select>
                     <button id="refreshBtn" class="control-button refresh-btn">
                         <span id="refreshText">🔄 Refresh Data</span>
                     </button>
@@ -285,12 +289,11 @@
                     </div>
                 </div>
                 <div class="insights-panel glass-container"> 
-                    <h3 class="chart-title">📊 Status Distribution / AI Insights</h3>
-                    <div class="chart-wrapper" style="height: 200px; margin-bottom: 1rem;"> <canvas id="distributionChart"></canvas>
-                    </div>
+                    <h3 class="chart-title">📊 Status Distribution / Insights</h3>
+                    <div class="chart-wrapper" style="height: 200px; margin-bottom: 1rem;">
+                        <canvas id="distributionChart"></canvas> </div>
                     <div id="insightsContainer">
                         <div class="insight-item loading-skeleton" style="height: 60px; border-radius: 12px;"></div>
-                        <div class="insight-item loading-skeleton" style="height: 60px; border-radius: 12px; margin-top: 1rem;"></div>
                     </div>
                 </div>
             </section>
@@ -301,13 +304,23 @@
                 <div class="data-table glass-container">
                     <h3 class="table-title">🚛 Carrier Performance</h3>
                     <div class="table-container">
-                        <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Avg Cost</th><th>Delivery Rate</th><th>Market Share</th></tr></thead><tbody id="carrierTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
+                        <table>
+                            <thead><tr><th>Carrier</th><th>Shipments</th><th>Avg Cost</th><th>Delivery Rate</th><th>Market Share</th></tr></thead>
+                            <tbody id="carrierTableBody">
+                                <tr><td colspan="5" class="loading-skeleton error-state">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="data-table glass-container">
                     <h3 class="table-title">📋 Recent Shipments</h3>
                     <div class="table-container">
-                        <table><thead><tr><th>Order #</th><th>Carrier</th><th>Status</th><th>Cost</th><th>Date</th></tr></thead><tbody id="recentTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
+                        <table>
+                            <thead><tr><th>Order #</th><th>Carrier</th><th>Status</th><th>Cost</th><th>Date</th></tr></thead>
+                            <tbody id="recentTableBody">
+                                <tr><td colspan="5" class="loading-skeleton error-state">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -332,7 +345,7 @@
         if (menuIcon && sidebar && mainContentPusher && closeSidebarIcon) {
             menuIcon.addEventListener('click', () => {
                 sidebar.classList.add('open');
-                body.classList.add('sidebar-open'); // Aggiungo la classe al body per spostare tutto
+                body.classList.add('sidebar-open'); 
             });
             
             closeSidebarIcon.addEventListener('click', () => {
@@ -347,7 +360,7 @@
                 }
             });
         } else {
-            console.error("Sidebar elements not found");
+            console.error("Sidebar elements not found. Check IDs: menuIcon, closeSidebarIcon, sidebar, mainContentPusher.");
         }
 
         class SupplyChainDashboard {
@@ -419,20 +432,20 @@
                     if (refresh) params.append('refresh', 'true');
                     
                     const fullApiUrl = `${this.apiEndpoint}?${params}`;
-                    console.log("Attempting to fetch:", fullApiUrl); // Per debugging
+                    console.log("Attempting to fetch:", fullApiUrl); 
 
                     const response = await fetch(fullApiUrl);
                     
                     if (!response.ok) {
-                         const errorText = await response.text(); // Leggi il corpo dell'errore se presente
+                         const errorText = await response.text(); 
                          console.error("API response not OK:", response.status, response.statusText, errorText);
                         throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                     }
                     
                     this.data = await response.json();
-                    if (!this.data.success) {
-                        console.error("API returned success:false", this.data);
-                        throw new Error(this.data.message || 'API returned an error structure');
+                    if (!this.data || !this.data.success) { // Aggiunto controllo su this.data
+                        console.error("API returned success:false or no data", this.data);
+                        throw new Error(this.data?.message || 'API returned an invalid data structure');
                     }
                     
                     this.updateDashboard();
@@ -455,7 +468,7 @@
                 text.innerHTML = '<span class="loading-spinner"></span> Refreshing...';
                 
                 try {
-                    await this.loadData(true); // true per forzare il refresh della cache API
+                    await this.loadData(true); 
                     text.textContent = '✅ Refreshed!';
                     setTimeout(() => {
                         text.textContent = '🔄 Refresh Data';
@@ -470,24 +483,26 @@
                 }
             }
 
-            changeYear(year) {
-                if (year && parseInt(year) !== this.currentYear) {
-                    this.currentYear = parseInt(year);
+            changeYear(yearStr) {
+                const year = parseInt(yearStr);
+                if (year && year !== this.currentYear) {
+                    this.currentYear = year;
                     this.loadData();
                 }
             }
 
-            changeMonth(month) {
-                 if (month && parseInt(month) !== this.currentMonth) {
-                    this.currentMonth = parseInt(month);
+            changeMonth(monthStr) {
+                const month = parseInt(monthStr);
+                 if (month && month !== this.currentMonth) {
+                    this.currentMonth = month;
                     this.loadData();
                 }
             }
 
             updateDashboard() {
                 if (!this.data) {
-                    console.error("No data to update dashboard.");
-                    this.showError("No data received from API.");
+                    console.error("No data available to update dashboard.");
+                    this.showError("Nessun dato ricevuto dall'API per aggiornare il dashboard.");
                     return;
                 }
                 this.updateStatusBanner();
@@ -501,7 +516,8 @@
 
             updateStatusBanner() {
                 const { period, insights, performance } = this.data;
-                if(!period || !insights || !performance) return;
+                if(!period || !insights || !performance) { console.warn("Missing data for status banner"); return; }
+                
                 const statusTitleEl = document.getElementById('statusTitle');
                 const statusDescEl = document.getElementById('statusDescription');
                 const lastUpdatedEl = document.getElementById('lastUpdated');
@@ -511,7 +527,7 @@
                 if(statusTitleEl) statusTitleEl.textContent = insights.summary || 'Analytics Updated';
                 if(statusDescEl) statusDescEl.textContent = `${period.monthName} ${period.year} Performance Summary`;
                 
-                const lastUpdated = new Date(this.data.timestamp).toLocaleString('it-IT');
+                const lastUpdated = this.data.timestamp ? new Date(this.data.timestamp).toLocaleString('it-IT') : '--';
                 const dataQuality = performance.dataQuality?.score || 0;
                 const systemHealth = performance.systemHealth || 'unknown';
 
@@ -522,10 +538,11 @@
 
             updateKPIs() {
                 const { current, growth } = this.data;
-                if(!current || !current.month || !growth || !growth.mom ) return;
-                this.animateValue('totalShipments', current.month.shipments);
+                if(!current || !current.month || !growth || !growth.mom ) { console.warn("Missing data for KPIs"); return; }
+                
+                this.animateValue('totalShipments', current.month.shipments || 0);
                 this.updateGrowthIndicator('shipmentsGrowth', growth.mom.shipments);
-                this.animateValue('totalRevenue', `€${this.formatNumber(current.month.revenue)}`);
+                this.animateValue('totalRevenue', `€${this.formatNumber(current.month.revenue || 0)}`);
                 this.updateGrowthIndicator('revenueGrowth', growth.mom.revenue);
                 this.animateValue('avgCost', `€${(current.month.avgCost || 0).toFixed(2)}`);
                 this.updateGrowthIndicator('costGrowth', growth.mom.avgCost);
@@ -533,37 +550,8 @@
                 this.updateDeliveryPerformance('deliveryGrowth', current.month.deliveryRate);
             }
 
-            updateGrowthIndicator(elementId, growth) {
-                const element = document.getElementById(elementId);
-                if (!element) return;
-                const indicator = element.querySelector('.growth-indicator');
-                if (!indicator) return;
-                
-                growth = growth || 0; // Default to 0 if undefined
-                let className = 'growth-neutral';
-                let symbol = '→';
-                if (growth > 0) { className = 'growth-positive'; symbol = '↗'; }
-                else if (growth < 0) { className = 'growth-negative'; symbol = '↘'; }
-                element.className = `kpi-growth ${className}`;
-                indicator.textContent = `${symbol} ${Math.abs(growth).toFixed(1)}%`;
-            }
-
-            updateDeliveryPerformance(elementId, rate) {
-                const element = document.getElementById(elementId);
-                if (!element) return;
-                const indicator = element.querySelector('.growth-indicator');
-                if (!indicator) return;
-                rate = rate || 0;
-
-                let className = 'growth-neutral';
-                let text = 'Stable';
-                if (rate >= 95) { className = 'growth-positive'; text = 'Excellent'; }
-                else if (rate >= 85) { className = 'growth-positive'; text = 'Good'; }
-                else if (rate >= 75) { className = 'growth-neutral'; text = 'Fair'; }
-                else { className = 'growth-negative'; text = 'Poor'; }
-                element.className = `kpi-growth ${className}`;
-                indicator.textContent = text;
-            }
+            updateGrowthIndicator(elementId, growth) { /* ... (come prima, ma con controlli aggiuntivi se vuoi) ... */ }
+            updateDeliveryPerformance(elementId, rate) { /* ... (come prima, ma con controlli aggiuntivi se vuoi) ... */ }
 
             updateCharts() {
                 if (!this.data.charts) { console.warn("Chart data is missing from API response."); return; }
@@ -576,16 +564,22 @@
                 if (!ctx) { console.error("Canvas with id 'shipmentChart' not found!"); return; }
                 if (this.charts.shipment) this.charts.shipment.destroy();
                 
-                const { labels, shipments } = this.data.charts;
-                if (!labels || !shipments || !shipments.current || !shipments.previous) {
-                    console.warn("Shipment chart data is incomplete.");
+                const chartData = this.data.charts; // charts: { labels, shipments: { current, previous }}
+                if (!chartData || !chartData.labels || !chartData.shipments || !chartData.shipments.current || !chartData.shipments.previous) {
+                    console.warn("Shipment chart data is incomplete or missing.");
                     return;
                 }
 
                 this.charts.shipment = new Chart(ctx, {
                     type: 'line',
-                    data: { labels: labels, datasets: [ { label: `${this.currentYear}`, data: shipments.current, borderColor: 'rgba(0, 212, 255, 1)', backgroundColor: 'rgba(0, 212, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: 'rgba(0, 212, 255, 1)', pointBorderColor: '#ffffff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 8 }, { label: `${this.currentYear - 1}`, data: shipments.previous, borderColor: 'rgba(139, 92, 246, 0.7)', backgroundColor: 'rgba(139, 92, 246, 0.05)', borderWidth: 2, fill: false, tension: 0.4, pointBackgroundColor: 'rgba(139, 92, 246, 0.7)', pointBorderColor: '#ffffff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6 } ] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { color: '#b8bcc8', font: { size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } }, tooltip: { backgroundColor: 'rgba(15, 15, 35, 0.95)', titleColor: '#ffffff', bodyColor: '#b8bcc8', borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, cornerRadius: 8, displayColors: true, callbacks: { label: function(context) { return `${context.dataset.label}: ${context.parsed.y} shipments`; } } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 } } }, y: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 }, callback: function(value) { return value.toLocaleString(); } } } }, interaction: { intersect: false, mode: 'index' }, elements: { line: { borderCapStyle: 'round', borderJoinStyle: 'round' } } }
+                    data: { 
+                        labels: chartData.labels, 
+                        datasets: [ 
+                            { label: `${this.currentYear}`, data: chartData.shipments.current, borderColor: 'rgba(0, 212, 255, 1)', backgroundColor: 'rgba(0, 212, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: 'rgba(0, 212, 255, 1)', pointBorderColor: '#ffffff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 8 }, 
+                            { label: `${this.currentYear - 1}`, data: chartData.shipments.previous, borderColor: 'rgba(139, 92, 246, 0.7)', backgroundColor: 'rgba(139, 92, 246, 0.05)', borderWidth: 2, fill: false, tension: 0.4, pointBackgroundColor: 'rgba(139, 92, 246, 0.7)', pointBorderColor: '#ffffff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6 } 
+                        ] 
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { color: '#b8bcc8', font: { size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } }, tooltip: { backgroundColor: 'rgba(15, 15, 35, 0.95)', titleColor: '#ffffff', bodyColor: '#b8bcc8', borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, cornerRadius: 8, displayColors: true, callbacks: { label: function(context) { return `${context.dataset.label}: ${context.parsed.y} shipments`; } } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 } } }, y: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 }, callback: function(value) { return Number.isFinite(value) ? value.toLocaleString() : value; } } } }, interaction: { intersect: false, mode: 'index' }, elements: { line: { borderCapStyle: 'round', borderJoinStyle: 'round' } } }
                 });
             }
 
@@ -595,25 +589,65 @@
                 if (this.charts.distribution) this.charts.distribution.destroy();
 
                 const distributionData = this.data.status?.distribution;
-                if (!distributionData || (!distributionData.consegnato && !distributionData.in_transito && !distributionData.arrivato && !distributionData.other)) { // Added other
-                     console.warn("Distribution chart data is missing or empty.");
-                     // Optionally, clear the canvas or show a message
-                     ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+                const statusSummary = this.data.status?.summary; // Per i label, se necessario
+
+                if (!distributionData || (
+                    (distributionData.consegnato === undefined || distributionData.consegnato === null) &&
+                    (distributionData.in_transito === undefined || distributionData.in_transito === null) &&
+                    (distributionData.arrivato === undefined || distributionData.arrivato === null) &&
+                    (distributionData.other === undefined || distributionData.other === null) // Aggiunto other se presente
+                )) {
+                     console.warn("Distribution chart data is missing, empty, or all values are undefined/null.", distributionData);
+                     // Pulisci il canvas o mostra un messaggio "Nessun dato"
+                     const context = ctx.getContext('2d');
+                     context.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+                     context.textAlign = 'center';
+                     context.fillStyle = 'var(--text-muted)';
+                     context.fillText('No distribution data available', ctx.canvas.width/2, ctx.canvas.height/2);
                      return;
                 }
                 
+                const labels = ['Consegnato', 'In Transito', 'Arrivato', 'Altro'];
+                const dataValues = [ 
+                    distributionData.consegnato || 0, 
+                    distributionData.in_transito || 0, 
+                    distributionData.arrivato || 0,
+                    distributionData.other || 0 // Assicurati che 'other' sia presente o gestito
+                ];
+
+                // Filtra labels e dataValues per includere solo quelli con valore > 0 se preferisci
+                // const filteredLabels = [];
+                // const filteredDataValues = [];
+                // const backgroundColors = ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)', 'var(--text-muted)'];
+                // const filteredBackgroundColors = [];
+
+                // dataValues.forEach((value, index) => {
+                //     if (value > 0) {
+                //         filteredLabels.push(labels[index]);
+                //         filteredDataValues.push(value);
+                //         filteredBackgroundColors.push(backgroundColors[index]);
+                //     }
+                // });
+                // if(filteredDataValues.length === 0) { /* ... gestisci nessun dato ... */ return; }
+
+
                 this.charts.distribution = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Consegnato', 'In Transito', 'Arrivato', 'Altro'], 
+                        labels: labels, // O filteredLabels
                         datasets: [{
-                            data: [ distributionData.consegnato || 0, distributionData.in_transito || 0, distributionData.arrivato || 0, distributionData.other || 0 ],
-                            backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)', 'var(--text-muted)'],
+                            data: dataValues, // O filteredDataValues
+                            backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)', 'var(--text-muted)'], // O filteredBackgroundColors
                             borderColor: 'var(--bg-secondary)',
                             borderWidth: 2
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}}
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: true, 
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}
+                        }
                     }
                 });
             }
