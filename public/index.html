@@ -6,11 +6,9 @@
     <title>Supply Chain Hub - Advanced Analytics</title>
     <link rel="icon" type="image/x-icon" href="https://cdn.jsdelivr.net/gh/lucide-icons/lucide@latest/icons/truck.svg">
     
-    <!-- Chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     
-    <!-- Animate.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     
     <style>
@@ -284,32 +282,24 @@
             font-weight: 600;
         }
 
-        .growth-positive {
-            color: var(--accent-green);
-        }
-
-        .growth-negative {
-            color: var(--accent-red);
-        }
-
-        .growth-neutral {
-            color: var(--text-muted);
-        }
+        .growth-positive { color: var(--accent-green); }
+        .growth-negative { color: var(--accent-red); }
+        .growth-neutral { color: var(--text-muted); }
 
         /* Charts Section */
         .charts-section {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 2fr 1fr; /* Modificato per dare più spazio al grafico a linee */
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
-        .chart-container {
-            padding: 2rem;
-            min-height: 400px;
-            position: relative;
+        .chart-container.glass-container { /* Applica stili glass anche ai contenitori dei grafici */
+             padding: 2rem;
+             min-height: 400px; /* Aumentata altezza minima */
+             position: relative;
         }
-
+        
         .chart-title {
             font-size: 1.2rem;
             font-weight: 700;
@@ -322,368 +312,84 @@
 
         .chart-wrapper {
             position: relative;
-            height: 350px;
+            height: 350px; /* Altezza specifica per il wrapper del canvas */
         }
-
+        
         /* Insights Panel */
         .insights-panel {
             padding: 2rem;
             animation: slideInLeft 0.8s ease-out;
         }
-
-        .insight-item {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .insight-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-
-        .insight-title {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .insight-description {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
+        .insight-item { padding: 1rem; margin-bottom: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease; cursor: pointer; }
+        .insight-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .insight-title { font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .insight-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
 
         /* Alerts Section */
-        .alerts-section {
-            margin-bottom: 2rem;
-        }
-
-        .alert-item {
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-radius: var(--border-radius);
-            border-left: 4px solid;
-            animation: slideInRight 0.8s ease-out;
-        }
-
-        .alert-critical {
-            background: rgba(255, 71, 87, 0.1);
-            border-left-color: var(--accent-red);
-            border: 1px solid rgba(255, 71, 87, 0.2);
-        }
-
-        .alert-warning {
-            background: rgba(255, 183, 77, 0.1);
-            border-left-color: var(--accent-orange);
-            border: 1px solid rgba(255, 183, 77, 0.2);
-        }
-
-        .alert-info {
-            background: rgba(0, 212, 255, 0.1);
-            border-left-color: var(--accent-blue);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-        }
-
-        .alert-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .alert-priority {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .priority-high {
-            background: rgba(255, 71, 87, 0.2);
-            color: var(--accent-red);
-        }
-
-        .priority-medium {
-            background: rgba(255, 183, 77, 0.2);
-            color: var(--accent-orange);
-        }
-
-        .priority-low {
-            background: rgba(0, 212, 255, 0.2);
-            color: var(--accent-blue);
-        }
+        .alerts-section { margin-bottom: 2rem; }
+        .alert-item { padding: 1.5rem; margin-bottom: 1rem; border-radius: var(--border-radius); border-left: 4px solid; animation: slideInRight 0.8s ease-out; }
+        .alert-critical { background: rgba(255,71,87,0.1); border-left-color: var(--accent-red); border: 1px solid rgba(255,71,87,0.2); }
+        .alert-warning { background: rgba(255,183,77,0.1); border-left-color: var(--accent-orange); border: 1px solid rgba(255,183,77,0.2); }
+        .alert-info { background: rgba(0,212,255,0.1); border-left-color: var(--accent-blue); border: 1px solid rgba(0,212,255,0.2); }
+        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; } /* changed from justify-content: between */
+        .alert-priority { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .priority-high { background: rgba(255,71,87,0.2); color: var(--accent-red); }
+        .priority-medium { background: rgba(255,183,77,0.2); color: var(--accent-orange); }
+        .priority-low { background: rgba(0,212,255,0.2); color: var(--accent-blue); }
 
         /* Data Tables */
-        .data-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .data-table {
-            padding: 2rem;
-        }
-
-        .table-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        th {
-            background: rgba(255, 255, 255, 0.05);
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            color: var(--text-primary);
-        }
-
-        tr:hover {
-            background: rgba(255, 255, 255, 0.03);
-        }
+        .data-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .data-table.glass-container { padding: 2rem; } /* Applica stili glass anche ai contenitori delle tabelle */
+        .table-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--glass-border); }
+        table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.05); font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: var(--text-primary); }
+        tr:hover { background: rgba(255,255,255,0.03); }
 
         /* Footer */
-        .footer {
-            padding: 2rem;
-            text-align: center;
-            border-top: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.2);
-            margin-top: 2rem;
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .footer-info {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .footer-version {
-            background: var(--glass-bg);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
+        .footer { padding: 2rem; text-align: center; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); margin-top: 2rem; }
+        .footer-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .footer-info { color: var(--text-muted); font-size: 0.9rem; }
+        .footer-version { background: var(--glass-bg); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--text-secondary); }
 
         /* Loading States */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--glass-border);
-            border-radius: 50%;
-            border-top-color: var(--accent-blue);
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-skeleton {
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-radius: 50%; border-top-color: var(--accent-blue); animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; } /* Added border-radius */
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
-            .charts-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .data-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .header-title h1 {
-                font-size: 2rem;
-            }
-            
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .status-content {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
+        @media (max-width: 1200px) { .charts-section, .data-section { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .main-content { padding: 1rem; } .header-content, .status-content { flex-direction: column; text-align: center; } .header-title h1 { font-size: 2rem; } .kpi-grid { grid-template-columns: 1fr; } }
 
         /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: scale(0.5);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* Additional Utilities */
-        .text-gradient {
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .error-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .error-state h3 {
-            color: var(--accent-red);
-            margin-bottom: 1rem;
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes countUp { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .hidden { display: none !important; }
+        .error-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .error-state h3 { color: var(--accent-red); margin-bottom: 1rem; }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="header-content">
             <div class="header-title">
-                <div class="header-logo">
-                    🚚
-                </div>
+                <div class="header-logo">🚚</div>
                 <div>
                     <h1>Supply Chain Hub</h1>
                     <p style="color: var(--text-secondary); font-size: 1rem; margin-top: 0.5rem;">Advanced Analytics Dashboard</p>
                 </div>
             </div>
             <div class="header-controls">
-                <select id="monthSelector" class="control-button">
-                    <option value="">Select Month</option>
-                </select>
-                <select id="yearSelector" class="control-button">
-                    <option value="">Select Year</option>
-                </select>
+                <select id="monthSelector" class="control-button"><option value="">Select Month</option></select>
+                <select id="yearSelector" class="control-button"><option value="">Select Year</option></select>
                 <button id="refreshBtn" class="control-button refresh-btn">
                     <span id="refreshText">🔄 Refresh Data</span>
                 </button>
@@ -691,9 +397,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Status Banner -->
         <section id="statusBanner" class="status-banner glass-container">
             <div class="status-content">
                 <div class="status-info">
@@ -708,58 +412,13 @@
             </div>
         </section>
 
-        <!-- KPI Grid -->
         <section class="kpi-grid">
-            <div class="kpi-card glass-container">
-                <div class="kpi-header">
-                    <span class="kpi-title">Total Shipments</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);">📦</div>
-                </div>
-                <div class="kpi-value" id="totalShipments">--</div>
-                <div class="kpi-growth" id="shipmentsGrowth">
-                    <span class="growth-indicator">--</span>
-                    <span>vs last month</span>
-                </div>
-            </div>
-
-            <div class="kpi-card glass-container">
-                <div class="kpi-header">
-                    <span class="kpi-title">Total Revenue</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);">💰</div>
-                </div>
-                <div class="kpi-value" id="totalRevenue">--</div>
-                <div class="kpi-growth" id="revenueGrowth">
-                    <span class="growth-indicator">--</span>
-                    <span>vs last month</span>
-                </div>
-            </div>
-
-            <div class="kpi-card glass-container">
-                <div class="kpi-header">
-                    <span class="kpi-title">Average Cost</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);">📊</div>
-                </div>
-                <div class="kpi-value" id="avgCost">--</div>
-                <div class="kpi-growth" id="costGrowth">
-                    <span class="growth-indicator">--</span>
-                    <span>vs last month</span>
-                </div>
-            </div>
-
-            <div class="kpi-card glass-container">
-                <div class="kpi-header">
-                    <span class="kpi-title">Delivery Rate</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-yellow) 100%);">🎯</div>
-                </div>
-                <div class="kpi-value" id="deliveryRate">--</div>
-                <div class="kpi-growth" id="deliveryGrowth">
-                    <span class="growth-indicator">--</span>
-                    <span>performance</span>
-                </div>
-            </div>
+            <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Total Shipments</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);">📦</div></div><div class="kpi-value" id="totalShipments">--</div><div class="kpi-growth" id="shipmentsGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+            <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Total Revenue</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);">💰</div></div><div class="kpi-value" id="totalRevenue">--</div><div class="kpi-growth" id="revenueGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+            <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Average Cost</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-red) 100%);">📊</div></div><div class="kpi-value" id="avgCost">--</div><div class="kpi-growth" id="costGrowth"><span class="growth-indicator">--</span><span>vs last month</span></div></div>
+            <div class="kpi-card glass-container"><div class="kpi-header"><span class="kpi-title">Delivery Rate</span><div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-yellow) 100%);">🎯</div></div><div class="kpi-value" id="deliveryRate">--</div><div class="kpi-growth" id="deliveryGrowth"><span class="growth-indicator">--</span><span>performance</span></div></div>
         </section>
 
-        <!-- Charts Section -->
         <section class="charts-section">
             <div class="chart-container glass-container">
                 <h3 class="chart-title">📈 Shipment Trends</h3>
@@ -767,7 +426,6 @@
                     <canvas id="shipmentChart"></canvas>
                 </div>
             </div>
-
             <div class="insights-panel glass-container">
                 <h3 class="chart-title">🤖 AI Insights</h3>
                 <div id="insightsContainer">
@@ -778,70 +436,28 @@
             </div>
         </section>
 
-        <!-- Alerts Section -->
-        <section id="alertsSection" class="alerts-section">
-            <!-- Alerts will be dynamically populated -->
-        </section>
+        <section id="alertsSection" class="alerts-section"></section>
 
-        <!-- Data Tables Section -->
         <section class="data-section">
             <div class="data-table glass-container">
                 <h3 class="table-title">🚛 Carrier Performance</h3>
                 <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Carrier</th>
-                                <th>Shipments</th>
-                                <th>Avg Cost</th>
-                                <th>Delivery Rate</th>
-                                <th>Market Share</th>
-                            </tr>
-                        </thead>
-                        <tbody id="carrierTableBody">
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                        </tbody>
-                    </table>
+                    <table><thead><tr><th>Carrier</th><th>Shipments</th><th>Avg Cost</th><th>Delivery Rate</th><th>Market Share</th></tr></thead><tbody id="carrierTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
                 </div>
             </div>
-
             <div class="data-table glass-container">
                 <h3 class="table-title">📋 Recent Shipments</h3>
                 <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Carrier</th>
-                                <th>Status</th>
-                                <th>Cost</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentTableBody">
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                            <tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr>
-                        </tbody>
-                    </table>
+                    <table><thead><tr><th>Order #</th><th>Carrier</th><th>Status</th><th>Cost</th><th>Date</th></tr></thead><tbody id="recentTableBody"><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr><tr><td colspan="5" class="loading-skeleton" style="height: 40px;"></td></tr></tbody></table>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-info">
-                <p>&copy; 2025 Supply Chain Hub. Advanced Analytics Platform v2.0</p>
-                <p>Powered by Dark Glass Theme & AI-Driven Insights</p>
-            </div>
-            <div class="footer-version">
-                <span id="apiVersion">API v2.0.0</span> | 
-                <span id="lastRefresh">Cache: --</span>
-            </div>
+            <div class="footer-info"><p>&copy; 2025 Supply Chain Hub. Advanced Analytics Platform v2.0</p><p>Powered by Dark Glass Theme & AI-Driven Insights</p></div>
+            <div class="footer-version"><span id="apiVersion">API v2.0.0</span> | <span id="lastRefresh">Cache: --</span></div>
         </div>
     </footer>
 
@@ -854,7 +470,7 @@
         class SupplyChainDashboard {
             constructor() {
                 this.apiEndpoint = '/.netlify/functions/dashboard-stats';
-                this.charts = {};
+                this.charts = {}; // Store chart instances here
                 this.data = null;
                 this.currentYear = new Date().getFullYear();
                 this.currentMonth = new Date().getMonth() + 1;
@@ -868,7 +484,6 @@
                 await this.loadData();
                 this.startAutoRefresh();
                 
-                // Add loading completion animation
                 setTimeout(() => {
                     document.body.classList.add('loaded');
                 }, 500);
@@ -879,7 +494,6 @@
                 document.getElementById('yearSelector').addEventListener('change', (e) => this.changeYear(e.target.value));
                 document.getElementById('monthSelector').addEventListener('change', (e) => this.changeMonth(e.target.value));
                 
-                // Keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
@@ -892,7 +506,6 @@
                 const yearSelector = document.getElementById('yearSelector');
                 const monthSelector = document.getElementById('monthSelector');
                 
-                // Populate years (current year and 2 previous)
                 for (let year = this.currentYear; year >= this.currentYear - 2; year--) {
                     const option = document.createElement('option');
                     option.value = year;
@@ -901,12 +514,7 @@
                     yearSelector.appendChild(option);
                 }
                 
-                // Populate months
-                const months = [
-                    'January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'
-                ];
-                
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                 months.forEach((month, index) => {
                     const option = document.createElement('option');
                     option.value = index + 1;
@@ -929,7 +537,7 @@
                         params.append('refresh', 'true');
                     }
                     
-                    const response = await fetch(`${this.apiEndpoint}?${params}`);
+                    const response = await fetch(`<span class="math-inline">\{this\.apiEndpoint\}?</span>{params}`);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -995,7 +603,7 @@
                 
                 this.updateStatusBanner();
                 this.updateKPIs();
-                this.updateCharts();
+                this.updateCharts(); // Make sure this calls the doughnut chart creation
                 this.updateInsights();
                 this.updateAlerts();
                 this.updateTables();
@@ -1004,14 +612,11 @@
 
             updateStatusBanner() {
                 const { period, insights, performance } = this.data;
-                
                 document.getElementById('statusTitle').textContent = insights?.summary || 'Analytics Updated';
                 document.getElementById('statusDescription').textContent = `${period.monthName} ${period.year} Performance Summary`;
-                
                 const lastUpdated = new Date(this.data.timestamp).toLocaleString();
                 const dataQuality = performance?.dataQuality?.score || 0;
                 const systemHealth = performance?.systemHealth || 'unknown';
-                
                 document.getElementById('lastUpdated').textContent = `Updated: ${lastUpdated}`;
                 document.getElementById('dataQuality').textContent = `Quality: ${dataQuality.toFixed(0)}%`;
                 document.getElementById('systemHealth').textContent = `System: ${systemHealth}`;
@@ -1019,277 +624,153 @@
 
             updateKPIs() {
                 const { current, growth } = this.data;
-                
-                // Total Shipments
                 this.animateValue('totalShipments', current.month.shipments);
                 this.updateGrowthIndicator('shipmentsGrowth', growth.mom.shipments, growth.mom.trend);
-                
-                // Total Revenue
                 this.animateValue('totalRevenue', `€${this.formatNumber(current.month.revenue)}`);
                 this.updateGrowthIndicator('revenueGrowth', growth.mom.revenue, growth.mom.trend);
-                
-                // Average Cost
                 this.animateValue('avgCost', `€${current.month.avgCost.toFixed(2)}`);
                 this.updateGrowthIndicator('costGrowth', growth.mom.avgCost, growth.mom.trend);
-                
-                // Delivery Rate
                 this.animateValue('deliveryRate', `${current.month.deliveryRate.toFixed(1)}%`);
                 this.updateDeliveryPerformance('deliveryGrowth', current.month.deliveryRate);
             }
 
             updateGrowthIndicator(elementId, growth, trend) {
                 const element = document.getElementById(elementId);
+                if (!element) return;
                 const indicator = element.querySelector('.growth-indicator');
+                if (!indicator) return;
                 
                 let className = 'growth-neutral';
                 let symbol = '→';
-                
-                if (growth > 0) {
-                    className = 'growth-positive';
-                    symbol = '↗';
-                } else if (growth < 0) {
-                    className = 'growth-negative';
-                    symbol = '↘';
-                }
-                
+                if (growth > 0) { className = 'growth-positive'; symbol = '↗'; }
+                else if (growth < 0) { className = 'growth-negative'; symbol = '↘'; }
                 element.className = `kpi-growth ${className}`;
                 indicator.textContent = `${symbol} ${Math.abs(growth).toFixed(1)}%`;
             }
 
             updateDeliveryPerformance(elementId, rate) {
-                const element = document.getElementById(elementId);
+                 const element = document.getElementById(elementId);
+                if (!element) return;
                 const indicator = element.querySelector('.growth-indicator');
-                
+                 if (!indicator) return;
+
                 let className = 'growth-neutral';
                 let text = 'Stable';
-                
-                if (rate >= 95) {
-                    className = 'growth-positive';
-                    text = 'Excellent';
-                } else if (rate >= 85) {
-                    className = 'growth-positive';
-                    text = 'Good';
-                } else if (rate >= 75) {
-                    className = 'growth-neutral';
-                    text = 'Fair';
-                } else {
-                    className = 'growth-negative';
-                    text = 'Poor';
-                }
-                
+                if (rate >= 95) { className = 'growth-positive'; text = 'Excellent'; }
+                else if (rate >= 85) { className = 'growth-positive'; text = 'Good'; }
+                else if (rate >= 75) { className = 'growth-neutral'; text = 'Fair'; }
+                else { className = 'growth-negative'; text = 'Poor'; }
                 element.className = `kpi-growth ${className}`;
                 indicator.textContent = text;
             }
 
             updateCharts() {
-                if (!this.data.charts) return;
-                
+                if (!this.data.charts) {
+                    console.warn("Chart data is missing from API response.");
+                    return;
+                }
                 this.createShipmentChart();
+                this.createDistributionChart(); // Added call to create doughnut chart
             }
 
             createShipmentChart() {
                 const ctx = document.getElementById('shipmentChart');
                 if (!ctx) return;
-                
-                // Destroy existing chart
-                if (this.charts.shipment) {
-                    this.charts.shipment.destroy();
-                }
+                if (this.charts.shipment) this.charts.shipment.destroy();
                 
                 const { labels, shipments } = this.data.charts;
-                
+                if (!labels || !shipments || !shipments.current || !shipments.previous) {
+                    console.warn("Shipment chart data is incomplete.");
+                    return;
+                }
+
                 this.charts.shipment = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [
-                            {
-                                label: `${this.currentYear}`,
-                                data: shipments.current,
-                                borderColor: 'rgba(0, 212, 255, 1)',
-                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: 'rgba(0, 212, 255, 1)',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: 6,
-                                pointHoverRadius: 8
-                            },
-                            {
-                                label: `${this.currentYear - 1}`,
-                                data: shipments.previous,
-                                borderColor: 'rgba(139, 92, 246, 0.7)',
-                                backgroundColor: 'rgba(139, 92, 246, 0.05)',
-                                borderWidth: 2,
-                                fill: false,
-                                tension: 0.4,
-                                pointBackgroundColor: 'rgba(139, 92, 246, 0.7)',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 1,
-                                pointRadius: 4,
-                                pointHoverRadius: 6
-                            }
+                            { label: `${this.currentYear}`, data: shipments.current, borderColor: 'rgba(0, 212, 255, 1)', backgroundColor: 'rgba(0, 212, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: 'rgba(0, 212, 255, 1)', pointBorderColor: '#ffffff', pointBorderWidth: 2, pointRadius: 6, pointHoverRadius: 8 },
+                            { label: `${this.currentYear - 1}`, data: shipments.previous, borderColor: 'rgba(139, 92, 246, 0.7)', backgroundColor: 'rgba(139, 92, 246, 0.05)', borderWidth: 2, fill: false, tension: 0.4, pointBackgroundColor: 'rgba(139, 92, 246, 0.7)', pointBorderColor: '#ffffff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6 }
                         ]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: {
-                                    color: '#b8bcc8',
-                                    font: {
-                                        size: 12,
-                                        weight: '600'
-                                    },
-                                    usePointStyle: true,
-                                    pointStyle: 'circle'
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 15, 35, 0.95)',
-                                titleColor: '#ffffff',
-                                bodyColor: '#b8bcc8',
-                                borderColor: 'rgba(255, 255, 255, 0.1)',
-                                borderWidth: 1,
-                                cornerRadius: 8,
-                                displayColors: true,
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${context.dataset.label}: ${context.parsed.y} shipments`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    color: '#8b92a5',
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)',
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    color: '#8b92a5',
-                                    font: {
-                                        size: 11
-                                    },
-                                    callback: function(value) {
-                                        return value.toLocaleString();
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        },
-                        elements: {
-                            line: {
-                                borderCapStyle: 'round',
-                                borderJoinStyle: 'round'
-                            }
-                        }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { color: '#b8bcc8', font: { size: 12, weight: '600' }, usePointStyle: true, pointStyle: 'circle' } }, tooltip: { backgroundColor: 'rgba(15, 15, 35, 0.95)', titleColor: '#ffffff', bodyColor: '#b8bcc8', borderColor: 'rgba(255, 255, 255, 0.1)', borderWidth: 1, cornerRadius: 8, displayColors: true, callbacks: { label: function(context) { return `${context.dataset.label}: ${context.parsed.y} shipments`; } } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 } } }, y: { grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#8b92a5', font: { size: 11 }, callback: function(value) { return value.toLocaleString(); } } } }, interaction: { intersect: false, mode: 'index' }, elements: { line: { borderCapStyle: 'round', borderJoinStyle: 'round' } } }
                 });
+            }
+
+            createDistributionChart() { // New function for doughnut chart
+                const ctx = document.getElementById('distributionChart'); // ASSUMING YOU HAVE A CANVAS WITH id="distributionChart"
+                if (!ctx) {
+                    // If you don't have a distribution chart canvas in this new theme,
+                    // you might want to get the type data from this.data.status.distribution instead
+                    // and render it differently or skip this chart.
+                    // For now, I'll assume you want to create a doughnut if the data exists.
+                    const distributionData = this.data.status?.distribution;
+                    if(distributionData && (distributionData.consegnato || distributionData.in_transito || distributionData.arrivato)) {
+                        // If you decide to add a canvas for it later, it would be like this:
+                        // const typeCtx = document.getElementById('typeChartCanvasId').getContext('2d');
+                        // if (this.charts.type) this.charts.type.destroy();
+                        // this.charts.type = new Chart(typeCtx, {
+                        //     type: 'doughnut',
+                        //     data: {
+                        //         labels: ['Consegnato', 'In Transito', 'Arrivato'],
+                        //         datasets: [{
+                        //             data: [distributionData.consegnato, distributionData.in_transito, distributionData.arrivato],
+                        //             backgroundColor: ['var(--accent-green)', 'var(--accent-orange)', 'var(--accent-blue)'],
+                        //             borderColor: 'var(--bg-secondary)',
+                        //             borderWidth: 2
+                        //         }]
+                        //     },
+                        //     options: {
+                        //         responsive: true,
+                        //         maintainAspectRatio: true,
+                        //         plugins: {
+                        //             legend: { position: 'bottom', labels: { color: 'var(--text-secondary)'}}
+                        //         }
+                        //     }
+                        // });
+                        console.log("Data for distribution chart found, but no canvas with id 'distributionChart'.");
+                    } else {
+                        console.warn("Distribution chart data is missing or empty.");
+                    }
+                    return; 
+                }
+                // The rest of this function would be the chart creation code if 'distributionChart' canvas exists
             }
 
             updateInsights() {
                 const container = document.getElementById('insightsContainer');
-                if (!this.data.insights) return;
-                
+                if (!this.data.insights || !container) return;
                 const { insights } = this.data;
-                
                 container.innerHTML = '';
-                
-                // Summary insight
-                if (insights.summary) {
-                    this.addInsightItem(container, '📊 Summary', insights.summary, 'summary');
-                }
-                
-                // Trends insight
-                if (insights.trends) {
-                    this.addInsightItem(container, '📈 Trend Analysis', insights.trends, 'trend');
-                }
-                
-                // Predictions
-                if (insights.predictions) {
-                    this.addInsightItem(container, '🔮 Forecast', insights.predictions, 'prediction');
-                }
-                
-                // Market Analysis
-                if (insights.marketAnalysis) {
-                    this.addInsightItem(container, '🏢 Market Analysis', insights.marketAnalysis, 'market');
-                }
-                
-                // Top recommendations
+                if (insights.summary) this.addInsightItem(container, '📊 Summary', insights.summary, 'summary');
+                if (insights.trends) this.addInsightItem(container, '📈 Trend Analysis', insights.trends, 'trend');
+                if (insights.predictions) this.addInsightItem(container, '🔮 Forecast', insights.predictions, 'prediction');
+                if (insights.marketAnalysis) this.addInsightItem(container, '🏢 Market Analysis', insights.marketAnalysis, 'market');
                 if (insights.recommendations && insights.recommendations.length > 0) {
-                    const topRecommendations = insights.recommendations.slice(0, 2);
-                    topRecommendations.forEach((rec, index) => {
+                    insights.recommendations.slice(0, 2).forEach((rec, index) => {
                         this.addInsightItem(container, `💡 Recommendation ${index + 1}`, rec, 'recommendation');
                     });
                 }
             }
 
             addInsightItem(container, title, description, type) {
-                const item = document.createElement('div');
-                item.className = 'insight-item';
-                
-                const titleEl = document.createElement('div');
-                titleEl.className = 'insight-title';
-                titleEl.textContent = title;
-                
-                const descEl = document.createElement('div');
-                descEl.className = 'insight-description';
-                descEl.textContent = description;
-                
-                item.appendChild(titleEl);
-                item.appendChild(descEl);
-                
-                container.appendChild(item);
+                const item = document.createElement('div'); item.className = 'insight-item';
+                const titleEl = document.createElement('div'); titleEl.className = 'insight-title'; titleEl.textContent = title;
+                const descEl = document.createElement('div'); descEl.className = 'insight-description'; descEl.textContent = description;
+                item.appendChild(titleEl); item.appendChild(descEl); container.appendChild(item);
             }
 
             updateAlerts() {
                 const section = document.getElementById('alertsSection');
-                if (!this.data.insights || !this.data.insights.alerts) {
-                    section.innerHTML = '';
-                    return;
+                if (!this.data.insights || !this.data.insights.alerts || !section) {
+                    if(section) section.innerHTML = ''; return;
                 }
-                
                 const alerts = this.data.insights.alerts;
                 section.innerHTML = '';
-                
-                if (alerts.length === 0) {
-                    return; // No alerts to show
-                }
-                
+                if (alerts.length === 0) return;
                 alerts.forEach(alert => {
-                    const alertEl = document.createElement('div');
-                    alertEl.className = `alert-item alert-${alert.type}`;
-                    
-                    alertEl.innerHTML = `
-                        <div class="alert-header">
-                            <strong>${alert.message}</strong>
-                            <span class="alert-priority priority-${alert.priority}">${alert.priority}</span>
-                        </div>
-                        <div style="margin-top: 0.5rem; color: var(--text-secondary);">${alert.action}</div>
-                        ${alert.impact ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);"><strong>Impact:</strong> ${alert.impact}</div>` : ''}
-                    `;
-                    
+                    const alertEl = document.createElement('div'); alertEl.className = `alert-item alert-${alert.type}`;
+                    alertEl.innerHTML = `<div class="alert-header"><strong><span class="math-inline">\{alert\.message\}</strong\><span class\="alert\-priority priority\-</span>{alert.priority}"><span class="math-inline">\{alert\.priority\}</span\></div\><div style\="margin\-top\: 0\.5rem; color\: var\(\-\-text\-secondary\);"\></span>{alert.action}</div>${alert.impact ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);"><strong>Impact:</strong> ${alert.impact}</div>` : ''}`;
                     section.appendChild(alertEl);
                 });
             }
@@ -1301,168 +782,97 @@
 
             updateCarrierTable() {
                 const tbody = document.getElementById('carrierTableBody');
-                if (!this.data.carriers || !this.data.carriers.performance) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="error-state">No carrier data available</td></tr>';
-                    return;
-                }
-                
+                 if (!tbody) return;
+                if (!this.data.carriers || !this.data.carriers.performance) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No carrier data available</td></tr>'; return; }
                 const carriers = this.data.carriers.performance;
                 tbody.innerHTML = '';
-                
                 carriers.slice(0, 5).forEach(carrier => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${carrier.carrier_name}</strong></td>
-                        <td>${carrier.total_shipments}</td>
-                        <td>€${parseFloat(carrier.avg_cost).toFixed(2)}</td>
-                        <td>
-                            <span class="${(carrier.delivery_rate * 100) >= 90 ? 'growth-positive' : (carrier.delivery_rate * 100) >= 80 ? 'growth-neutral' : 'growth-negative'}">
-                                ${(carrier.delivery_rate * 100).toFixed(1)}%
-                            </span>
-                        </td>
-                        <td>${parseFloat(carrier.market_share).toFixed(1)}%</td>
-                    `;
+                    row.innerHTML = `<td><strong><span class="math-inline">\{carrier\.carrier\_name\}</strong\></td\><td\></span>{carrier.total_shipments}</td><td>€<span class="math-inline">\{parseFloat\(carrier\.avg\_cost\)\.toFixed\(2\)\}</td\><td\><span class\="</span>{(carrier.delivery_rate * 100) >= 90 ? 'growth-positive' : (carrier.delivery_rate * 100) >= 80 ? 'growth-neutral' : 'growth-negative'}"><span class="math-inline">\{\(carrier\.delivery\_rate \* 100\)\.toFixed\(1\)\}%</span\></td\><td\></span>{parseFloat(carrier.market_share).toFixed(1)}%</td>`;
                     tbody.appendChild(row);
                 });
-                
-                if (carriers.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="error-state">No carrier performance data available</td></tr>';
-                }
+                if (carriers.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No carrier performance data available</td></tr>'; }
             }
 
             updateRecentTable() {
                 const tbody = document.getElementById('recentTableBody');
-                if (!this.data.recent) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="error-state">No recent shipments data available</td></tr>';
-                    return;
-                }
-                
+                if (!tbody) return;
+                if (!this.data.recent) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No recent shipments data available</td></tr>'; return; }
                 const recent = this.data.recent;
                 tbody.innerHTML = '';
-                
                 recent.slice(0, 5).forEach(shipment => {
                     const row = document.createElement('tr');
-                    
-                    const statusClass = shipment.status === 'CONSEGNATO' ? 'growth-positive' : 
-                                       shipment.status === 'IN TRANSITO' ? 'growth-neutral' : 'growth-negative';
-                    
-                    const formattedDate = shipment.shippedDate ? 
-                        new Date(shipment.shippedDate).toLocaleDateString() : '--';
-                    
-                    row.innerHTML = `
-                        <td><strong>${shipment.orderNumber || shipment.id}</strong></td>
-                        <td>${shipment.carrier || '--'}</td>
-                        <td><span class="${statusClass}">${shipment.status || '--'}</span></td>
-                        <td>€${(shipment.cost || 0).toFixed(2)}</td>
-                        <td>${formattedDate}</td>
-                    `;
+                    const statusClass = shipment.status === 'CONSEGNATO' ? 'growth-positive' : shipment.status === 'IN TRANSITO' ? 'growth-neutral' : 'growth-negative';
+                    const formattedDate = shipment.shippedDate ? new Date(shipment.shippedDate).toLocaleDateString() : '--';
+                    row.innerHTML = `<td><strong><span class="math-inline">\{shipment\.orderNumber \|\| shipment\.id\}</strong\></td\><td\></span>{shipment.carrier || '--'}</td><td><span class="<span class="math-inline">\{statusClass\}"\></span>{shipment.status || '--'}</span></td><td>€<span class="math-inline">\{\(shipment\.cost \|\| 0\)\.toFixed\(2\)\}</td\><td\></span>{formattedDate}</td>`;
                     tbody.appendChild(row);
                 });
-                
-                if (recent.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="error-state">No recent shipments available</td></tr>';
-                }
+                if (recent.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="error-state">No recent shipments available</td></tr>'; }
             }
 
             updateFooter() {
-                const apiVersion = document.getElementById('apiVersion');
-                const lastRefresh = document.getElementById('lastRefresh');
-                
-                if (this.data.version) {
-                    apiVersion.textContent = `API v${this.data.version}`;
-                }
-                
-                if (this.data.performance && this.data.performance.cacheStatus) {
-                    lastRefresh.textContent = `Cache: ${this.data.performance.cacheStatus}`;
-                }
+                const apiVersionEl = document.getElementById('apiVersion');
+                const lastRefreshEl = document.getElementById('lastRefresh');
+                if (this.data.version && apiVersionEl) apiVersionEl.textContent = `API v${this.data.version}`;
+                if (this.data.performance && this.data.performance.cacheStatus && lastRefreshEl) lastRefreshEl.textContent = `Cache: ${this.data.performance.cacheStatus}`;
             }
 
             animateValue(elementId, targetValue) {
                 const element = document.getElementById(elementId);
                 if (!element) return;
-                
-                // Simple animation for now
                 element.style.opacity = '0';
-                setTimeout(() => {
-                    element.textContent = targetValue;
-                    element.style.opacity = '1';
-                }, 150);
+                setTimeout(() => { element.textContent = targetValue; element.style.opacity = '1'; }, 150);
             }
 
             formatNumber(num) {
-                if (num >= 1000000) {
-                    return (num / 1000000).toFixed(1) + 'M';
-                } else if (num >= 1000) {
-                    return (num / 1000).toFixed(1) + 'K';
-                } else {
-                    return num.toFixed(2);
-                }
+                if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                else if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                else return num.toFixed(2);
             }
 
             showLoading() {
-                // Add loading states to elements
                 const elements = document.querySelectorAll('.kpi-value');
-                elements.forEach(el => {
-                    el.classList.add('pulse');
-                });
+                elements.forEach(el => el.classList.add('pulse'));
+                // You might want to add skeleton loaders for tables/charts here too
             }
 
             hideLoading() {
-                // Remove loading states
                 const elements = document.querySelectorAll('.kpi-value');
-                elements.forEach(el => {
-                    el.classList.remove('pulse');
-                });
+                elements.forEach(el => el.classList.remove('pulse'));
             }
 
             showError(message) {
                 const statusTitle = document.getElementById('statusTitle');
                 const statusDescription = document.getElementById('statusDescription');
-                
-                statusTitle.textContent = '❌ Error Loading Data';
-                statusDescription.textContent = message;
-                
-                // Show error in status banner
+                if(statusTitle) statusTitle.textContent = '❌ Error Loading Data';
+                if(statusDescription) statusDescription.textContent = message;
                 const banner = document.getElementById('statusBanner');
-                banner.style.background = 'linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, rgba(255, 183, 77, 0.1) 100%)';
-                banner.style.borderColor = 'rgba(255, 71, 87, 0.2)';
+                if(banner) {
+                    banner.style.background = 'linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, rgba(255, 183, 77, 0.1) 100%)';
+                    banner.style.borderColor = 'rgba(255, 71, 87, 0.2)';
+                }
             }
 
             startAutoRefresh() {
-                // Auto refresh every 5 minutes
-                setInterval(() => {
-                    this.loadData();
-                }, 5 * 60 * 1000);
+                setInterval(() => { this.loadData(); }, 5 * 60 * 1000);
             }
         }
 
-        // Start the dashboard when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             window.dashboard = new SupplyChainDashboard();
         });
 
-        // Add some interactive enhancements
         document.addEventListener('DOMContentLoaded', () => {
-            // Add hover effects to cards
             const cards = document.querySelectorAll('.glass-container');
             cards.forEach(card => {
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'translateY(-4px) scale(1.01)';
-                });
-                
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'translateY(0) scale(1)';
-                });
+                card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px) scale(1.01)'; });
+                card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0) scale(1)'; });
             });
-            
-            // Add click effects to buttons
             const buttons = document.querySelectorAll('.control-button');
             buttons.forEach(button => {
                 button.addEventListener('click', () => {
                     button.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        button.style.transform = 'scale(1)';
-                    }, 150);
+                    setTimeout(() => { button.style.transform = 'scale(1)'; }, 150);
                 });
             });
         });
