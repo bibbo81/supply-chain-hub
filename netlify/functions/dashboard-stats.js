@@ -25,43 +25,9 @@ exports.handler = async (event, context) => {
     // Inizializza client Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Estrai parametri dalla query string
-    const { year = 2024, month = 1 } = event.queryStringParameters || {};
-    const targetYear = parseInt(year);
-    const targetMonth = parseInt(month);
+    console.log('Starting dashboard-stats function');
 
-    console.log(`Fetching data for ${targetYear}-${targetMonth}`);
-
-    // Nome del mese per il frontend
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    const monthName = monthNames[targetMonth - 1];
-
-    // Date range per il mese target
-    const startDate = `${targetYear}-${targetMonth.toString().padStart(2, '0')}-01`;
-    const endDate = targetMonth === 12 
-      ? `${targetYear + 1}-01-01` 
-      : `${targetYear}-${(targetMonth + 1).toString().padStart(2, '0')}-01`;
-
-    console.log(`Date range: ${startDate} to ${endDate}`);
-
-    // 1. QUERY PRINCIPALE: Dati analytics dalla vista materializzata
-    const { data: analyticsData, error: analyticsError } = await supabase
-      .from('mv_analytics_monthly')
-      .select('*')
-      .eq('created_year', targetYear)
-      .eq('created_month', targetMonth)
-      .single();
-
-    if (analyticsError && analyticsError.code !== 'PGRST116') {
-      console.error('Analytics query error:', analyticsError);
-    }
-
-    console.log('Analytics data:', analyticsData);
-
-    // 2. QUERY: Spedizioni del mese per distribuzione stati e carrier performance
+    // QUERY SEMPLICE: Prendi tutti i shipments disponibili
     const { data: shipmentsData, error: shipmentsError } = await supabase
       .from('shipments')
       .select(`
@@ -74,84 +40,91 @@ exports.handler = async (event, context) => {
         delivery_date,
         origin,
         destination
-      `)
-      .gte('shipment_date', startDate)
-      .lt('shipment_date', endDate);
+      `);
 
     if (shipmentsError) {
       console.error('Shipments query error:', shipmentsError);
+      throw shipmentsError;
     }
 
-    console.log('Shipments data:', shipmentsData);
+    console.log('Shipments found:', shipmentsData ? shipmentsData.length : 0);
 
-    // 3. QUERY: Dati mese precedente per calcolare crescita
-    let prevYear = targetYear;
-    let prevMonth = targetMonth - 1;
-    if (prevMonth < 1) {
-      prevMonth = 12;
-      prevYear = targetYear - 1;
-    }
-
-    const { data: prevAnalyticsData } = await supabase
-      .from('mv_analytics_monthly')
-      .select('*')
-      .eq('created_year', prevYear)
-      .eq('created_month', prevMonth)
-      .single();
-
-    console.log('Previous month data:', prevAnalyticsData);
-
-    // 4. QUERY: Dati annuali per charts
-    const { data: yearlyData } = await supabase
-      .from('mv_analytics_monthly')
-      .select('*')
-      .eq('created_year', targetYear)
-      .order('created_month', { ascending: true });
-
-    console.log('Yearly data:', yearlyData);
-
-    // PROCESSA I DATI
-    
-    // Dati correnti (usa dati reali o default)
-    const current = analyticsData || {
-      total_shipments: shipmentsData ? shipmentsData.length : 0,
-      total_revenue: shipmentsData ? shipmentsData.reduce((sum, s) => sum + (s.cost || 0), 0) : 0,
-      avg_cost: 0,
-      delivery_rate: 0,
-      data_quality_score: 100
-    };
-
-    // Se non abbiamo dati dalla vista, calcoliamo dai shipments
-    if (!analyticsData && shipmentsData && shipmentsData.length > 0) {
-      const totalCost = shipmentsData.reduce((sum, s) => sum + (s.cost || 0), 0);
-      const deliveredCount = shipmentsData.filter(s => 
-        s.status && s.status.toLowerCase() === 'consegnato'
-      ).length;
-      
-      current.avg_cost = Math.round(totalCost / shipmentsData.length);
-      current.delivery_rate = Math.round((deliveredCount / shipmentsData.length) * 100);
-    }
-
-    console.log('Processed current data:', current);
-
-    // Dati precedenti per crescita
-    const previous = prevAnalyticsData || {
-      total_shipments: 0,
-      total_revenue: 0,
-      avg_cost: 0,
-      delivery_rate: 0
-    };
-
-    // Calcola crescita month-over-month
-    const calculateGrowth = (current, previous) => {
-      if (previous === 0) return { value: current, percentage: current > 0 ? 100 : 0 };
-      const growth = current - previous;
-      const percentage = (growth / previous) * 100;
+    // Se non ci sono dati
+    if (!shipmentsData || shipmentsData.length === 0) {
       return {
-        value: growth,
-        percentage: Math.round(percentage * 100) / 100
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          period: {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            monthName: 'Current'
+          },
+          current: {
+            month: {
+              shipments: 0,
+              revenue: 0,
+              avgCost: 0,
+              deliveryRate: 0
+            }
+          },
+          growth: {
+            mom: {
+              shipments: { value: 0, percentage: 0 },
+              revenue: { value: 0, percentage: 0 },
+              avgCost: { value: 0, percentage: 0 }
+            }
+          },
+          charts: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            shipments: {
+              current: [0,0,0,0,0,0,0,0,0,0,0,0],
+              previous: [0,0,0,0,0,0,0,0,0,0,0,0]
+            }
+          },
+          status: {
+            distribution: {
+              consegnato: 0,
+              in_transito: 0,
+              arrivato: 0,
+              other: 0
+            }
+          },
+          insights: {
+            summary: 'No data available',
+            keyFindings: ['No shipments found'],
+            recommendations: ['Add shipment data']
+          },
+          performance: {
+            dataQuality: { score: 100, status: 'excellent' },
+            systemHealth: { status: 'operational', uptime: 99.9, lastUpdate: new Date().toISOString() }
+          },
+          alerts: [],
+          carrierPerformance: [],
+          recentShipments: []
+        })
       };
-    };
+    }
+
+    // CALCOLA STATISTICHE DA TUTTI I DATI
+    const totalShipments = shipmentsData.length;
+    const totalRevenue = shipmentsData.reduce((sum, s) => sum + (s.cost || 0), 0);
+    const avgCost = totalShipments > 0 ? Math.round(totalRevenue / totalShipments) : 0;
+
+    // Calcola delivery rate
+    const deliveredCount = shipmentsData.filter(s => 
+      s.status && s.status.toLowerCase().includes('consegnato')
+    ).length;
+    const deliveryRate = totalShipments > 0 ? Math.round((deliveredCount / totalShipments) * 100) : 0;
+
+    console.log('Calculated stats:', {
+      totalShipments,
+      totalRevenue,
+      avgCost,
+      deliveryRate,
+      deliveredCount
+    });
 
     // DISTRIBUZIONE STATI
     const statusDistribution = {
@@ -161,123 +134,84 @@ exports.handler = async (event, context) => {
       other: 0
     };
 
-    if (shipmentsData) {
-      shipmentsData.forEach(shipment => {
-        const status = shipment.status ? shipment.status.toLowerCase().trim() : '';
-        console.log('Processing status:', status);
-        
-        if (status === 'consegnato') {
-          statusDistribution.consegnato++;
-        } else if (status === 'in transito' || status === 'in_transito') {
-          statusDistribution.in_transito++;
-        } else if (status === 'arrivato') {
-          statusDistribution.arrivato++;
-        } else {
-          statusDistribution.other++;
-        }
-      });
-    }
+    shipmentsData.forEach(shipment => {
+      const status = shipment.status ? shipment.status.toLowerCase().trim() : '';
+      
+      if (status.includes('consegnato')) {
+        statusDistribution.consegnato++;
+      } else if (status.includes('transito') || status.includes('transit')) {
+        statusDistribution.in_transito++;
+      } else if (status.includes('arrivato')) {
+        statusDistribution.arrivato++;
+      } else {
+        statusDistribution.other++;
+      }
+    });
 
     console.log('Status distribution:', statusDistribution);
 
     // CARRIER PERFORMANCE
-    const carrierPerformance = [];
-    if (shipmentsData && shipmentsData.length > 0) {
-      const carrierStats = {};
+    const carrierStats = {};
+    shipmentsData.forEach(shipment => {
+      const carrier = shipment.carrier || 'Unknown';
+      if (!carrierStats[carrier]) {
+        carrierStats[carrier] = {
+          shipments: 0,
+          totalCost: 0,
+          delivered: 0
+        };
+      }
       
-      shipmentsData.forEach(shipment => {
-        const carrier = shipment.carrier || 'Unknown';
-        if (!carrierStats[carrier]) {
-          carrierStats[carrier] = {
-            shipments: 0,
-            totalCost: 0,
-            delivered: 0,
-            onTime: 0
-          };
-        }
-        
-        carrierStats[carrier].shipments++;
-        carrierStats[carrier].totalCost += shipment.cost || 0;
-        
-        if (shipment.status && shipment.status.toLowerCase() === 'consegnato') {
-          carrierStats[carrier].delivered++;
-        }
-        
-        // Calcola on-time delivery (se consegnato entro 7 giorni)
-        if (shipment.delivery_date && shipment.shipment_date) {
-          const shipDate = new Date(shipment.shipment_date);
-          const deliveryDate = new Date(shipment.delivery_date);
-          const daysDiff = (deliveryDate - shipDate) / (1000 * 60 * 60 * 24);
-          
-          if (daysDiff <= 7) {
-            carrierStats[carrier].onTime++;
-          }
-        }
-      });
+      carrierStats[carrier].shipments++;
+      carrierStats[carrier].totalCost += shipment.cost || 0;
+      
+      if (shipment.status && shipment.status.toLowerCase().includes('consegnato')) {
+        carrierStats[carrier].delivered++;
+      }
+    });
 
-      // Converti in array per il frontend
-      Object.entries(carrierStats).forEach(([carrier, stats]) => {
-        const avgCost = stats.shipments > 0 ? Math.round(stats.totalCost / stats.shipments) : 0;
-        const deliveryRate = stats.shipments > 0 ? Math.round((stats.delivered / stats.shipments) * 100) : 0;
-        const onTimeRate = stats.shipments > 0 ? Math.round((stats.onTime / stats.shipments) * 100) : 0;
-        
-        carrierPerformance.push({
-          carrier,
-          shipments: stats.shipments,
-          avgCost,
-          deliveryRate,
-          onTimeRate,
-          marketShare: Math.round((stats.shipments / shipmentsData.length) * 100)
-        });
-      });
-    }
+    const carrierPerformance = Object.entries(carrierStats).map(([carrier, stats]) => {
+      const avgCost = stats.shipments > 0 ? Math.round(stats.totalCost / stats.shipments) : 0;
+      const deliveryRate = stats.shipments > 0 ? Math.round((stats.delivered / stats.shipments) * 100) : 0;
+      const marketShare = Math.round((stats.shipments / totalShipments) * 100);
+      
+      return {
+        carrier,
+        shipments: stats.shipments,
+        avgCost,
+        deliveryRate,
+        onTimeRate: deliveryRate, // Semplificato
+        marketShare
+      };
+    });
 
     console.log('Carrier performance:', carrierPerformance);
 
-    // CHARTS DATA
-    const chartLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
+    // RECENT SHIPMENTS (ultimi 10)
+    const recentShipments = shipmentsData
+      .sort((a, b) => new Date(b.shipment_date || 0) - new Date(a.shipment_date || 0))
+      .slice(0, 10)
+      .map(shipment => ({
+        orderNumber: shipment.order_number || shipment.id,
+        carrier: shipment.carrier || 'Unknown',
+        status: shipment.status || 'Unknown',
+        cost: shipment.cost || 0,
+        date: shipment.shipment_date || new Date().toISOString().split('T')[0]
+      }));
+
+    // CHARTS DATA (semplificato - mette tutti i dati nel mese corrente)
+    const currentMonth = new Date().getMonth(); // 0-11
     const currentYearData = new Array(12).fill(0);
-    const previousYearData = new Array(12).fill(0);
+    currentYearData[currentMonth] = totalShipments;
 
-    // Popola dati correnti
-    if (yearlyData) {
-      yearlyData.forEach(item => {
-        const monthIndex = item.created_month - 1;
-        if (monthIndex >= 0 && monthIndex < 12) {
-          currentYearData[monthIndex] = item.total_shipments || 0;
-        }
-      });
-    }
-
-    // Query per anno precedente
-    const { data: prevYearData } = await supabase
-      .from('mv_analytics_monthly')
-      .select('*')
-      .eq('created_year', targetYear - 1)
-      .order('created_month', { ascending: true });
-
-    if (prevYearData) {
-      prevYearData.forEach(item => {
-        const monthIndex = item.created_month - 1;
-        if (monthIndex >= 0 && monthIndex < 12) {
-          previousYearData[monthIndex] = item.total_shipments || 0;
-        }
-      });
-    }
-
-    // INSIGHTS E PERFORMANCE
-    const totalShipments = current.total_shipments || 0;
-    const totalRevenue = current.total_revenue || 0;
-    const deliveryRate = current.delivery_rate || 0;
-
+    // INSIGHTS
     const insights = {
-      summary: `Performance analytics for ${monthName} ${targetYear}`,
+      summary: `Dashboard overview with ${totalShipments} total shipments`,
       keyFindings: [
         `${totalShipments} total shipments processed`,
         `€${totalRevenue.toLocaleString()} in total revenue`,
-        `${deliveryRate}% delivery success rate`
+        `${deliveryRate}% delivery success rate`,
+        `${carrierPerformance.length} carriers active`
       ],
       recommendations: [
         deliveryRate < 50 ? 'Focus on improving delivery performance' : 'Maintain current service levels',
@@ -285,10 +219,11 @@ exports.handler = async (event, context) => {
       ]
     };
 
+    // PERFORMANCE
     const performance = {
       dataQuality: {
-        score: current.data_quality_score || 100,
-        status: (current.data_quality_score || 100) >= 90 ? 'excellent' : 'good'
+        score: 100,
+        status: 'excellent'
       },
       systemHealth: {
         status: 'operational',
@@ -309,48 +244,39 @@ exports.handler = async (event, context) => {
     if (totalShipments === 0) {
       alerts.push({
         type: 'info',
-        message: 'No shipments recorded for this period',
+        message: 'No shipments found in database',
         priority: 'medium'
       });
     }
-
-    // RECENT SHIPMENTS per tabella
-    const recentShipments = shipmentsData ? shipmentsData.slice(0, 10).map(shipment => ({
-      orderNumber: shipment.order_number || shipment.id,
-      carrier: shipment.carrier || 'Unknown',
-      status: shipment.status || 'Unknown',
-      cost: shipment.cost || 0,
-      date: shipment.shipment_date || new Date().toISOString().split('T')[0]
-    })) : [];
 
     // COSTRUISCI RISPOSTA FINALE
     const response = {
       success: true,
       period: {
-        year: targetYear,
-        month: targetMonth,
-        monthName: monthName
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+        monthName: 'All Data'
       },
       current: {
         month: {
           shipments: totalShipments,
           revenue: totalRevenue,
-          avgCost: current.avg_cost || 0,
+          avgCost: avgCost,
           deliveryRate: deliveryRate
         }
       },
       growth: {
         mom: {
-          shipments: calculateGrowth(totalShipments, previous.total_shipments),
-          revenue: calculateGrowth(totalRevenue, previous.total_revenue),
-          avgCost: calculateGrowth(current.avg_cost || 0, previous.avg_cost)
+          shipments: { value: 0, percentage: 0 },
+          revenue: { value: 0, percentage: 0 },
+          avgCost: { value: 0, percentage: 0 }
         }
       },
       charts: {
-        labels: chartLabels,
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         shipments: {
           current: currentYearData,
-          previous: previousYearData
+          previous: new Array(12).fill(0)
         }
       },
       status: {
@@ -363,9 +289,10 @@ exports.handler = async (event, context) => {
       recentShipments: recentShipments
     };
 
-    console.log('Final response summary:', {
+    console.log('Final response stats:', {
       success: response.success,
       currentShipments: response.current.month.shipments,
+      currentRevenue: response.current.month.revenue,
       carrierCount: response.carrierPerformance.length,
       recentShipmentsCount: response.recentShipments.length
     });
