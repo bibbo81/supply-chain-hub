@@ -30,7 +30,7 @@
             background-attachment: fixed;
             min-height: 100vh;
             color: var(--text-white);
-            overflow-x: hidden;
+            overflow-x: hidden; /* Previene lo scorrimento orizzontale del body */
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         .header { background: var(--dark-glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--dark-glass-border); border-radius: 16px; padding: 24px; margin-bottom: 32px; box-shadow: var(--dark-glass-shadow); }
@@ -52,14 +52,23 @@
         .dropdown-item:hover { background-color: rgba(255, 255, 255, 0.05); }
         .dropdown:hover .dropdown-menu { display: block; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
-        .kpi-card, .chart-card, .table-card { background: var(--dark-glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--dark-glass-border); border-radius: 16px; padding: 24px; box-shadow: var(--dark-glass-shadow); }
+        
+        .kpi-card, .chart-card, .table-card { 
+            background: var(--dark-glass-bg); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid var(--dark-glass-border); 
+            border-radius: 16px; 
+            padding: 24px; 
+            box-shadow: var(--dark-glass-shadow);
+            min-width: 0; /* <<< MODIFICA CHIAVE per grid items */
+        }
+
         .kpi-value { font-size: 2.5rem; font-weight: 700; color: var(--text-white); line-height: 1; margin-bottom: 8px; }
         .kpi-label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px; }
         .kpi-trend { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
         .charts-section { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px; }
         .chart-header { margin-bottom: 1rem; }
         
-        /* REGOLE PER GRAFICI RESPONSIVE */
         .chart-container {
             position: relative;
             height: 300px;
@@ -69,10 +78,13 @@
         .chart-container canvas {
             min-width: 600px;
         }
-        /* FINE REGOLE PER GRAFICI */
 
         .tables-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .data-table { width: 100%; border-collapse: collapse; }
+        .table-card .table-wrapper { /* Aggiunto wrapper per le tabelle se necessario scorrimento */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .data-table { width: 100%; border-collapse: collapse; /* min-width per forzare scorrimento se serve, es: 600px */ }
         .data-table th, .data-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
         .status-in-transit { background: rgba(66, 133, 244, 0.2); color: #4285f4; }
@@ -131,8 +143,24 @@
         </section>
 
         <section class="tables-section">
-            <div class="table-card"><div class="table-header"><h3 class="table-title">Spedizioni Recenti</h3></div><div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>RIF.</th><th>Fornitore</th><th>Stato</th><th>Costo</th></tr></thead><tbody id="recentShipmentsTable"></tbody></table></div></div>
-            <div class="table-card"><div class="table-header"><h3 class="table-title">Spedizionieri Performance</h3></div><div style="overflow-x: auto;"><table class="data-table"><thead><tr><th>Spedizioniere</th><th>Tipo</th><th>Attivo</th></tr></thead><tbody id="carriersTable"></tbody></table></div></div>
+            <div class="table-card">
+                <div class="table-header"><h3 class="table-title">Spedizioni Recenti</h3></div>
+                <div class="table-wrapper"> {/* Wrapper per scorrimento tabella */}
+                    <table class="data-table">
+                        <thead><tr><th>RIF.</th><th>Fornitore</th><th>Stato</th><th>Costo</th></tr></thead>
+                        <tbody id="recentShipmentsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="table-header"><h3 class="table-title">Spedizionieri Performance</h3></div>
+                <div class="table-wrapper"> {/* Wrapper per scorrimento tabella */}
+                    <table class="data-table">
+                        <thead><tr><th>Spedizioniere</th><th>Tipo</th><th>Attivo</th></tr></thead>
+                        <tbody id="carriersTable"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
     </div>
 
