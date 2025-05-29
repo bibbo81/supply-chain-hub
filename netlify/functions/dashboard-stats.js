@@ -132,7 +132,6 @@ async function handleCarrierPerformance(event, headers) {
       stato_spedizione,
       costo_trasporto,
       data_partenza,
-      data_consegna_prevista,
       tipo_spedizione
     `);
 
@@ -274,7 +273,11 @@ async function handleMobileSummary(event, headers) {
     .order('year desc, month desc')
     .limit(6);
 
-  if (error1 || error2) throw error1 || error2;
+  if (error1) throw error1;
+  if (error2) throw error2;
+
+  // Handle case where monthlyStats might be null or empty
+  const safeMonthlyStats = monthlyStats || [];
 
   // Mobile-optimized summary
   const summary = {
@@ -292,7 +295,7 @@ async function handleMobileSummary(event, headers) {
       cost: s.costo_trasporto,
       date: s.data_partenza
     })),
-    monthly_trend: monthlyStats.map(m => ({
+    monthly_trend: safeMonthlyStats.map(m => ({
       period: `${m.year}-${String(m.month).padStart(2, '0')}`,
       shipments: m.shipment_count,
       revenue: m.total_revenue
