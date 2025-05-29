@@ -1,683 +1,1506 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Enterprise Dashboard</title>
+    <meta name="description" content="Advanced Supply Chain Management Dashboard with real-time analytics and reporting">
     
-    <!-- Preload critical resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <!-- Chart.js CDN with fallbacks for AdBlocker compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://unpkg.com/chart.js@4.4.0/dist/chart.min.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdnjs.com/libraries/Chart.js"><\/script>');
+        }
+    </script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://ajax.googleapis.com/ajax/libs/charts/current/charts.js"><\/script>');
+        }
+    </script>
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Papa Parse for CSV processing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     
-    <!-- FontAwesome with fallback -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
-          onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css';">
+    <!-- SheetJS for Excel processing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
     <style>
+        /* SOLARIUM DESIGN SYSTEM - Apple-inspired Dark Theme + Glassmorphism */
+        
+        :root {
+            /* Color Palette */
+            --primary-bg: linear-gradient(135deg, #0a0a0b 0%, #1c1c1e 50%, #2c2c2e 100%);
+            --secondary-bg: rgba(28, 28, 30, 0.85);
+            --card-bg: rgba(44, 44, 46, 0.9);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            
+            /* Accent Colors */
+            --accent-color: #007aff;
+            --accent-hover: #0056cc;
+            --success-color: #34c759;
+            --warning-color: #ff9500;
+            --error-color: #ff3b30;
+            --info-color: #5ac8fa;
+            
+            /* Text Colors */
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a6;
+            --text-tertiary: #6d6d70;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+            
+            /* Transitions */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+        
+        /* Reset & Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
-        :root {
-            --primary-bg: #0a0a0b;
-            --secondary-bg: rgba(28, 28, 30, 0.8);
-            --card-bg: rgba(44, 44, 46, 0.9);
-            --accent-color: #007aff;
-            --success-color: #34c759;
-            --warning-color: #ff9500;
-            --error-color: #ff3b30;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-tertiary: rgba(255, 255, 255, 0.5);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            --blur-bg: rgba(44, 44, 46, 0.7);
-        }
-
+        
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0a0a0b 0%, #1c1c1e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--primary-bg);
             color: var(--text-primary);
             line-height: 1.6;
-            min-height: 100vh;
             overflow-x: hidden;
+            min-height: 100vh;
         }
-
+        
+        /* Container & Layout */
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: var(--spacing-lg);
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 0;
-            background: var(--blur-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-2xl);
+            padding: var(--spacing-lg);
+            background: var(--glass-bg);
             border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px var(--shadow-color);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
         }
-
-        h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-color), var(--info-color));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-color), #5ac8fa);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 10px;
-            letter-spacing: -0.02em;
         }
-
-        .subtitle {
-            font-size: 1.2rem;
+        
+        .header-subtitle {
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            font-weight: 400;
+            margin-top: var(--spacing-xs);
         }
-
+        
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+        
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Upload Section */
+        .upload-section {
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent-color);
+            background: rgba(0, 122, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        /* Main Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        /* KPI Cards */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
         }
-
+        
         .kpi-card {
-            background: var(--blur-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 32px;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px var(--shadow-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
         }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-color), #5ac8fa);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
+        
         .kpi-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px var(--shadow-color);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.2);
         }
-
-        .kpi-card:hover::before {
-            opacity: 1;
-        }
-
+        
         .kpi-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
         }
-
+        
         .kpi-title {
             font-size: 0.9rem;
-            font-weight: 500;
             color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 500;
         }
-
-        .kpi-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+        
+        .kpi-trend {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
+            gap: var(--spacing-xs);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
         }
-
+        
+        .trend-positive {
+            color: var(--success-color);
+            background: rgba(52, 199, 89, 0.1);
+        }
+        
+        .trend-negative {
+            color: var(--error-color);
+            background: rgba(255, 59, 48, 0.1);
+        }
+        
         .kpi-value {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 8px;
-            letter-spacing: -0.02em;
+            margin-bottom: var(--spacing-xs);
         }
-
-        .kpi-change {
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        
+        .kpi-unit {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
-
-        .change-positive {
-            color: var(--success-color);
-        }
-
-        .change-negative {
-            color: var(--error-color);
-        }
-
-        .charts-grid {
+        
+        /* Chart Cards */
+        .chart-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
         }
-
+        
         .chart-card {
-            background: var(--blur-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 32px;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px var(--shadow-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
         }
-
+        
         .chart-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 40px var(--shadow-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
-
+        
+        .chart-header {
+            margin-bottom: var(--spacing-lg);
+        }
+        
         .chart-title {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 24px;
-            text-align: center;
+            margin-bottom: var(--spacing-xs);
         }
-
+        
+        .chart-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
         .chart-container {
             position: relative;
             height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin-bottom: var(--spacing-md);
         }
-
-        .chart-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
+        
+        /* Data Tables */
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-table th {
+            background: var(--glass-bg);
             color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
+        
+        .data-table td {
+            color: var(--text-primary);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-delivered {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success-color);
+        }
+        
+        .status-in-transit {
+            background: rgba(255, 149, 0, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .status-pending {
+            background: rgba(90, 200, 250, 0.2);
+            color: var(--info-color);
+        }
+        
+        .status-delayed {
+            background: rgba(255, 59, 48, 0.2);
+            color: var(--error-color);
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            min-width: 320px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform var(--transition-normal);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+        }
+        
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .notification.info {
+            border-left: 4px solid var(--info-color);
+        }
+        
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
             border: 3px solid var(--border-color);
             border-top: 3px solid var(--accent-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .chart-error {
-            text-align: center;
-            color: var(--text-tertiary);
-            font-style: italic;
-        }
-
-        .last-updated {
-            text-align: center;
-            color: var(--text-tertiary);
-            font-size: 0.9rem;
-            margin-top: 40px;
-            padding: 20px;
-            background: var(--blur-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-        }
-
+        
         /* Responsive Design */
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+        
         @media (max-width: 768px) {
             .container {
-                padding: 16px;
+                padding: var(--spacing-md);
             }
-
+            
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-lg);
+                text-align: center;
+            }
+            
+            .actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
             .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .chart-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
             }
-
-            .charts-grid {
+            
+            .table-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
             }
-
-            .kpi-card, .chart-card {
-                padding: 24px;
-            }
-
+            
             .chart-container {
                 height: 250px;
             }
+            
+            .notification {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+                transform: translateY(-100px);
+            }
+            
+            .notification.show {
+                transform: translateY(0);
+            }
         }
-
+        
         @media (max-width: 480px) {
-            .kpi-card, .chart-card {
-                padding: 20px;
+            .kpi-grid {
+                grid-template-columns: 1fr;
             }
-
+            
+            .btn {
+                padding: var(--spacing-sm);
+                font-size: 0.8rem;
+            }
+            
+            .header-title {
+                font-size: 1.5rem;
+            }
+            
             .kpi-value {
-                font-size: 2rem;
-            }
-
-            .chart-container {
-                height: 200px;
+                font-size: 1.8rem;
             }
         }
-
-        /* Chart.js fallback styles */
-        .chart-fallback {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            gap: 16px;
-        }
-
-        .chart-fallback.active {
-            display: flex;
-        }
-
-        .fallback-icon {
-            font-size: 3rem;
-            color: var(--text-tertiary);
-            opacity: 0.5;
-        }
-
-        .fallback-text {
-            color: var(--text-secondary);
-            font-size: 1rem;
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .header,
+            .upload-section,
+            .actions {
+                display: none;
+            }
+            
+            .kpi-card,
+            .chart-card,
+            .table-card {
+                background: white;
+                border: 1px solid #ccc;
+                box-shadow: none;
+                break-inside: avoid;
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
     <div class="container">
-        <header>
-            <h1>Supply Chain Hub</h1>
-            <p class="subtitle">Enterprise Analytics Dashboard</p>
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo">SCH</div>
+                <div>
+                    <div class="header-title">Supply Chain Hub</div>
+                    <div class="header-subtitle">Enterprise Dashboard & Analytics</div>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="refreshDashboard()">
+                    🔄 Aggiorna
+                </button>
+                <button class="btn btn-secondary" onclick="exportToPDF()">
+                    📄 Export PDF
+                </button>
+                <button class="btn btn-primary" onclick="exportToExcel()">
+                    📊 Export Excel
+                </button>
+            </div>
         </header>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
+                <div class="upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple>
+        </div>
 
         <!-- KPI Cards -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <span class="kpi-title">Total Revenue</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--success-color), #30d158);">
-                        <i class="fas fa-dollar-sign"></i>
+                    <div class="kpi-title">Fatturato Totale</div>
+                    <div class="kpi-trend trend-positive" id="revenue-trend">
+                        ↗ +12.5%
                     </div>
                 </div>
-                <div class="kpi-value" id="total-revenue">$2.5M</div>
-                <div class="kpi-change change-positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+12.5% vs last month</span>
-                </div>
+                <div class="kpi-value" id="total-revenue">€2.500.000</div>
+                <div class="kpi-unit">Ultimo trimestre</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <span class="kpi-title">Total Shipments</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--accent-color), #5ac8fa);">
-                        <i class="fas fa-shipping-fast"></i>
+                    <div class="kpi-title">Spedizioni Totali</div>
+                    <div class="kpi-trend trend-positive" id="shipments-trend">
+                        ↗ +8.3%
                     </div>
                 </div>
-                <div class="kpi-value" id="total-shipments">15,420</div>
-                <div class="kpi-change change-positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+8.3% vs last month</span>
-                </div>
+                <div class="kpi-value" id="total-shipments">15.420</div>
+                <div class="kpi-unit">Ultimo mese</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <span class="kpi-title">Avg Delivery Time</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, var(--warning-color), #ffcc02);">
-                        <i class="fas fa-clock"></i>
+                    <div class="kpi-title">Tempo Medio Consegna</div>
+                    <div class="kpi-trend trend-negative" id="delivery-trend">
+                        ↘ -0.3%
                     </div>
                 </div>
-                <div class="kpi-value" id="avg-delivery-time">3.2 days</div>
-                <div class="kpi-change change-positive">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>-0.3 days vs last month</span>
-                </div>
+                <div class="kpi-value" id="avg-delivery">3.2</div>
+                <div class="kpi-unit">giorni</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <span class="kpi-title">On-Time Rate</span>
-                    <div class="kpi-icon" style="background: linear-gradient(135deg, #34c759, #30d158);">
-                        <i class="fas fa-check-circle"></i>
+                    <div class="kpi-title">Tasso Puntualità</div>
+                    <div class="kpi-trend trend-positive" id="ontime-trend">
+                        ↗ +2.1%
                     </div>
                 </div>
-                <div class="kpi-value" id="on-time-rate">94.5%</div>
-                <div class="kpi-change change-positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+2.1% vs last month</span>
-                </div>
+                <div class="kpi-value" id="ontime-rate">94.5%</div>
+                <div class="kpi-unit">consegne puntuali</div>
             </div>
         </div>
 
         <!-- Charts -->
-        <div class="charts-grid">
+        <div class="chart-grid">
             <div class="chart-card">
-                <h3 class="chart-title">Monthly Revenue Trend</h3>
+                <div class="chart-header">
+                    <div class="chart-title">Trend Fatturato</div>
+                    <div class="chart-subtitle">Andamento mensile revenue</div>
+                </div>
                 <div class="chart-container">
-                    <div class="chart-loading" id="revenue-loading">
-                        <div class="loading-spinner"></div>
-                        <span>Loading chart...</span>
-                    </div>
-                    <canvas id="revenueChart" style="display: none;"></canvas>
-                    <div class="chart-fallback" id="revenue-fallback">
-                        <i class="fas fa-chart-line fallback-icon"></i>
-                        <div class="fallback-text">Chart temporarily unavailable<br>Revenue trending upward (+12.5%)</div>
-                    </div>
+                    <canvas id="revenueChart"></canvas>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 class="chart-title">Shipment Volume by Carrier</h3>
+                <div class="chart-header">
+                    <div class="chart-title">Spedizioni per Corriere</div>
+                    <div class="chart-subtitle">Distribuzione volumi</div>
+                </div>
                 <div class="chart-container">
-                    <div class="chart-loading" id="shipment-loading">
-                        <div class="loading-spinner"></div>
-                        <span>Loading chart...</span>
-                    </div>
-                    <canvas id="shipmentChart" style="display: none;"></canvas>
-                    <div class="chart-fallback" id="shipment-fallback">
-                        <i class="fas fa-chart-bar fallback-icon"></i>
-                        <div class="fallback-text">Chart temporarily unavailable<br>DHL leads with 3,420 shipments</div>
-                    </div>
+                    <canvas id="carriersChart"></canvas>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 class="chart-title">Delivery Performance</h3>
+                <div class="chart-header">
+                    <div class="chart-title">Performance Consegne</div>
+                    <div class="chart-subtitle">Stato spedizioni</div>
+                </div>
                 <div class="chart-container">
-                    <div class="chart-loading" id="performance-loading">
-                        <div class="loading-spinner"></div>
-                        <span>Loading chart...</span>
-                    </div>
-                    <canvas id="performanceChart" style="display: none;"></canvas>
-                    <div class="chart-fallback" id="performance-fallback">
-                        <i class="fas fa-chart-pie fallback-icon"></i>
-                        <div class="fallback-text">Chart temporarily unavailable<br>94.5% on-time delivery rate</div>
-                    </div>
+                    <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 class="chart-title">Geographic Distribution</h3>
+                <div class="chart-header">
+                    <div class="chart-title">Distribuzione Geografica</div>
+                    <div class="chart-subtitle">Spedizioni per regione</div>
+                </div>
                 <div class="chart-container">
-                    <div class="chart-loading" id="geographic-loading">
-                        <div class="loading-spinner"></div>
-                        <span>Loading chart...</span>
-                    </div>
-                    <canvas id="geographicChart" style="display: none;"></canvas>
-                    <div class="chart-fallback" id="geographic-fallback">
-                        <i class="fas fa-globe fallback-icon"></i>
-                        <div class="fallback-text">Chart temporarily unavailable<br>North America: 45%, Europe: 35%</div>
-                    </div>
+                    <canvas id="geographicChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="last-updated" id="last-updated">
-            Last updated: <span id="update-time">Loading...</span>
+        <!-- Data Tables -->
+        <div class="table-grid">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Spedizioni Recenti</div>
+                    <div class="chart-subtitle">Ultimi 5 movimenti</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="shipmentsTable">
+                        <thead>
+                            <tr>
+                                <th>Tracking ID</th>
+                                <th>Destinazione</th>
+                                <th>Corriere</th>
+                                <th>Stato</th>
+                                <th>Valore</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Corrieri Attivi</div>
+                    <div class="chart-subtitle">Partner logistici</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="carriersTable">
+                        <thead>
+                            <tr>
+                                <th>Corriere</th>
+                                <th>Spedizioni</th>
+                                <th>Tasso Successo</th>
+                                <th>Tempo Medio</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Chart.js with multiple CDN fallbacks -->
     <script>
-        // Chart.js loading with multiple CDN fallbacks
-        let chartJsLoaded = false;
-        const chartCDNs = [
-            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js',
-            'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js',
-            'https://cdn.skypack.dev/chart.js@4.4.0',
-            'https://esm.sh/chart.js@4.4.0'
-        ];
-
-        async function loadChartJS() {
-            for (let i = 0; i < chartCDNs.length; i++) {
-                try {
-                    console.log(`Attempting to load Chart.js from CDN ${i + 1}:`, chartCDNs[i]);
-                    
-                    await new Promise((resolve, reject) => {
-                        const script = document.createElement('script');
-                        script.src = chartCDNs[i];
-                        script.onload = () => {
-                            console.log(`✅ Chart.js loaded successfully from CDN ${i + 1}`);
-                            chartJsLoaded = true;
-                            resolve();
-                        };
-                        script.onerror = () => {
-                            console.log(`❌ Failed to load Chart.js from CDN ${i + 1}`);
-                            reject(new Error(`Failed to load from ${chartCDNs[i]}`));
-                        };
-                        
-                        // Set timeout for each attempt
-                        setTimeout(() => {
-                            if (!chartJsLoaded) {
-                                reject(new Error('Timeout loading Chart.js'));
-                            }
-                        }, 5000);
-                        
-                        document.head.appendChild(script);
-                    });
-
-                    // If we get here, Chart.js loaded successfully
-                    if (typeof Chart !== 'undefined') {
-                        console.log('✅ Chart.js is available and ready');
-                        return true;
-                    }
-                } catch (error) {
-                    console.log(`Failed CDN ${i + 1}:`, error.message);
-                    if (i === chartCDNs.length - 1) {
-                        console.error('❌ All Chart.js CDNs failed. Showing fallback UI.');
-                        showChartFallbacks();
-                        return false;
-                    }
+        // Global Dashboard Data Store
+        let dashboardData = {
+            kpi: {
+                totalRevenue: 2500000,
+                totalShipments: 15420,
+                avgDeliveryTime: 3.2,
+                onTimeRate: 94.5,
+                trends: {
+                    revenue: 12.5,
+                    shipments: 8.3,
+                    delivery: -0.3,
+                    onTime: 2.1
                 }
-            }
-            return false;
-        }
-
-        function showChartFallbacks() {
-            const charts = ['revenue', 'shipment', 'performance', 'geographic'];
-            charts.forEach(chart => {
-                const loading = document.getElementById(`${chart}-loading`);
-                const fallback = document.getElementById(`${chart}-fallback`);
-                if (loading) loading.style.display = 'none';
-                if (fallback) fallback.classList.add('active');
-            });
-        }
-
-        function hideLoadingSpinners() {
-            const charts = ['revenue', 'shipment', 'performance', 'geographic'];
-            charts.forEach(chart => {
-                const loading = document.getElementById(`${chart}-loading`);
-                if (loading) loading.style.display = 'none';
-            });
-        }
-
-        // Dashboard data with fallbacks
-        const fallbackData = {
-            kpis: {
-                total_revenue: 2500000,
-                total_shipments: 15420,
-                avg_delivery_time: 3.2,
-                on_time_rate: 94.5,
-                active_carriers: 28
             },
-            charts: {
-                revenue: [180000, 220000, 195000, 275000, 310000, 285000],
-                shipments: { DHL: 3420, FedEx: 2890, UPS: 4150, USPS: 3680 },
-                performance: { onTime: 94.5, delayed: 4.2, failed: 1.3 },
-                geographic: { 
-                    'North America': 45, 
-                    'Europe': 35, 
-                    'Asia': 15, 
-                    'Others': 5 
+            revenue: [
+                { month: 'Dec 2024', value: 380000 },
+                { month: 'Gen 2025', value: 420000 },
+                { month: 'Feb 2025', value: 395000 },
+                { month: 'Mar 2025', value: 445000 },
+                { month: 'Apr 2025', value: 460000 },
+                { month: 'Mag 2025', value: 485000 }
+            ],
+            shipments: {
+                'DHL': 4850,
+                'FedEx': 3920,
+                'UPS': 3140,
+                'TNT': 2180,
+                'GLS': 1330
+            },
+            performance: {
+                onTime: 94.5,
+                delayed: 4.2,
+                failed: 1.3
+            },
+            geographic: {
+                'Nord Italia': 35,
+                'Centro Italia': 28,
+                'Sud Italia': 22,
+                'Isole': 15
+            },
+            shipmentsData: [
+                {
+                    trackingId: 'SP-2025-001',
+                    destination: 'Milano, IT',
+                    carrier: 'DHL',
+                    status: 'delivered',
+                    value: 1850
+                },
+                {
+                    trackingId: 'SP-2025-002',
+                    destination: 'Roma, IT',
+                    carrier: 'FedEx',
+                    status: 'in-transit',
+                    value: 920
+                },
+                {
+                    trackingId: 'SP-2025-003',
+                    destination: 'Napoli, IT',
+                    carrier: 'UPS',
+                    status: 'delivered',
+                    value: 2340
+                },
+                {
+                    trackingId: 'SP-2025-004',
+                    destination: 'Torino, IT',
+                    carrier: 'TNT',
+                    status: 'pending',
+                    value: 675
+                },
+                {
+                    trackingId: 'SP-2025-005',
+                    destination: 'Bologna, IT',
+                    carrier: 'GLS',
+                    status: 'delayed',
+                    value: 1520
                 }
-            }
+            ],
+            carriersData: [
+                {
+                    name: 'DHL',
+                    shipments: 4850,
+                    successRate: 96.2,
+                    avgTime: 2.8,
+                    rating: 4.8
+                },
+                {
+                    name: 'FedEx',
+                    shipments: 3920,
+                    successRate: 94.7,
+                    avgTime: 3.1,
+                    rating: 4.6
+                },
+                {
+                    name: 'UPS',
+                    shipments: 3140,
+                    successRate: 93.8,
+                    avgTime: 3.4,
+                    rating: 4.5
+                },
+                {
+                    name: 'TNT',
+                    shipments: 2180,
+                    successRate: 92.1,
+                    avgTime: 3.7,
+                    rating: 4.2
+                },
+                {
+                    name: 'GLS',
+                    shipments: 1330,
+                    successRate: 90.5,
+                    avgTime: 4.1,
+                    rating: 4.0
+                }
+            ],
+            rawData: []
         };
 
-        // API functions with fallbacks
-        async function fetchWithFallback(url, fallbackData) {
+        // Chart instances storage
+        let charts = {};
+
+        // Notification System
+        function showNotification(title, message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title">${title}</div>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // File Upload System
+        function setupFileUpload() {
+            const uploadArea = document.querySelector('.upload-area');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            // File input handler
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
+            });
+        }
+
+        // File Upload Handler
+        function handleFileUpload(files) {
+            if (!files.length) return;
+
+            showNotification('Upload in corso', `Elaborazione di ${files.length} file...`, 'info');
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                reader.onload = (e) => {
+                    try {
+                        if (fileExtension === 'csv') {
+                            processCSV(e.target.result, file.name);
+                        } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                            processExcel(e.target.result, file.name);
+                        } else {
+                            showNotification('Errore', `Formato file non supportato: ${file.name}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
+                    }
+                };
+
+                if (fileExtension === 'csv') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+        }
+
+        // CSV Processing
+        function processCSV(csvData, filename) {
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return await response.json();
+                Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    delimitersToGuess: [',', '\t', '|', ';'],
+                    complete: (results) => {
+                        if (results.errors.length > 0) {
+                            console.warn('CSV parsing warnings:', results.errors);
+                        }
+                        
+                        const cleanedData = results.data.map(row => {
+                            const cleanedRow = {};
+                            for (const [key, value] of Object.entries(row)) {
+                                const cleanKey = key.trim().toLowerCase();
+                                cleanedRow[cleanKey] = value;
+                            }
+                            return cleanedRow;
+                        });
+
+                        processRawData(cleanedData, filename);
+                        showNotification('Successo', `File CSV elaborato: ${filename}`, 'success');
+                    },
+                    error: (error) => {
+                        console.error('CSV parsing error:', error);
+                        showNotification('Errore', `Errore nel parsing CSV: ${filename}`, 'error');
+                    }
+                });
             } catch (error) {
-                console.log(`API call failed: ${url}. Using fallback data.`, error);
-                return fallbackData;
+                console.error('CSV processing error:', error);
+                showNotification('Errore', `Errore nell'elaborazione CSV: ${filename}`, 'error');
+            }
+        }
+
+        // Excel Processing
+        function processExcel(arrayBuffer, filename) {
+            try {
+                const workbook = XLSX.read(arrayBuffer, {
+                    cellStyles: true,
+                    cellFormulas: true,
+                    cellDates: true,
+                    cellNF: true,
+                    sheetStubs: true
+                });
+
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                    header: 1,
+                    defval: '',
+                    blankrows: false
+                });
+
+                if (jsonData.length === 0) {
+                    showNotification('Avviso', `File Excel vuoto: ${filename}`, 'info');
+                    return;
+                }
+
+                // Convert to object format with headers
+                const headers = jsonData[0].map(h => String(h).trim().toLowerCase());
+                const processedData = jsonData.slice(1).map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index] || '';
+                    });
+                    return obj;
+                });
+
+                processRawData(processedData, filename);
+                showNotification('Successo', `File Excel elaborato: ${filename}`, 'success');
+            } catch (error) {
+                console.error('Excel processing error:', error);
+                showNotification('Errore', `Errore nell'elaborazione Excel: ${filename}`, 'error');
+            }
+        }
+
+        // Raw Data Processing
+        function processRawData(data, filename) {
+            try {
+                dashboardData.rawData = [...dashboardData.rawData, ...data];
+
+                // Detect data type and process accordingly
+                const sampleRow = data[0];
+                const keys = Object.keys(sampleRow);
+
+                // Check for shipment data patterns
+                const shipmentKeys = ['tracking_id', 'trackingid', 'id', 'destination', 'carrier', 'status', 'value', 'amount'];
+                const hasShipmentData = shipmentKeys.some(key => 
+                    keys.some(k => k.includes(key))
+                );
+
+                if (hasShipmentData) {
+                    processShipmentData(data);
+                } else {
+                    processGenericData(data);
+                }
+
+                updateDashboard();
+            } catch (error) {
+                console.error('Raw data processing error:', error);
+                showNotification('Errore', 'Errore nell\'elaborazione dei dati', 'error');
+            }
+        }
+
+        // Shipment Data Processing
+        function processShipmentData(data) {
+            try {
+                const processedShipments = data.map(row => {
+                    const normalizedRow = {};
+                    
+                    // Normalize tracking ID
+                    normalizedRow.trackingId = row.tracking_id || row.trackingid || row.id || `SP-${Date.now()}`;
+                    
+                    // Normalize destination
+                    normalizedRow.destination = row.destination || row.dest || row.address || 'N/A';
+                    
+                    // Normalize carrier
+                    normalizedRow.carrier = row.carrier || row.courier || row.shipper || 'Unknown';
+                    
+                    // Normalize status
+                    let status = (row.status || row.state || 'pending').toLowerCase();
+                    if (status.includes('deliver')) status = 'delivered';
+                    else if (status.includes('transit') || status.includes('shipping')) status = 'in-transit';
+                    else if (status.includes('delay')) status = 'delayed';
+                    else if (status.includes('pend')) status = 'pending';
+                    normalizedRow.status = status;
+                    
+                    // Normalize value
+                    const value = row.value || row.amount || row.cost || row.price || 0;
+                    normalizedRow.value = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
+                    
+                    // Normalize dates
+                    normalizedRow.shipDate = row.ship_date || row.shipdate || row.date || new Date().toISOString().split('T')[0];
+                    normalizedRow.expectedDelivery = row.expected_delivery || row.expected_date || row.delivery_date || '';
+                    
+                    return normalizedRow;
+                });
+
+                // Update dashboard data
+                dashboardData.shipmentsData = [...dashboardData.shipmentsData, ...processedShipments];
+
+                // Update carriers data
+                const carrierStats = {};
+                processedShipments.forEach(shipment => {
+                    if (!carrierStats[shipment.carrier]) {
+                        carrierStats[shipment.carrier] = {
+                            name: shipment.carrier,
+                            shipments: 0,
+                            delivered: 0,
+                            totalValue: 0
+                        };
+                    }
+                    carrierStats[shipment.carrier].shipments++;
+                    carrierStats[shipment.carrier].totalValue += shipment.value;
+                    if (shipment.status === 'delivered') {
+                        carrierStats[shipment.carrier].delivered++;
+                    }
+                });
+
+                // Update shipments count for existing carriers
+                Object.values(carrierStats).forEach(carrier => {
+                    const existingCarrier = dashboardData.carriersData.find(c => c.name === carrier.name);
+                    if (existingCarrier) {
+                        existingCarrier.shipments += carrier.shipments;
+                    } else {
+                        dashboardData.carriersData.push({
+                            name: carrier.name,
+                            shipments: carrier.shipments,
+                            successRate: (carrier.delivered / carrier.shipments * 100).toFixed(1),
+                            avgTime: (Math.random() * 2 + 2).toFixed(1), // Placeholder
+                            rating: (Math.random() * 1.5 + 3.5).toFixed(1) // Placeholder
+                        });
+                    }
+                    
+                    // Update shipments count in chart data
+                    if (!dashboardData.shipments[carrier.name]) {
+                        dashboardData.shipments[carrier.name] = 0;
+                    }
+                    dashboardData.shipments[carrier.name] += carrier.shipments;
+                });
+
+                // Update KPIs
+                const totalValue = processedShipments.reduce((sum, shipment) => sum + shipment.value, 0);
+                dashboardData.kpi.totalRevenue += totalValue;
+                dashboardData.kpi.totalShipments += processedShipments.length;
+
+                // Calculate performance metrics
+                const deliveredCount = processedShipments.filter(s => s.status === 'delivered').length;
+                const delayedCount = processedShipments.filter(s => s.status === 'delayed').length;
+                const totalProcessed = processedShipments.length;
+
+                if (totalProcessed > 0) {
+                    const onTimeRate = (deliveredCount / totalProcessed) * 100;
+                    const delayedRate = (delayedCount / totalProcessed) * 100;
+                    const failedRate = 100 - onTimeRate - delayedRate;
+
+                    dashboardData.performance = {
+                        onTime: onTimeRate.toFixed(1),
+                        delayed: delayedRate.toFixed(1),
+                        failed: failedRate.toFixed(1)
+                    };
+
+                    dashboardData.kpi.onTimeRate = onTimeRate.toFixed(1);
+                }
+
+            } catch (error) {
+                console.error('Shipment data processing error:', error);
+                showNotification('Errore', 'Errore nell\'elaborazione dei dati di spedizione', 'error');
+            }
+        }
+
+        // Generic Data Processing
+        function processGenericData(data) {
+            try {
+                // Basic data analysis for generic datasets
+                const sampleRow = data[0];
+                const numericColumns = [];
+                
+                Object.keys(sampleRow).forEach(key => {
+                    const values = data.map(row => row[key]).filter(v => v !== null && v !== undefined && v !== '');
+                    const numericValues = values.filter(v => !isNaN(parseFloat(v)));
+                    
+                    if (numericValues.length > values.length * 0.7) { // 70% numeric threshold
+                        numericColumns.push({
+                            column: key,
+                            sum: numericValues.reduce((sum, val) => sum + parseFloat(val), 0),
+                            avg: numericValues.reduce((sum, val) => sum + parseFloat(val), 0) / numericValues.length,
+                            count: numericValues.length
+                        });
+                    }
+                });
+
+                // Update revenue if revenue-like columns found
+                const revenueColumns = numericColumns.filter(col => 
+                    col.column.toLowerCase().includes('revenue') ||
+                    col.column.toLowerCase().includes('sales') ||
+                    col.column.toLowerCase().includes('amount') ||
+                    col.column.toLowerCase().includes('value')
+                );
+
+                if (revenueColumns.length > 0) {
+                    const totalRevenue = revenueColumns.reduce((sum, col) => sum + col.sum, 0);
+                    dashboardData.kpi.totalRevenue += totalRevenue;
+                }
+
+                showNotification('Info', `Elaborati ${data.length} record generici`, 'info');
+            } catch (error) {
+                console.error('Generic data processing error:', error);
+                showNotification('Errore', 'Errore nell\'elaborazione dei dati generici', 'error');
+            }
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            try {
+                updateKPIs();
+                updateTables();
+                updateCharts();
+            } catch (error) {
+                console.error('Dashboard update error:', error);
+                showNotification('Errore', 'Errore nell\'aggiornamento della dashboard', 'error');
             }
         }
 
         // Update KPIs
-        function updateKPIs(data) {
+        function updateKPIs() {
             try {
+                // Update KPI values
                 document.getElementById('total-revenue').textContent = 
-                    `$${(data.total_revenue / 1000000).toFixed(1)}M`;
+                    `€${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`;
                 document.getElementById('total-shipments').textContent = 
-                    data.total_shipments.toLocaleString();
-                document.getElementById('avg-delivery-time').textContent = 
-                    `${data.avg_delivery_time} days`;
-                document.getElementById('on-time-rate').textContent = 
-                    `${data.on_time_rate}%`;
+                    dashboardData.kpi.totalShipments.toLocaleString('it-IT');
+                document.getElementById('avg-delivery').textContent = 
+                    dashboardData.kpi.avgDeliveryTime.toString();
+                document.getElementById('ontime-rate').textContent = 
+                    `${dashboardData.kpi.onTimeRate}%`;
+
+                // Update trend indicators
+                const updateTrend = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        const isPositive = value >= 0;
+                        element.className = `kpi-trend ${isPositive ? 'trend-positive' : 'trend-negative'}`;
+                        element.textContent = `${isPositive ? '↗' : '↘'} ${isPositive ? '+' : ''}${value}%`;
+                    }
+                };
+
+                updateTrend('revenue-trend', dashboardData.kpi.trends.revenue);
+                updateTrend('shipments-trend', dashboardData.kpi.trends.shipments);
+                updateTrend('delivery-trend', dashboardData.kpi.trends.delivery);
+                updateTrend('ontime-trend', dashboardData.kpi.trends.onTime);
             } catch (error) {
-                console.error('Error updating KPIs:', error);
+                console.error('KPI update error:', error);
             }
         }
 
-        // Create charts with enhanced error handling
-        function createCharts(data) {
-            if (!chartJsLoaded || typeof Chart === 'undefined') {
-                console.log('Chart.js not available, showing fallbacks');
-                showChartFallbacks();
-                return;
-            }
-
+        // Update Tables
+        function updateTables() {
             try {
-                hideLoadingSpinners();
+                // Update shipments table
+                const shipmentsTableBody = document.querySelector('#shipmentsTable tbody');
+                shipmentsTableBody.innerHTML = '';
 
-                // Revenue Chart
+                dashboardData.shipmentsData.slice(0, 5).forEach(shipment => {
+                    const row = shipmentsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${shipment.trackingId}</td>
+                        <td>${shipment.destination}</td>
+                        <td>${shipment.carrier}</td>
+                        <td><span class="status-badge status-${shipment.status}">${shipment.status}</span></td>
+                        <td>€${shipment.value.toLocaleString('it-IT')}</td>
+                    `;
+                });
+
+                // Update carriers table
+                const carriersTableBody = document.querySelector('#carriersTable tbody');
+                carriersTableBody.innerHTML = '';
+
+                dashboardData.carriersData.slice(0, 5).forEach(carrier => {
+                    const row = carriersTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${carrier.name}</td>
+                        <td>${carrier.shipments.toLocaleString('it-IT')}</td>
+                        <td>${carrier.successRate}%</td>
+                        <td>${carrier.avgTime} giorni</td>
+                        <td>${carrier.rating}/5</td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Tables update error:', error);
+            }
+        }
+
+        // Update Charts
+        function updateCharts() {
+            try {
+                // Destroy existing charts
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                charts = {};
+
+                // Recreate all charts
+                initCharts();
+            } catch (error) {
+                console.error('Charts update error:', error);
+            }
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            try {
+                // Revenue Chart (Line)
                 const revenueCtx = document.getElementById('revenueChart');
                 if (revenueCtx) {
-                    revenueCtx.style.display = 'block';
-                    new Chart(revenueCtx, {
+                    charts.revenue = new Chart(revenueCtx, {
                         type: 'line',
                         data: {
-                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            labels: dashboardData.revenue.map(item => item.month),
                             datasets: [{
-                                label: 'Revenue',
-                                data: data.revenue,
+                                label: 'Fatturato Mensile',
+                                data: dashboardData.revenue.map(item => item.value),
                                 borderColor: '#007aff',
                                 backgroundColor: 'rgba(0, 122, 255, 0.1)',
                                 borderWidth: 3,
                                 fill: true,
-                                tension: 0.4
+                                tension: 0.4,
+                                pointBackgroundColor: '#007aff',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false }
+                                legend: {
+                                    display: false
+                                }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
-                                },
                                 x: {
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#a1a1a6'
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#a1a1a6',
+                                        callback: function(value) {
+                                            return '€' + (value / 1000) + 'K';
+                                        }
+                                    }
                                 }
                             }
                         }
                     });
                 }
 
-                // Shipment Chart
-                const shipmentCtx = document.getElementById('shipmentChart');
-                if (shipmentCtx) {
-                    shipmentCtx.style.display = 'block';
-                    new Chart(shipmentCtx, {
+                // Carriers Chart (Bar)
+                const carriersCtx = document.getElementById('carriersChart');
+                if (carriersCtx) {
+                    const carriersData = Object.entries(dashboardData.shipments);
+                    charts.carriers = new Chart(carriersCtx, {
                         type: 'bar',
                         data: {
-                            labels: Object.keys(data.shipments),
+                            labels: carriersData.map(([name]) => name),
                             datasets: [{
-                                label: 'Shipments',
-                                data: Object.values(data.shipments),
+                                label: 'Spedizioni',
+                                data: carriersData.map(([, count]) => count),
                                 backgroundColor: [
                                     '#007aff',
                                     '#34c759',
                                     '#ff9500',
+                                    '#ff3b30',
                                     '#5ac8fa'
                                 ],
-                                borderRadius: 8
+                                borderRadius: 8,
+                                borderSkipped: false
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false }
+                                legend: {
+                                    display: false
+                                }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
-                                },
                                 x: {
-                                    grid: { display: false },
-                                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#a1a1a6'
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#a1a1a6'
+                                    }
                                 }
                             }
                         }
                     });
                 }
 
-                // Performance Chart
+                // Performance Chart (Doughnut)
                 const performanceCtx = document.getElementById('performanceChart');
                 if (performanceCtx) {
-                    performanceCtx.style.display = 'block';
-                    new Chart(performanceCtx, {
+                    charts.performance = new Chart(performanceCtx, {
                         type: 'doughnut',
                         data: {
-                            labels: ['On Time', 'Delayed', 'Failed'],
+                            labels: ['Puntuali', 'In Ritardo', 'Fallite'],
                             datasets: [{
-                                data: [data.performance.onTime, data.performance.delayed, data.performance.failed],
-                                backgroundColor: ['#34c759', '#ff9500', '#ff3b30'],
-                                borderWidth: 0
+                                data: [
+                                    parseFloat(dashboardData.performance.onTime),
+                                    parseFloat(dashboardData.performance.delayed),
+                                    parseFloat(dashboardData.performance.failed)
+                                ],
+                                backgroundColor: [
+                                    '#34c759',
+                                    '#ff9500',
+                                    '#ff3b30'
+                                ],
+                                borderWidth: 0,
+                                cutout: '70%'
                             }]
                         },
                         options: {
@@ -686,30 +1509,40 @@
                             plugins: {
                                 legend: {
                                     position: 'bottom',
-                                    labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                                    labels: {
+                                        color: '#a1a1a6',
+                                        usePointStyle: true,
+                                        padding: 20
+                                    }
                                 }
                             }
                         }
                     });
                 }
 
-                // Geographic Chart
+                // Geographic Chart (Polar Area)
                 const geographicCtx = document.getElementById('geographicChart');
                 if (geographicCtx) {
-                    geographicCtx.style.display = 'block';
-                    new Chart(geographicCtx, {
+                    const geoData = Object.entries(dashboardData.geographic);
+                    charts.geographic = new Chart(geographicCtx, {
                         type: 'polarArea',
                         data: {
-                            labels: Object.keys(data.geographic),
+                            labels: geoData.map(([region]) => region),
                             datasets: [{
-                                data: Object.values(data.geographic),
+                                data: geoData.map(([, percentage]) => percentage),
                                 backgroundColor: [
                                     'rgba(0, 122, 255, 0.8)',
                                     'rgba(52, 199, 89, 0.8)',
                                     'rgba(255, 149, 0, 0.8)',
                                     'rgba(90, 200, 250, 0.8)'
                                 ],
-                                borderWidth: 0
+                                borderColor: [
+                                    '#007aff',
+                                    '#34c759',
+                                    '#ff9500',
+                                    '#5ac8fa'
+                                ],
+                                borderWidth: 2
                             }]
                         },
                         options: {
@@ -718,87 +1551,325 @@
                             plugins: {
                                 legend: {
                                     position: 'bottom',
-                                    labels: { color: 'rgba(255, 255, 255, 0.7)' }
+                                    labels: {
+                                        color: '#a1a1a6',
+                                        usePointStyle: true,
+                                        padding: 15
+                                    }
                                 }
                             },
                             scales: {
                                 r: {
-                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    },
+                                    ticks: {
+                                        color: '#a1a1a6',
+                                        backdropColor: 'transparent'
+                                    }
                                 }
                             }
                         }
                     });
                 }
-
             } catch (error) {
-                console.error('Error creating charts:', error);
-                showChartFallbacks();
+                console.error('Charts initialization error:', error);
+                showNotification('Avviso', 'Alcuni grafici potrebbero non essere disponibili', 'info');
             }
         }
 
-        // Initialize dashboard
-        async function initializeDashboard() {
-            console.log('🚀 Initializing Supply Chain Hub Dashboard...');
-            
-            // Update timestamp
-            document.getElementById('update-time').textContent = new Date().toLocaleString();
-            
+        // Export to PDF
+        function exportToPDF() {
             try {
-                // Load Chart.js with fallbacks
-                const chartLoaded = await loadChartJS();
+                showNotification('Export PDF', 'Generazione report PDF in corso...', 'info');
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Header
+                doc.setFontSize(20);
+                doc.text('Supply Chain Hub - Report', 20, 30);
                 
-                // Fetch data with fallbacks
-                const [kpiData, chartData] = await Promise.all([
-                    fetchWithFallback('/api/dashboard-stats', fallbackData.kpis),
-                    fetchWithFallback('/api/analytics/2024/12', fallbackData.charts)
-                ]);
+                doc.setFontSize(12);
+                doc.text(`Data generazione: ${new Date().toLocaleDateString('it-IT')}`, 20, 45);
+
+                // KPIs
+                doc.setFontSize(16);
+                doc.text('Indicatori Chiave di Performance', 20, 65);
                 
-                // Update UI
-                updateKPIs(kpiData);
+                doc.setFontSize(12);
+                let yPos = 80;
+                doc.text(`Fatturato Totale: €${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`, 20, yPos);
+                yPos += 10;
+                doc.text(`Spedizioni Totali: ${dashboardData.kpi.totalShipments.toLocaleString('it-IT')}`, 20, yPos);
+                yPos += 10;
+                doc.text(`Tempo Medio Consegna: ${dashboardData.kpi.avgDeliveryTime} giorni`, 20, yPos);
+                yPos += 10;
+                doc.text(`Tasso Puntualità: ${dashboardData.kpi.onTimeRate}%`, 20, yPos);
+
+                // Shipments Table
+                yPos += 30;
+                doc.setFontSize(16);
+                doc.text('Spedizioni Recenti', 20, yPos);
                 
-                if (chartLoaded) {
-                    createCharts(chartData);
-                } else {
-                    showChartFallbacks();
+                yPos += 15;
+                doc.setFontSize(10);
+                doc.text('ID Tracking', 20, yPos);
+                doc.text('Destinazione', 60, yPos);
+                doc.text('Corriere', 110, yPos);
+                doc.text('Stato', 140, yPos);
+                doc.text('Valore', 170, yPos);
+                
+                yPos += 5;
+                dashboardData.shipmentsData.slice(0, 10).forEach(shipment => {
+                    yPos += 10;
+                    doc.text(shipment.trackingId, 20, yPos);
+                    doc.text(shipment.destination, 60, yPos);
+                    doc.text(shipment.carrier, 110, yPos);
+                    doc.text(shipment.status, 140, yPos);
+                    doc.text(`€${shipment.value.toLocaleString('it-IT')}`, 170, yPos);
+                });
+
+                // Carriers Performance
+                if (yPos > 220) {
+                    doc.addPage();
+                    yPos = 30;
                 }
+
+                yPos += 20;
+                doc.setFontSize(16);
+                doc.text('Performance Corrieri', 20, yPos);
                 
-                console.log('✅ Dashboard initialized successfully');
+                yPos += 15;
+                doc.setFontSize(10);
+                doc.text('Corriere', 20, yPos);
+                doc.text('Spedizioni', 60, yPos);
+                doc.text('Tasso Successo', 110, yPos);
+                doc.text('Tempo Medio', 150, yPos);
+                doc.text('Rating', 180, yPos);
                 
+                yPos += 5;
+                dashboardData.carriersData.slice(0, 10).forEach(carrier => {
+                    yPos += 10;
+                    doc.text(carrier.name, 20, yPos);
+                    doc.text(carrier.shipments.toString(), 60, yPos);
+                    doc.text(`${carrier.successRate}%`, 110, yPos);
+                    doc.text(`${carrier.avgTime} gg`, 150, yPos);
+                    doc.text(`${carrier.rating}/5`, 180, yPos);
+                });
+
+                // Save PDF
+                doc.save(`supply-chain-report-${new Date().toISOString().split('T')[0]}.pdf`);
+                showNotification('Successo', 'Report PDF generato con successo', 'success');
             } catch (error) {
-                console.error('❌ Dashboard initialization error:', error);
-                // Still show fallback data even if everything fails
-                updateKPIs(fallbackData.kpis);
-                showChartFallbacks();
+                console.error('PDF export error:', error);
+                showNotification('Errore', 'Errore nella generazione del PDF', 'error');
             }
         }
 
-        // Auto-refresh every 5 minutes
-        function setupAutoRefresh() {
-            setInterval(() => {
-                console.log('🔄 Auto-refreshing dashboard data...');
-                initializeDashboard();
-            }, 300000); // 5 minutes
+        // Export to Excel
+        function exportToExcel() {
+            try {
+                showNotification('Export Excel', 'Generazione file Excel in corso...', 'info');
+
+                const wb = XLSX.utils.book_new();
+
+                // KPIs Sheet
+                const kpiData = [
+                    ['Indicatore', 'Valore', 'Trend'],
+                    ['Fatturato Totale', `€${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`, `${dashboardData.kpi.trends.revenue}%`],
+                    ['Spedizioni Totali', dashboardData.kpi.totalShipments, `${dashboardData.kpi.trends.shipments}%`],
+                    ['Tempo Medio Consegna', `${dashboardData.kpi.avgDeliveryTime} giorni`, `${dashboardData.kpi.trends.delivery}%`],
+                    ['Tasso Puntualità', `${dashboardData.kpi.onTimeRate}%`, `${dashboardData.kpi.trends.onTime}%`]
+                ];
+                const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+                XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
+
+                // Shipments Sheet
+                const shipmentsData = [
+                    ['Tracking ID', 'Destinazione', 'Corriere', 'Stato', 'Valore', 'Data Spedizione', 'Consegna Prevista']
+                ];
+                dashboardData.shipmentsData.forEach(shipment => {
+                    shipmentsData.push([
+                        shipment.trackingId,
+                        shipment.destination,
+                        shipment.carrier,
+                        shipment.status,
+                        shipment.value,
+                        shipment.shipDate || '',
+                        shipment.expectedDelivery || ''
+                    ]);
+                });
+                const shipmentsSheet = XLSX.utils.aoa_to_sheet(shipmentsData);
+                XLSX.utils.book_append_sheet(wb, shipmentsSheet, 'Spedizioni');
+
+                // Carriers Sheet
+                const carriersData = [
+                    ['Corriere', 'Spedizioni', 'Tasso Successo', 'Tempo Medio', 'Rating']
+                ];
+                dashboardData.carriersData.forEach(carrier => {
+                    carriersData.push([
+                        carrier.name,
+                        carrier.shipments,
+                        `${carrier.successRate}%`,
+                        `${carrier.avgTime} giorni`,
+                        `${carrier.rating}/5`
+                    ]);
+                });
+                const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData);
+                XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri');
+
+                // Revenue Sheet
+                const revenueData = [
+                    ['Mese', 'Fatturato']
+                ];
+                dashboardData.revenue.forEach(item => {
+                    revenueData.push([item.month, item.value]);
+                });
+                const revenueSheet = XLSX.utils.aoa_to_sheet(revenueData);
+                XLSX.utils.book_append_sheet(wb, revenueSheet, 'Fatturato');
+
+                // Performance Sheet
+                const performanceData = [
+                    ['Categoria', 'Percentuale'],
+                    ['Consegne Puntuali', `${dashboardData.performance.onTime}%`],
+                    ['Consegne in Ritardo', `${dashboardData.performance.delayed}%`],
+                    ['Consegne Fallite', `${dashboardData.performance.failed}%`]
+                ];
+                const performanceSheet = XLSX.utils.aoa_to_sheet(performanceData);
+                XLSX.utils.book_append_sheet(wb, performanceSheet, 'Performance');
+
+                // Geographic Sheet
+                const geographicData = [
+                    ['Regione', 'Percentuale']
+                ];
+                Object.entries(dashboardData.geographic).forEach(([region, percentage]) => {
+                    geographicData.push([region, `${percentage}%`]);
+                });
+                const geographicSheet = XLSX.utils.aoa_to_sheet(geographicData);
+                XLSX.utils.book_append_sheet(wb, geographicSheet, 'Distribuzione Geografica');
+
+                // Save Excel file
+                XLSX.writeFile(wb, `supply-chain-data-${new Date().toISOString().split('T')[0]}.xlsx`);
+                showNotification('Successo', 'File Excel generato con successo', 'success');
+            } catch (error) {
+                console.error('Excel export error:', error);
+                showNotification('Errore', 'Errore nella generazione del file Excel', 'error');
+            }
+        }
+
+        // Refresh Dashboard
+        function refreshDashboard() {
+            try {
+                showNotification('Aggiornamento', 'Aggiornamento dashboard in corso...', 'info');
+                
+                // Add small random variations to simulate real-time updates
+                dashboardData.kpi.totalRevenue += Math.floor(Math.random() * 10000) - 5000;
+                dashboardData.kpi.totalShipments += Math.floor(Math.random() * 20) - 10;
+                dashboardData.kpi.avgDeliveryTime += (Math.random() * 0.2) - 0.1;
+                dashboardData.kpi.onTimeRate += (Math.random() * 2) - 1;
+
+                // Ensure reasonable bounds
+                dashboardData.kpi.totalRevenue = Math.max(0, dashboardData.kpi.totalRevenue);
+                dashboardData.kpi.totalShipments = Math.max(0, dashboardData.kpi.totalShipments);
+                dashboardData.kpi.avgDeliveryTime = Math.max(1, Math.min(10, dashboardData.kpi.avgDeliveryTime));
+                dashboardData.kpi.onTimeRate = Math.max(80, Math.min(100, dashboardData.kpi.onTimeRate));
+
+                // Update trends
+                dashboardData.kpi.trends.revenue += (Math.random() * 2) - 1;
+                dashboardData.kpi.trends.shipments += (Math.random() * 2) - 1;
+                dashboardData.kpi.trends.delivery += (Math.random() * 1) - 0.5;
+                dashboardData.kpi.trends.onTime += (Math.random() * 1) - 0.5;
+
+                // Round values
+                dashboardData.kpi.avgDeliveryTime = parseFloat(dashboardData.kpi.avgDeliveryTime.toFixed(1));
+                dashboardData.kpi.onTimeRate = parseFloat(dashboardData.kpi.onTimeRate.toFixed(1));
+                dashboardData.kpi.trends.revenue = parseFloat(dashboardData.kpi.trends.revenue.toFixed(1));
+                dashboardData.kpi.trends.shipments = parseFloat(dashboardData.kpi.trends.shipments.toFixed(1));
+                dashboardData.kpi.trends.delivery = parseFloat(dashboardData.kpi.trends.delivery.toFixed(1));
+                dashboardData.kpi.trends.onTime = parseFloat(dashboardData.kpi.trends.onTime.toFixed(1));
+
+                // Update performance based on new on-time rate
+                dashboardData.performance.onTime = dashboardData.kpi.onTimeRate;
+                dashboardData.performance.delayed = (Math.random() * 5 + 2).toFixed(1);
+                dashboardData.performance.failed = (100 - parseFloat(dashboardData.performance.onTime) - parseFloat(dashboardData.performance.delayed)).toFixed(1);
+
+                updateDashboard();
+                showNotification('Successo', 'Dashboard aggiornata con successo', 'success');
+            } catch (error) {
+                console.error('Dashboard refresh error:', error);
+                showNotification('Errore', 'Errore nell\'aggiornamento della dashboard', 'error');
+            }
+        }
+
+        // Initialize Dashboard
+        function initDashboard() {
+            try {
+                console.log('Initializing Supply Chain Hub Dashboard...');
+                
+                // Check for Chart.js availability
+                if (typeof Chart === 'undefined') {
+                    showNotification('Avviso', 'Chart.js non disponibile. I grafici potrebbero non funzionare.', 'info');
+                    console.warn('Chart.js not loaded. Charts will not be available.');
+                }
+
+                // Setup file upload functionality
+                setupFileUpload();
+
+                // Initialize dashboard components
+                updateKPIs();
+                updateTables();
+                
+                // Initialize charts with delay to ensure DOM is ready
+                setTimeout(() => {
+                    if (typeof Chart !== 'undefined') {
+                        initCharts();
+                        console.log('Charts initialized successfully');
+                    }
+                }, 100);
+
+                // Show welcome notification
+                setTimeout(() => {
+                    showNotification(
+                        'Dashboard Pronta', 
+                        'Supply Chain Hub caricato con successo. Carica i tuoi file per iniziare l\'analisi.', 
+                        'success'
+                    );
+                }, 500);
+
+                console.log('Dashboard initialization completed');
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                showNotification('Errore', 'Errore nell\'inizializzazione della dashboard', 'error');
+            }
         }
 
         // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                initializeDashboard();
-                setupAutoRefresh();
-            });
-        } else {
-            initializeDashboard();
-            setupAutoRefresh();
-        }
+        document.addEventListener('DOMContentLoaded', initDashboard);
 
-        // Handle visibility change to refresh data when tab becomes active
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                console.log('🔄 Tab became active, refreshing data...');
-                initializeDashboard();
-            }
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            showNotification('Errore Sistema', 'Si è verificato un errore imprevisto', 'error');
         });
+
+        // Handle unhandled promise rejections
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            showNotification('Errore', 'Errore durante l\'elaborazione dei dati', 'error');
+        });
+
+        // Expose global functions for debugging (development only)
+        if (typeof window !== 'undefined') {
+            window.SupplyChainHub = {
+                data: dashboardData,
+                refresh: refreshDashboard,
+                exportPDF: exportToPDF,
+                exportExcel: exportToExcel,
+                updateDashboard: updateDashboard,
+                version: '1.0.0'
+            };
+        }
     </script>
 </body>
 </html>
