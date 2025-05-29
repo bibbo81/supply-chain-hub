@@ -56,8 +56,8 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"></noscript>
     
-    <!-- Chart.js v4 - Load async -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.umd.js" async></script>
+    <!-- Chart.js v4 - Load synchronously to ensure availability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.umd.js"></script>
     
     <!-- Icons - Load async -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -232,6 +232,6 @@
     </main>
 
     <!-- External JavaScript -->
-    <script src="script.js" defer></script>
+    <script src="script.js"></script>
 </body>
 </html>
