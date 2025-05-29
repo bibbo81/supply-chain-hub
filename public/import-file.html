@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import File - Supply Chain Hub</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4285f4;
+            --primary-rgb: 66, 133, 244;
+            --secondary: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --success: #34a853;
+            --white: #ffffff;
+            --dark: #333;
+            
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            --glass-blur: 15px;
+            
+            --radius: 16px;
+            --radius-small: 8px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: var(--white);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .step-container {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .step-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: var(--radius);
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--glass-border);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success);
+            background: rgba(52, 168, 83, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius-small);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: #1a73e8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #2d8f43;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 168, 83, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .mapping-container {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mapping-label {
+            font-weight: 600;
+            min-width: 140px;
+        }
+
+        .mapping-select {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-small);
+            color: var(--white);
+            font-family: inherit;
+        }
+
+        .mapping-select option {
+            background: var(--dark);
+            color: var(--white);
+        }
+
+        .preview-container {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-small);
+            overflow: hidden;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: var(--radius-small);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .status-success {
+            background: rgba(52, 168, 83, 0.2);
+            border-color: var(--success);
+            color: var(--white);
+        }
+
+        .status-error {
+            background: rgba(234, 67, 53, 0.2);
+            border-color: var(--danger);
+            color: var(--white);
+        }
+
+        .status-info {
+            background: rgba(var(--primary-rgb), 0.2);
+            border-color: var(--primary);
+            color: var(--white);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid var(--white);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .results-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .results-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: var(--radius-small);
+            text-align: center;
+        }
+
+        .results-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .results-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .error-list {
+            background: rgba(234, 67, 53, 0.1);
+            border: 1px solid rgba(234, 67, 53, 0.3);
+            border-radius: var(--radius-small);
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .error-item {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .mapping-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .results-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>
+                <div class="header-icon">
+                    <i class="fas fa-file-import"></i>
+                </div>
+                Import File - Supply Chain Hub
+            </h1>
+            <p>Importa spedizioni da file CSV o Excel</p>
+        </header>
+
+        <div class="step-container">
+            <!-- STEP 1: Upload File -->
+            <div class="step-card" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h2 class="step-title">Selezione File</h2>
+                </div>
+                
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <div class="upload-text">Trascina il file qui o clicca per selezionarlo</div>
+                    <div class="upload-hint">Supportati: CSV, Excel (.xlsx, .xls) - Max 10MB</div>
+                </div>
+                
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileSelect(event)">
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Caricamento in corso...</div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Column Mapping -->
+            <div class="step-card hidden" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h2 class="step-title">Mappatura Colonne</h2>
+                </div>
+                
+                <p>Associa le colonne del file ai campi del database:</p>
+                
+                <div class="mapping-container" id="mappingContainer">
+                    <div class="mapping-grid" id="mappingGrid">
+                        <!-- Mapping items will be generated here -->
+                    </div>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">
+                        <i class="fas fa-arrow-left"></i> Indietro
+                    </button>
+                    <button class="btn btn-primary" onclick="previewData()">
+                        Anteprima Dati <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Preview Data -->
+            <div class="step-card hidden" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h2 class="step-title">Anteprima Dati</h2>
+                </div>
+                
+                <p>Verifica i dati prima dell'importazione:</p>
+                
+                <div class="preview-container" id="previewContainer">
+                    <table class="preview-table" id="previewTable">
+                        <!-- Preview data will be shown here -->
+                    </table>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">
+                        <i class="fas fa-arrow-left"></i> Indietro
+                    </button>
+                    <button class="btn btn-success" onclick="importData()">
+                        <i class="fas fa-check"></i> Importa Dati
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Results -->
+            <div class="step-card hidden" id="step4">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <h2 class="step-title">Risultati Importazione</h2>
+                </div>
+                
+                <div class="results-container" id="resultsContainer">
+                    <div class="results-summary" id="resultsSummary">
+                        <!-- Results summary will be shown here -->
+                    </div>
+                    
+                    <div class="error-list hidden" id="errorList">
+                        <h4>Errori riscontrati:</h4>
+                        <div id="errorItems"></div>
+                    </div>
+                </div>
+                
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="resetImport()">
+                        <i class="fas fa-redo"></i> Nuovo Import
+                    </button>
+                    <a href="/backend-spedizioni.html" class="btn btn-primary">
+                        <i class="fas fa-table"></i> Vai al Backend
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Indicator -->
+    <div id="statusIndicator" class="status-indicator">
+        <div class="spinner" id="statusSpinner" style="display: none;"></div>
+        <i id="statusIcon" class="fas fa-info-circle"></i>
+        <span id="statusMessage">Operazione completata</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // ===== CONFIGURAZIONE =====
+        const API_BASE_URL = 'https://supply-chain-hub.netlify.app/.netlify/functions/import-file';
+        
+        // ===== VARIABILI GLOBALI =====
+        let fileData = null;
+        let columnMapping = {};
+        let previewData = [];
+        let currentStep = 1;
+        
+        // Campi richiesti per l'importazione
+        const requiredFields = {
+            'rif_spedizione': '🚢 RIF. SPEDIZIONE',
+            'cod_art': '🏷️ COD. ART.',
+            'fornitore': '🏭 FORNITORE',
+            'qty': '🔢 QTY',
+            'costo_trasporto': '💰 COSTO TRASPORTO'
+        };
+        
+        const optionalFields = {
+            'n_oda': '#️⃣ N. ODA',
+            'anno': '🔢 ANNO',
+            'fattura_fornitore': '🧾 FATTURA FORNITORE',
+            'um': '📏 U.M.',
+            'tipo_spedizione': '🚛 TIPO SPEDIZIONE',
+            'spedizioniere': '🚚 SPEDIZIONIERE',
+            'data_partenza': '🛫 DATA PARTENZA'
+        };
+
+        // ===== INIZIALIZZAZIONE =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragAndDrop();
+            console.log('🎯 Sistema Import File inizializzato');
+        });
+
+        // ===== DRAG & DROP =====
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('uploadZone');
+            
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect({ target: { files: files } });
+                }
+            });
+        }
+
+        // ===== FILE HANDLING =====
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validazione file
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                showStatus('error', 'File troppo grande', 'Il file non può superare 10MB');
+                return;
+            }
+
+            const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            if (!validTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx|xls)$/i)) {
+                showStatus('error', 'Formato non supportato', 'Usa file CSV o Excel (.xlsx, .xls)');
+                return;
+            }
+
+            showProgress();
+            processFile(file);
+        }
+
+        function processFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    if (file.name.toLowerCase().endsWith('.csv')) {
+                        processCSVData(e.target.result);
+                    } else {
+                        processExcelData(e.target.result);
+                    }
+                } catch (error) {
+                    console.error('Errore elaborazione file:', error);
+                    showStatus('error', 'Errore lettura file', 'Impossibile leggere il file selezionato');
+                    hideProgress();
+                }
+            };
+            
+            reader.onerror = function() {
+                showStatus('error', 'Errore lettura file', 'Impossibile leggere il file');
+                hideProgress();
+            };
+            
+            if (file.name.toLowerCase().endsWith('.csv')) {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function processCSVData(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const row = lines[i].split(',').map(cell => cell.trim().replace(/"/g, ''));
+                    const rowObj = {};
+                    headers.forEach((header, index) => {
+                        rowObj[header] = row[index] || '';
+                    });
+                    data.push(rowObj);
+                }
+            }
+            
+            fileData = { headers, data };
+            hideProgress();
+            showStatus('success', 'File caricato', `${data.length} righe rilevate`);
+            goToStep(2);
+        }
+
+        function processExcelData(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const headers = data[0] || [];
+            
+            const processedData = [];
+            for (let i = 1; i < data.length; i++) {
+                if (data[i] && data[i].some(cell => cell !== undefined && cell !== '')) {
+                    const rowObj = {};
+                    headers.forEach((header, index) => {
+                        rowObj[header] = data[i][index] || '';
+                    });
+                    processedData.push(rowObj);
+                }
+            }
+            
+            fileData = { headers, data: processedData };
+            hideProgress();
+            showStatus('success', 'File caricato', `${processedData.length} righe rilevate`);
+            goToStep(2);
+        }
+
+        // ===== STEP NAVIGATION =====
+        function goToStep(step) {
+            // Nascondi tutti gli step
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).classList.add('hidden');
+            }
+            
+            // Mostra lo step richiesto
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            currentStep = step;
+            
+            // Inizializza contenuto dello step
+            if (step === 2) {
+                setupColumnMapping();
+            } else if (step === 3) {
+                setupPreview();
+            }
+        }
+
+        // ===== COLUMN MAPPING =====
+        function setupColumnMapping() {
+            const mappingGrid = document.getElementById('mappingGrid');
+            mappingGrid.innerHTML = '';
+            
+            const allFields = { ...requiredFields, ...optionalFields };
+            
+            Object.keys(allFields).forEach(fieldKey => {
+                const mappingItem = document.createElement('div');
+                mappingItem.className = 'mapping-item';
+                
+                const label = document.createElement('div');
+                label.className = 'mapping-label';
+                label.textContent = allFields[fieldKey];
+                if (requiredFields[fieldKey]) {
+                    label.innerHTML += ' <span style="color: #ea4335;">*</span>';
+                }
+                
+                const select = document.createElement('select');
+                select.className = 'mapping-select';
+                select.id = `mapping_${fieldKey}`;
+                
+                // Opzione vuota
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '-- Seleziona colonna --';
+                select.appendChild(emptyOption);
+                
+                // Opzioni dalle colonne del file
+                fileData.headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+                
+                // Auto-mapping intelligente
+                const autoMatch = findBestMatch(fieldKey, fileData.headers);
+                if (autoMatch) {
+                    select.value = autoMatch;
+                }
+                
+                mappingItem.appendChild(label);
+                mappingItem.appendChild(select);
+                mappingGrid.appendChild(mappingItem);
+            });
+            
+            document.getElementById('mappingContainer').style.display = 'block';
+        }
+
+        function findBestMatch(fieldKey, headers) {
+            const fieldPatterns = {
+                'rif_spedizione': ['rif', 'spedizione', 'reference', 'shipment'],
+                'cod_art': ['cod', 'art', 'articolo', 'code', 'item'],
+                'fornitore': ['fornitore', 'supplier', 'vendor'],
+                'qty': ['qty', 'quantità', 'quantity', 'qta'],
+                'costo_trasporto': ['costo', 'trasporto', 'transport', 'cost'],
+                'n_oda': ['oda', 'ordine', 'order'],
+                'anno': ['anno', 'year'],
+                'fattura_fornitore': ['fattura', 'invoice'],
+                'um': ['um', 'unit', 'unità'],
+                'tipo_spedizione': ['tipo', 'type', 'modalità'],
+                'spedizioniere': ['spedizioniere', 'carrier', 'corriere'],
+                'data_partenza': ['data', 'partenza', 'departure', 'date']
+            };
+            
+            const patterns = fieldPatterns[fieldKey] || [];
+            
+            for (const header of headers) {
+                const headerLower = header.toLowerCase();
+                for (const pattern of patterns) {
+                    if (headerLower.includes(pattern.toLowerCase())) {
+                        return header;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        // ===== PREVIEW =====
+        function previewData() {
+            // Raccoglie mapping
+            columnMapping = {};
+            const allFields = { ...requiredFields, ...optionalFields };
+            
+            Object.keys(allFields).forEach(fieldKey => {
+                const select = document.getElementById(`mapping_${fieldKey}`);
+                if (select.value) {
+                    columnMapping[fieldKey] = select.value;
+                }
+            });
+            
+            // Verifica campi obbligatori
+            const missingRequired = [];
+            Object.keys(requiredFields).forEach(fieldKey => {
+                if (!columnMapping[fieldKey]) {
+                    missingRequired.push(requiredFields[fieldKey]);
+                }
+            });
+            
+            if (missingRequired.length > 0) {
+                showStatus('error', 'Campi obbligatori mancanti', `Mappa: ${missingRequired.join(', ')}`);
+                return;
+            }
+            
+            // Genera dati anteprima (prime 5 righe)
+            previewData = fileData.data.slice(0, 5).map(row => {
+                const mappedRow = {};
+                Object.keys(columnMapping).forEach(fieldKey => {
+                    const sourceColumn = columnMapping[fieldKey];
+                    mappedRow[fieldKey] = row[sourceColumn] || '';
+                });
+                return mappedRow;
+            });
+            
+            goToStep(3);
+        }
+
+        function setupPreview() {
+            const previewTable = document.getElementById('previewTable');
+            previewTable.innerHTML = '';
+            
+            // Header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            const allFields = { ...requiredFields, ...optionalFields };
+            Object.keys(columnMapping).forEach(fieldKey => {
+                const th = document.createElement('th');
+                th.textContent = allFields[fieldKey];
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            previewTable.appendChild(thead);
+            
+            // Body
+            const tbody = document.createElement('tbody');
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.keys(columnMapping).forEach(fieldKey => {
+                    const td = document.createElement('td');
+                    td.textContent = row[fieldKey] || '-';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            previewTable.appendChild(tbody);
+            document.getElementById('previewContainer').style.display = 'block';
+        }
+
+        // ===== IMPORT =====
+        async function importData() {
+            showStatus('info', 'Importazione in corso...', 'Invio dati al server...');
+            
+            try {
+                // Prepara tutti i dati per l'importazione
+                const importData = fileData.data.map(row => {
+                    const mappedRow = {};
+                    Object.keys(columnMapping).forEach(fieldKey => {
+                        const sourceColumn = columnMapping[fieldKey];
+                        mappedRow[fieldKey] = row[sourceColumn] || '';
+                    });
+                    return mappedRow;
+                });
+                
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        data: importData,
+                        mapping: columnMapping
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                showImportResults(result);
+                goToStep(4);
+                
+            } catch (error) {
+                console.error('Errore importazione:', error);
+                showStatus('error', 'Errore importazione', 'Impossibile completare l\'importazione');
+            }
+        }
+
+        function showImportResults(result) {
+            const resultsSummary = document.getElementById('resultsSummary');
+            resultsSummary.innerHTML = '';
+            
+            // Cards risultati
+            const cards = [
+                { number: result.total || 0, label: 'Righe Elaborate', color: '#4285f4' },
+                { number: result.success || 0, label: 'Importate con Successo', color: '#34a853' },
+                { number: result.errors || 0, label: 'Errori', color: '#ea4335' },
+                { number: result.skipped || 0, label: 'Saltate', color: '#fbbc04' }
+            ];
+            
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'results-card';
+                cardElement.innerHTML = `
+                    <div class="results-number" style="color: ${card.color}">${card.number}</div>
+                    <div class="results-label">${card.label}</div>
+                `;
+                resultsSummary.appendChild(cardElement);
+            });
+            
+            // Mostra errori se presenti
+            if (result.errorDetails && result.errorDetails.length > 0) {
+                const errorList = document.getElementById('errorList');
+                const errorItems = document.getElementById('errorItems');
+                
+                errorItems.innerHTML = '';
+                result.errorDetails.forEach(error => {
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'error-item';
+                    errorItem.textContent = `Riga ${error.row}: ${error.message}`;
+                    errorItems.appendChild(errorItem);
+                });
+                
+                errorList.classList.remove('hidden');
+            }
+            
+            const successRate = Math.round((result.success / result.total) * 100) || 0;
+            showStatus('success', 'Importazione completata', `${successRate}% delle righe importate con successo`);
+        }
+
+        // ===== UTILITY =====
+        function resetImport() {
+            fileData = null;
+            columnMapping = {};
+            previewData = [];
+            document.getElementById('fileInput').value = '';
+            goToStep(1);
+        }
+
+        function showProgress() {
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'block';
+            
+            // Simula progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `${Math.round(progress)}% completato`;
+            }, 200);
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        function showStatus(type, title, message) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusSpinner = document.getElementById('statusSpinner');
+
+            statusIndicator.className = `status-indicator status-${type}`;
+            statusMessage.textContent = `${title}: ${message}`;
+            
+            if (type === 'info') {
+                statusSpinner.style.display = 'block';
+                statusIcon.style.display = 'none';
+            } else {
+                statusSpinner.style.display = 'none';
+                statusIcon.style.display = 'block';
+                
+                switch(type) {
+                    case 'success':
+                        statusIcon.className = 'fas fa-check-circle';
+                        break;
+                    case 'error':
+                        statusIcon.className = 'fas fa-exclamation-circle';
+                        break;
+                    default:
+                        statusIcon.className = 'fas fa-info-circle';
+                }
+            }
+            
+            statusIndicator.style.display = 'flex';
+            
+            if (type !== 'info') {
+                setTimeout(() => {
+                    statusIndicator.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
