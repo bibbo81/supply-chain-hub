@@ -6,28 +6,8 @@
     <title>Supply Chain Hub - Enterprise Dashboard</title>
     <meta name="description" content="Advanced Supply Chain Management Dashboard with real-time analytics and reporting">
     
-    <!-- Chart.js CDN with fallbacks for AdBlocker compatibility -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://unpkg.com/chart.js@4.4.0/dist/chart.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.com/libraries/Chart.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://ajax.googleapis.com/ajax/libs/charts/current/charts.js"><\/script>');
-        }
-    </script>
+    <!-- ApexCharts al posto di Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
     
     <!-- Papa Parse for CSV processing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -369,6 +349,34 @@
             position: relative;
             height: 300px;
             margin-bottom: var(--spacing-md);
+        }
+        
+        /* ApexCharts Specific Styles */
+        .apexcharts-canvas {
+            position: relative !important;
+        }
+        
+        .apexcharts-legend {
+            padding: 10px 0 !important;
+        }
+        
+        .apexcharts-tooltip {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+        }
+        
+        .apexcharts-tooltip-title {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 10px !important;
+        }
+        
+        .apexcharts-xaxistooltip {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
         }
         
         /* Data Tables */
@@ -729,9 +737,7 @@
                     <div class="chart-title">Trend Fatturato</div>
                     <div class="chart-subtitle">Andamento mensile revenue</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="revenueChart"></canvas>
-                </div>
+                <div class="chart-container" id="revenueChart"></div>
             </div>
 
             <div class="chart-card">
@@ -739,9 +745,7 @@
                     <div class="chart-title">Spedizioni per Corriere</div>
                     <div class="chart-subtitle">Distribuzione volumi</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="carriersChart"></canvas>
-                </div>
+                <div class="chart-container" id="carriersChart"></div>
             </div>
 
             <div class="chart-card">
@@ -749,9 +753,7 @@
                     <div class="chart-title">Performance Consegne</div>
                     <div class="chart-subtitle">Stato spedizioni</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
-                </div>
+                <div class="chart-container" id="performanceChart"></div>
             </div>
 
             <div class="chart-card">
@@ -759,9 +761,7 @@
                     <div class="chart-title">Distribuzione Geografica</div>
                     <div class="chart-subtitle">Spedizioni per regione</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="geographicChart"></canvas>
-                </div>
+                <div class="chart-container" id="geographicChart"></div>
             </div>
         </div>
 
@@ -934,7 +934,105 @@
         };
 
         // Chart instances storage
-        let charts = {};
+        let chartInstances = {};
+
+        // ApexCharts Theme Configuration
+        const solariumTheme = {
+            theme: {
+                mode: 'dark'
+            },
+            chart: {
+                background: 'transparent',
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 350
+                    }
+                },
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            },
+            grid: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                strokeDashArray: 0,
+                xaxis: {
+                    lines: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            colors: ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#8e8e93', '#af52de'],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            xaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
+                    }
+                },
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
+                    },
+                    formatter: function(value) {
+                        if (value >= 1000) {
+                            return (value / 1000).toFixed(0) + 'k';
+                        }
+                        return value;
+                    }
+                }
+            },
+            legend: {
+                labels: {
+                    colors: 'rgba(255, 255, 255, 0.8)'
+                },
+                position: 'bottom',
+                horizontalAlign: 'center'
+            },
+            tooltip: {
+                theme: 'dark',
+                style: {
+                    fontSize: '12px'
+                },
+                y: {
+                    formatter: function(value) {
+                        if (typeof value === 'number') {
+                            return value.toLocaleString('it-IT');
+                        }
+                        return value;
+                    }
+                }
+            }
+        };
 
         // Notification System
         function showNotification(title, message, type = 'info') {
@@ -1279,7 +1377,7 @@
             try {
                 updateKPIs();
                 updateTables();
-                updateCharts();
+                updateChartsWithNewData();
             } catch (error) {
                 console.error('Dashboard update error:', error);
                 showNotification('Errore', 'Errore nell\'aggiornamento della dashboard', 'error');
@@ -1355,226 +1453,378 @@
             }
         }
 
-        // Update Charts
-        function updateCharts() {
-            try {
-                // Destroy existing charts
-                Object.values(charts).forEach(chart => {
-                    if (chart) chart.destroy();
+        // Initialize Charts with ApexCharts
+        function initCharts() {
+            console.log('Inizializzazione grafici con ApexCharts...');
+            
+            // Verifica se ApexCharts è caricato
+            if (typeof ApexCharts === 'undefined') {
+                console.error('ApexCharts non è caricato! Assicurati di includere il CDN.');
+                ['revenueChart', 'carriersChart', 'performanceChart', 'geographicChart'].forEach(id => {
+                    const container = document.getElementById(id);
+                    if (container) {
+                        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #ff3b30;">⚠️ Errore: ApexCharts non caricato</div>';
+                    }
                 });
-                charts = {};
+                return;
+            }
 
-                // Recreate all charts
-                initCharts();
+            // 1. Revenue Trend Chart (Line/Area)
+            const revenueOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Ricavi',
+                    data: dashboardData.revenue.map(item => item.value)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'area',
+                    height: '100%',
+                    sparkline: {
+                        enabled: false
+                    }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.4,
+                        opacityTo: 0.1,
+                        stops: [0, 90, 100]
+                    }
+                },
+                xaxis: {
+                    ...solariumTheme.xaxis,
+                    categories: dashboardData.revenue.map(item => item.month)
+                },
+                yaxis: {
+                    ...solariumTheme.yaxis,
+                    title: {
+                        text: 'Ricavi (€)',
+                        style: {
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            fontSize: '12px',
+                            fontWeight: 400
+                        }
+                    }
+                }
+            };
+
+            // 2. Shipments by Carrier Chart (Horizontal Bar)
+            const carriersOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Spedizioni',
+                    data: Object.values(dashboardData.shipments)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'bar',
+                    height: '100%'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 8,
+                        horizontal: true,
+                        distributed: true,
+                        barHeight: '70%',
+                        dataLabels: {
+                            position: 'right'
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    textAnchor: 'start',
+                    style: {
+                        colors: ['#fff']
+                    },
+                    formatter: function(val, opt) {
+                        return val.toLocaleString('it-IT');
+                    },
+                    offsetX: 10
+                },
+                xaxis: {
+                    ...solariumTheme.xaxis,
+                    categories: Object.keys(dashboardData.shipments),
+                    labels: {
+                        ...solariumTheme.xaxis.labels,
+                        formatter: function(val) {
+                            return val.toLocaleString('it-IT');
+                        }
+                    }
+                },
+                yaxis: {
+                    ...solariumTheme.yaxis,
+                    labels: {
+                        ...solariumTheme.yaxis.labels,
+                        style: {
+                            colors: 'rgba(255, 255, 255, 0.8)',
+                            fontSize: '13px'
+                        }
+                    }
+                }
+            };
+
+            // 3. Delivery Performance Chart (Donut)
+            const performanceOptions = {
+                ...solariumTheme,
+                series: Object.values(dashboardData.performance).map(v => parseFloat(v)),
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'donut',
+                    height: '100%'
+                },
+                labels: ['In Orario', 'In Ritardo', 'Fallite'],
+                colors: ['#34c759', '#ff9500', '#ff3b30'],
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                name: {
+                                    show: true,
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: 'rgba(255, 255, 255, 0.8)',
+                                    offsetY: -10
+                                },
+                                value: {
+                                    show: true,
+                                    fontSize: '24px',
+                                    fontWeight: 700,
+                                    color: '#fff',
+                                    offsetY: 8,
+                                    formatter: function(val) {
+                                        return val + '%';
+                                    }
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Totale',
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: 'rgba(255, 255, 255, 0.8)',
+                                    formatter: function(w) {
+                                        return '100%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                legend: {
+                    position: 'bottom',
+                    horizontalAlign: 'center',
+                    floating: false,
+                    fontSize: '13px',
+                    offsetY: 0
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            height: 250
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }]
+            };
+
+            // 4. Geographic Distribution Chart (Radar)
+            const geographicOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Distribuzione %',
+                    data: Object.values(dashboardData.geographic)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'radar',
+                    height: '100%'
+                },
+                xaxis: {
+                    categories: Object.keys(dashboardData.geographic),
+                    labels: {
+                        style: {
+                            colors: Array(Object.keys(dashboardData.geographic).length).fill('rgba(255, 255, 255, 0.8)'),
+                            fontSize: '13px'
+                        }
+                    }
+                },
+                yaxis: {
+                    show: false,
+                    max: 50
+                },
+                plotOptions: {
+                    radar: {
+                        size: undefined,
+                        polygons: {
+                            strokeColors: 'rgba(255, 255, 255, 0.1)',
+                            strokeWidth: 1,
+                            connectorColors: 'rgba(255, 255, 255, 0.1)',
+                            fill: {
+                                colors: ['transparent']
+                            }
+                        }
+                    }
+                },
+                fill: {
+                    opacity: 0.4
+                },
+                markers: {
+                    size: 5,
+                    colors: ['#007aff'],
+                    strokeColors: '#fff',
+                    strokeWidth: 2,
+                    hover: {
+                        size: 8
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    style: {
+                        colors: ['#fff'],
+                        fontSize: '11px'
+                    },
+                    background: {
+                        enabled: true,
+                        foreColor: '#000',
+                        padding: 4,
+                        borderRadius: 4,
+                        borderWidth: 0
+                    }
+                }
+            };
+
+            // Distruggi grafici esistenti se presenti
+            if (window.chartInstances) {
+                Object.values(window.chartInstances).forEach(chart => {
+                    if (chart && typeof chart.destroy === 'function') {
+                        chart.destroy();
+                    }
+                });
+            }
+            window.chartInstances = {};
+
+            // Renderizza i grafici con controllo errori
+            try {
+                // Pulisci i container
+                ['revenueChart', 'carriersChart', 'performanceChart', 'geographicChart'].forEach(id => {
+                    const container = document.getElementById(id);
+                    if (container) {
+                        container.innerHTML = '';
+                    }
+                });
+
+                // Revenue Chart
+                if (document.querySelector("#revenueChart")) {
+                    window.chartInstances.revenue = new ApexCharts(
+                        document.querySelector("#revenueChart"), 
+                        revenueOptions
+                    );
+                    window.chartInstances.revenue.render();
+                }
+
+                // Carriers Chart
+                if (document.querySelector("#carriersChart")) {
+                    window.chartInstances.carriers = new ApexCharts(
+                        document.querySelector("#carriersChart"), 
+                        carriersOptions
+                    );
+                    window.chartInstances.carriers.render();
+                }
+
+                // Performance Chart
+                if (document.querySelector("#performanceChart")) {
+                    window.chartInstances.performance = new ApexCharts(
+                        document.querySelector("#performanceChart"), 
+                        performanceOptions
+                    );
+                    window.chartInstances.performance.render();
+                }
+
+                // Geographic Chart
+                if (document.querySelector("#geographicChart")) {
+                    window.chartInstances.geographic = new ApexCharts(
+                        document.querySelector("#geographicChart"), 
+                        geographicOptions
+                    );
+                    window.chartInstances.geographic.render();
+                }
+
+                console.log('✅ Tutti i grafici ApexCharts sono stati inizializzati con successo!');
+                showNotification('Grafici caricati', 'Tutti i grafici sono stati caricati correttamente', 'success');
+
             } catch (error) {
-                console.error('Charts update error:', error);
+                console.error('Errore durante l\'inizializzazione dei grafici:', error);
+                showNotification('Errore', 'Errore nel caricamento dei grafici', 'error');
             }
         }
 
-        // Initialize Charts
-        function initCharts() {
+        // Update Charts with new data
+        function updateChartsWithNewData() {
+            if (!window.chartInstances) {
+                initCharts();
+                return;
+            }
+
             try {
-                // Revenue Chart (Line)
-                const revenueCtx = document.getElementById('revenueChart');
-                if (revenueCtx) {
-                    charts.revenue = new Chart(revenueCtx, {
-                        type: 'line',
-                        data: {
-                            labels: dashboardData.revenue.map(item => item.month),
-                            datasets: [{
-                                label: 'Fatturato Mensile',
-                                data: dashboardData.revenue.map(item => item.value),
-                                borderColor: '#007aff',
-                                backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: '#007aff',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: 6,
-                                pointHoverRadius: 8
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                },
-                                y: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6',
-                                        callback: function(value) {
-                                            return '€' + (value / 1000) + 'K';
-                                        }
-                                    }
-                                }
-                            }
+                // Update Revenue Chart
+                if (window.chartInstances.revenue) {
+                    window.chartInstances.revenue.updateOptions({
+                        series: [{
+                            name: 'Ricavi',
+                            data: dashboardData.revenue.map(item => item.value)
+                        }],
+                        xaxis: {
+                            categories: dashboardData.revenue.map(item => item.month)
                         }
                     });
                 }
 
-                // Carriers Chart (Bar)
-                const carriersCtx = document.getElementById('carriersChart');
-                if (carriersCtx) {
-                    const carriersData = Object.entries(dashboardData.shipments);
-                    charts.carriers = new Chart(carriersCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: carriersData.map(([name]) => name),
-                            datasets: [{
-                                label: 'Spedizioni',
-                                data: carriersData.map(([, count]) => count),
-                                backgroundColor: [
-                                    '#007aff',
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#ff3b30',
-                                    '#5ac8fa'
-                                ],
-                                borderRadius: 8,
-                                borderSkipped: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                },
-                                y: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                }
-                            }
+                // Update Carriers Chart
+                if (window.chartInstances.carriers) {
+                    window.chartInstances.carriers.updateOptions({
+                        series: [{
+                            name: 'Spedizioni',
+                            data: Object.values(dashboardData.shipments)
+                        }],
+                        xaxis: {
+                            categories: Object.keys(dashboardData.shipments)
                         }
                     });
                 }
 
-                // Performance Chart (Doughnut)
-                const performanceCtx = document.getElementById('performanceChart');
-                if (performanceCtx) {
-                    charts.performance = new Chart(performanceCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Puntuali', 'In Ritardo', 'Fallite'],
-                            datasets: [{
-                                data: [
-                                    parseFloat(dashboardData.performance.onTime),
-                                    parseFloat(dashboardData.performance.delayed),
-                                    parseFloat(dashboardData.performance.failed)
-                                ],
-                                backgroundColor: [
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#ff3b30'
-                                ],
-                                borderWidth: 0,
-                                cutout: '70%'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: '#a1a1a6',
-                                        usePointStyle: true,
-                                        padding: 20
-                                    }
-                                }
-                            }
+                // Update Performance Chart
+                if (window.chartInstances.performance) {
+                    window.chartInstances.performance.updateOptions({
+                        series: Object.values(dashboardData.performance).map(v => parseFloat(v))
+                    });
+                }
+
+                // Update Geographic Chart
+                if (window.chartInstances.geographic) {
+                    window.chartInstances.geographic.updateOptions({
+                        series: [{
+                            name: 'Distribuzione %',
+                            data: Object.values(dashboardData.geographic)
+                        }],
+                        xaxis: {
+                            categories: Object.keys(dashboardData.geographic)
                         }
                     });
                 }
 
-                // Geographic Chart (Polar Area)
-                const geographicCtx = document.getElementById('geographicChart');
-                if (geographicCtx) {
-                    const geoData = Object.entries(dashboardData.geographic);
-                    charts.geographic = new Chart(geographicCtx, {
-                        type: 'polarArea',
-                        data: {
-                            labels: geoData.map(([region]) => region),
-                            datasets: [{
-                                data: geoData.map(([, percentage]) => percentage),
-                                backgroundColor: [
-                                    'rgba(0, 122, 255, 0.8)',
-                                    'rgba(52, 199, 89, 0.8)',
-                                    'rgba(255, 149, 0, 0.8)',
-                                    'rgba(90, 200, 250, 0.8)'
-                                ],
-                                borderColor: [
-                                    '#007aff',
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#5ac8fa'
-                                ],
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: '#a1a1a6',
-                                        usePointStyle: true,
-                                        padding: 15
-                                    }
-                                }
-                            },
-                            scales: {
-                                r: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6',
-                                        backdropColor: 'transparent'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
+                console.log('✅ Grafici aggiornati con i nuovi dati');
             } catch (error) {
-                console.error('Charts initialization error:', error);
-                showNotification('Avviso', 'Alcuni grafici potrebbero non essere disponibili', 'info');
+                console.error('Errore nell\'aggiornamento dei grafici:', error);
             }
         }
 
@@ -1807,10 +2057,10 @@
             try {
                 console.log('Initializing Supply Chain Hub Dashboard...');
                 
-                // Check for Chart.js availability
-                if (typeof Chart === 'undefined') {
-                    showNotification('Avviso', 'Chart.js non disponibile. I grafici potrebbero non funzionare.', 'info');
-                    console.warn('Chart.js not loaded. Charts will not be available.');
+                // Check for ApexCharts availability
+                if (typeof ApexCharts === 'undefined') {
+                    showNotification('Errore', 'ApexCharts non disponibile. I grafici non funzioneranno.', 'error');
+                    console.error('ApexCharts not loaded! Assicurati che il CDN sia accessibile.');
                 }
 
                 // Setup file upload functionality
@@ -1822,9 +2072,26 @@
                 
                 // Initialize charts with delay to ensure DOM is ready
                 setTimeout(() => {
-                    if (typeof Chart !== 'undefined') {
+                    if (typeof ApexCharts !== 'undefined') {
                         initCharts();
-                        console.log('Charts initialized successfully');
+                        console.log('Charts initialized successfully with ApexCharts');
+                    } else {
+                        console.error('ApexCharts still not available after delay');
+                        // Show fallback message in chart containers
+                        ['revenueChart', 'carriersChart', 'performanceChart', 'geographicChart'].forEach(id => {
+                            const container = document.getElementById(id);
+                            if (container) {
+                                container.innerHTML = `
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ff3b30;">
+                                        <div style="text-align: center;">
+                                            <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
+                                            <div>Grafici non disponibili</div>
+                                            <div style="font-size: 0.8rem; color: #a1a1a6; margin-top: 0.5rem;">Ricarica la pagina o controlla la connessione</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
                     }
                 }, 100);
 
@@ -1844,8 +2111,35 @@
             }
         }
 
+        // Debounce function for resize events
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Handle window resize for responsive charts
+        function handleChartsResize() {
+            if (window.chartInstances) {
+                Object.values(window.chartInstances).forEach(chart => {
+                    if (chart && typeof chart.render === 'function') {
+                        chart.render();
+                    }
+                });
+            }
+        }
+
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Handle window resize with debounce
+        window.addEventListener('resize', debounce(handleChartsResize, 250));
 
         // Global error handler
         window.addEventListener('error', (event) => {
@@ -1859,6 +2153,29 @@
             showNotification('Errore', 'Errore durante l\'elaborazione dei dati', 'error');
         });
 
+        // Test function for ApexCharts integration
+        function testApexChartsIntegration() {
+            console.log('=== TEST INTEGRAZIONE APEXCHARTS ===');
+            console.log('1. ApexCharts caricato?', typeof ApexCharts !== 'undefined' ? '✅ SI' : '❌ NO');
+            console.log('2. Container grafici trovati:');
+            console.log('   - Revenue:', document.getElementById('revenueChart') ? '✅' : '❌');
+            console.log('   - Carriers:', document.getElementById('carriersChart') ? '✅' : '❌');
+            console.log('   - Performance:', document.getElementById('performanceChart') ? '✅' : '❌');
+            console.log('   - Geographic:', document.getElementById('geographicChart') ? '✅' : '❌');
+            console.log('3. Dashboard data presente?', typeof dashboardData !== 'undefined' ? '✅ SI' : '❌ NO');
+            
+            if (typeof dashboardData !== 'undefined') {
+                console.log('4. Struttura dati:');
+                console.log('   - Revenue:', dashboardData.revenue ? `✅ ${dashboardData.revenue.length} mesi` : '❌');
+                console.log('   - Shipments:', dashboardData.shipments ? `✅ ${Object.keys(dashboardData.shipments).length} vettori` : '❌');
+                console.log('   - Performance:', dashboardData.performance ? '✅' : '❌');
+                console.log('   - Geographic:', dashboardData.geographic ? `✅ ${Object.keys(dashboardData.geographic).length} regioni` : '❌');
+            }
+            
+            console.log('5. Chart instances:', window.chartInstances ? `✅ ${Object.keys(window.chartInstances).length} grafici` : '❌ Nessuno');
+            console.log('=== FINE TEST ===');
+        }
+
         // Expose global functions for debugging (development only)
         if (typeof window !== 'undefined') {
             window.SupplyChainHub = {
@@ -1867,8 +2184,14 @@
                 exportPDF: exportToPDF,
                 exportExcel: exportToExcel,
                 updateDashboard: updateDashboard,
-                version: '1.0.0'
+                charts: chartInstances,
+                testCharts: testApexChartsIntegration,
+                version: '1.1.0'
             };
+            
+            // Auto-run test in development
+            console.log('Supply Chain Hub v1.1.0 - Dashboard con ApexCharts');
+            console.log('Per testare i grafici, esegui: SupplyChainHub.testCharts()');
         }
     </script>
 </body>
