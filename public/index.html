@@ -6,28 +6,8 @@
     <title>Supply Chain Hub - Enterprise Dashboard</title>
     <meta name="description" content="Advanced Supply Chain Management Dashboard with real-time analytics and reporting">
     
-    <!-- Chart.js CDN with fallbacks for AdBlocker compatibility -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://unpkg.com/chart.js@4.4.0/dist/chart.min.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://cdnjs.com/libraries/Chart.js"><\/script>');
-        }
-    </script>
-    <script>
-        if (typeof Chart === 'undefined') {
-            document.write('<script src="https://ajax.googleapis.com/ajax/libs/charts/current/charts.js"><\/script>');
-        }
-    </script>
+    <!-- ApexCharts al posto di Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
     
     <!-- Papa Parse for CSV processing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -369,6 +349,34 @@
             position: relative;
             height: 300px;
             margin-bottom: var(--spacing-md);
+        }
+        
+        /* ApexCharts Specific Styles */
+        .apexcharts-canvas {
+            position: relative !important;
+        }
+        
+        .apexcharts-legend {
+            padding: 10px 0 !important;
+        }
+        
+        .apexcharts-tooltip {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+        }
+        
+        .apexcharts-tooltip-title {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 10px !important;
+        }
+        
+        .apexcharts-xaxistooltip {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
         }
         
         /* Data Tables */
@@ -729,9 +737,7 @@
                     <div class="chart-title">Trend Fatturato</div>
                     <div class="chart-subtitle">Andamento mensile revenue</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="revenueChart"></canvas>
-                </div>
+                <div class="chart-container" id="revenueChart"></div>
             </div>
 
             <div class="chart-card">
@@ -739,9 +745,7 @@
                     <div class="chart-title">Spedizioni per Corriere</div>
                     <div class="chart-subtitle">Distribuzione volumi</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="carriersChart"></canvas>
-                </div>
+                <div class="chart-container" id="carriersChart"></div>
             </div>
 
             <div class="chart-card">
@@ -749,9 +753,7 @@
                     <div class="chart-title">Performance Consegne</div>
                     <div class="chart-subtitle">Stato spedizioni</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
-                </div>
+                <div class="chart-container" id="performanceChart"></div>
             </div>
 
             <div class="chart-card">
@@ -759,9 +761,7 @@
                     <div class="chart-title">Distribuzione Geografica</div>
                     <div class="chart-subtitle">Spedizioni per regione</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="geographicChart"></canvas>
-                </div>
+                <div class="chart-container" id="geographicChart"></div>
             </div>
         </div>
 
@@ -934,942 +934,102 @@
         };
 
         // Chart instances storage
-        let charts = {};
+        let chartInstances = {};
 
-        // Notification System
-        function showNotification(title, message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="notification-header">
-                    <div class="notification-title">${title}</div>
-                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-                </div>
-                <div class="notification-message">${message}</div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-
-        // File Upload System
-        function setupFileUpload() {
-            const uploadArea = document.querySelector('.upload-area');
-            const fileInput = document.getElementById('fileInput');
-
-            // Drag and drop handlers
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = Array.from(e.dataTransfer.files);
-                handleFileUpload(files);
-            });
-
-            // File input handler
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                handleFileUpload(files);
-            });
-        }
-
-        // File Upload Handler
-        function handleFileUpload(files) {
-            if (!files.length) return;
-
-            showNotification('Upload in corso', `Elaborazione di ${files.length} file...`, 'info');
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-
-                reader.onload = (e) => {
-                    try {
-                        if (fileExtension === 'csv') {
-                            processCSV(e.target.result, file.name);
-                        } else if (['xlsx', 'xls'].includes(fileExtension)) {
-                            processExcel(e.target.result, file.name);
-                        } else {
-                            showNotification('Errore', `Formato file non supportato: ${file.name}`, 'error');
-                        }
-                    } catch (error) {
-                        console.error('Error processing file:', error);
-                        showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
-                    }
-                };
-
-                if (fileExtension === 'csv') {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsArrayBuffer(file);
-                }
-            });
-        }
-
-        // CSV Processing
-        function processCSV(csvData, filename) {
-            try {
-                Papa.parse(csvData, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    delimitersToGuess: [',', '\t', '|', ';'],
-                    complete: (results) => {
-                        if (results.errors.length > 0) {
-                            console.warn('CSV parsing warnings:', results.errors);
-                        }
-                        
-                        const cleanedData = results.data.map(row => {
-                            const cleanedRow = {};
-                            for (const [key, value] of Object.entries(row)) {
-                                const cleanKey = key.trim().toLowerCase();
-                                cleanedRow[cleanKey] = value;
-                            }
-                            return cleanedRow;
-                        });
-
-                        processRawData(cleanedData, filename);
-                        showNotification('Successo', `File CSV elaborato: ${filename}`, 'success');
+        // ApexCharts Theme Configuration
+        const solariumTheme = {
+            theme: {
+                mode: 'dark'
+            },
+            chart: {
+                background: 'transparent',
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
                     },
-                    error: (error) => {
-                        console.error('CSV parsing error:', error);
-                        showNotification('Errore', `Errore nel parsing CSV: ${filename}`, 'error');
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 350
                     }
-                });
-            } catch (error) {
-                console.error('CSV processing error:', error);
-                showNotification('Errore', `Errore nell'elaborazione CSV: ${filename}`, 'error');
-            }
-        }
-
-        // Excel Processing
-        function processExcel(arrayBuffer, filename) {
-            try {
-                const workbook = XLSX.read(arrayBuffer, {
-                    cellStyles: true,
-                    cellFormulas: true,
-                    cellDates: true,
-                    cellNF: true,
-                    sheetStubs: true
-                });
-
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-                    header: 1,
-                    defval: '',
-                    blankrows: false
-                });
-
-                if (jsonData.length === 0) {
-                    showNotification('Avviso', `File Excel vuoto: ${filename}`, 'info');
-                    return;
+                },
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            },
+            grid: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                strokeDashArray: 0,
+                xaxis: {
+                    lines: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
                 }
-
-                // Convert to object format with headers
-                const headers = jsonData[0].map(h => String(h).trim().toLowerCase());
-                const processedData = jsonData.slice(1).map(row => {
-                    const obj = {};
-                    headers.forEach((header, index) => {
-                        obj[header] = row[index] || '';
-                    });
-                    return obj;
-                });
-
-                processRawData(processedData, filename);
-                showNotification('Successo', `File Excel elaborato: ${filename}`, 'success');
-            } catch (error) {
-                console.error('Excel processing error:', error);
-                showNotification('Errore', `Errore nell'elaborazione Excel: ${filename}`, 'error');
-            }
-        }
-
-        // Raw Data Processing
-        function processRawData(data, filename) {
-            try {
-                dashboardData.rawData = [...dashboardData.rawData, ...data];
-
-                // Detect data type and process accordingly
-                const sampleRow = data[0];
-                const keys = Object.keys(sampleRow);
-
-                // Check for shipment data patterns
-                const shipmentKeys = ['tracking_id', 'trackingid', 'id', 'destination', 'carrier', 'status', 'value', 'amount'];
-                const hasShipmentData = shipmentKeys.some(key => 
-                    keys.some(k => k.includes(key))
-                );
-
-                if (hasShipmentData) {
-                    processShipmentData(data);
-                } else {
-                    processGenericData(data);
+            },
+            colors: ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#8e8e93', '#af52de'],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            xaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
+                    }
+                },
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
                 }
-
-                updateDashboard();
-            } catch (error) {
-                console.error('Raw data processing error:', error);
-                showNotification('Errore', 'Errore nell\'elaborazione dei dati', 'error');
-            }
-        }
-
-        // Shipment Data Processing
-        function processShipmentData(data) {
-            try {
-                const processedShipments = data.map(row => {
-                    const normalizedRow = {};
-                    
-                    // Normalize tracking ID
-                    normalizedRow.trackingId = row.tracking_id || row.trackingid || row.id || `SP-${Date.now()}`;
-                    
-                    // Normalize destination
-                    normalizedRow.destination = row.destination || row.dest || row.address || 'N/A';
-                    
-                    // Normalize carrier
-                    normalizedRow.carrier = row.carrier || row.courier || row.shipper || 'Unknown';
-                    
-                    // Normalize status
-                    let status = (row.status || row.state || 'pending').toLowerCase();
-                    if (status.includes('deliver')) status = 'delivered';
-                    else if (status.includes('transit') || status.includes('shipping')) status = 'in-transit';
-                    else if (status.includes('delay')) status = 'delayed';
-                    else if (status.includes('pend')) status = 'pending';
-                    normalizedRow.status = status;
-                    
-                    // Normalize value
-                    const value = row.value || row.amount || row.cost || row.price || 0;
-                    normalizedRow.value = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
-                    
-                    // Normalize dates
-                    normalizedRow.shipDate = row.ship_date || row.shipdate || row.date || new Date().toISOString().split('T')[0];
-                    normalizedRow.expectedDelivery = row.expected_delivery || row.expected_date || row.delivery_date || '';
-                    
-                    return normalizedRow;
-                });
-
-                // Update dashboard data
-                dashboardData.shipmentsData = [...dashboardData.shipmentsData, ...processedShipments];
-
-                // Update carriers data
-                const carrierStats = {};
-                processedShipments.forEach(shipment => {
-                    if (!carrierStats[shipment.carrier]) {
-                        carrierStats[shipment.carrier] = {
-                            name: shipment.carrier,
-                            shipments: 0,
-                            delivered: 0,
-                            totalValue: 0
-                        };
-                    }
-                    carrierStats[shipment.carrier].shipments++;
-                    carrierStats[shipment.carrier].totalValue += shipment.value;
-                    if (shipment.status === 'delivered') {
-                        carrierStats[shipment.carrier].delivered++;
-                    }
-                });
-
-                // Update shipments count for existing carriers
-                Object.values(carrierStats).forEach(carrier => {
-                    const existingCarrier = dashboardData.carriersData.find(c => c.name === carrier.name);
-                    if (existingCarrier) {
-                        existingCarrier.shipments += carrier.shipments;
-                    } else {
-                        dashboardData.carriersData.push({
-                            name: carrier.name,
-                            shipments: carrier.shipments,
-                            successRate: (carrier.delivered / carrier.shipments * 100).toFixed(1),
-                            avgTime: (Math.random() * 2 + 2).toFixed(1), // Placeholder
-                            rating: (Math.random() * 1.5 + 3.5).toFixed(1) // Placeholder
-                        });
-                    }
-                    
-                    // Update shipments count in chart data
-                    if (!dashboardData.shipments[carrier.name]) {
-                        dashboardData.shipments[carrier.name] = 0;
-                    }
-                    dashboardData.shipments[carrier.name] += carrier.shipments;
-                });
-
-                // Update KPIs
-                const totalValue = processedShipments.reduce((sum, shipment) => sum + shipment.value, 0);
-                dashboardData.kpi.totalRevenue += totalValue;
-                dashboardData.kpi.totalShipments += processedShipments.length;
-
-                // Calculate performance metrics
-                const deliveredCount = processedShipments.filter(s => s.status === 'delivered').length;
-                const delayedCount = processedShipments.filter(s => s.status === 'delayed').length;
-                const totalProcessed = processedShipments.length;
-
-                if (totalProcessed > 0) {
-                    const onTimeRate = (deliveredCount / totalProcessed) * 100;
-                    const delayedRate = (delayedCount / totalProcessed) * 100;
-                    const failedRate = 100 - onTimeRate - delayedRate;
-
-                    dashboardData.performance = {
-                        onTime: onTimeRate.toFixed(1),
-                        delayed: delayedRate.toFixed(1),
-                        failed: failedRate.toFixed(1)
-                    };
-
-                    dashboardData.kpi.onTimeRate = onTimeRate.toFixed(1);
-                }
-
-            } catch (error) {
-                console.error('Shipment data processing error:', error);
-                showNotification('Errore', 'Errore nell\'elaborazione dei dati di spedizione', 'error');
-            }
-        }
-
-        // Generic Data Processing
-        function processGenericData(data) {
-            try {
-                // Basic data analysis for generic datasets
-                const sampleRow = data[0];
-                const numericColumns = [];
-                
-                Object.keys(sampleRow).forEach(key => {
-                    const values = data.map(row => row[key]).filter(v => v !== null && v !== undefined && v !== '');
-                    const numericValues = values.filter(v => !isNaN(parseFloat(v)));
-                    
-                    if (numericValues.length > values.length * 0.7) { // 70% numeric threshold
-                        numericColumns.push({
-                            column: key,
-                            sum: numericValues.reduce((sum, val) => sum + parseFloat(val), 0),
-                            avg: numericValues.reduce((sum, val) => sum + parseFloat(val), 0) / numericValues.length,
-                            count: numericValues.length
-                        });
-                    }
-                });
-
-                // Update revenue if revenue-like columns found
-                const revenueColumns = numericColumns.filter(col => 
-                    col.column.toLowerCase().includes('revenue') ||
-                    col.column.toLowerCase().includes('sales') ||
-                    col.column.toLowerCase().includes('amount') ||
-                    col.column.toLowerCase().includes('value')
-                );
-
-                if (revenueColumns.length > 0) {
-                    const totalRevenue = revenueColumns.reduce((sum, col) => sum + col.sum, 0);
-                    dashboardData.kpi.totalRevenue += totalRevenue;
-                }
-
-                showNotification('Info', `Elaborati ${data.length} record generici`, 'info');
-            } catch (error) {
-                console.error('Generic data processing error:', error);
-                showNotification('Errore', 'Errore nell\'elaborazione dei dati generici', 'error');
-            }
-        }
-
-        // Update Dashboard
-        function updateDashboard() {
-            try {
-                updateKPIs();
-                updateTables();
-                updateCharts();
-            } catch (error) {
-                console.error('Dashboard update error:', error);
-                showNotification('Errore', 'Errore nell\'aggiornamento della dashboard', 'error');
-            }
-        }
-
-        // Update KPIs
-        function updateKPIs() {
-            try {
-                // Update KPI values
-                document.getElementById('total-revenue').textContent = 
-                    `€${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`;
-                document.getElementById('total-shipments').textContent = 
-                    dashboardData.kpi.totalShipments.toLocaleString('it-IT');
-                document.getElementById('avg-delivery').textContent = 
-                    dashboardData.kpi.avgDeliveryTime.toString();
-                document.getElementById('ontime-rate').textContent = 
-                    `${dashboardData.kpi.onTimeRate}%`;
-
-                // Update trend indicators
-                const updateTrend = (id, value) => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        const isPositive = value >= 0;
-                        element.className = `kpi-trend ${isPositive ? 'trend-positive' : 'trend-negative'}`;
-                        element.textContent = `${isPositive ? '↗' : '↘'} ${isPositive ? '+' : ''}${value}%`;
-                    }
-                };
-
-                updateTrend('revenue-trend', dashboardData.kpi.trends.revenue);
-                updateTrend('shipments-trend', dashboardData.kpi.trends.shipments);
-                updateTrend('delivery-trend', dashboardData.kpi.trends.delivery);
-                updateTrend('ontime-trend', dashboardData.kpi.trends.onTime);
-            } catch (error) {
-                console.error('KPI update error:', error);
-            }
-        }
-
-        // Update Tables
-        function updateTables() {
-            try {
-                // Update shipments table
-                const shipmentsTableBody = document.querySelector('#shipmentsTable tbody');
-                shipmentsTableBody.innerHTML = '';
-
-                dashboardData.shipmentsData.slice(0, 5).forEach(shipment => {
-                    const row = shipmentsTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${shipment.trackingId}</td>
-                        <td>${shipment.destination}</td>
-                        <td>${shipment.carrier}</td>
-                        <td><span class="status-badge status-${shipment.status}">${shipment.status}</span></td>
-                        <td>€${shipment.value.toLocaleString('it-IT')}</td>
-                    `;
-                });
-
-                // Update carriers table
-                const carriersTableBody = document.querySelector('#carriersTable tbody');
-                carriersTableBody.innerHTML = '';
-
-                dashboardData.carriersData.slice(0, 5).forEach(carrier => {
-                    const row = carriersTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${carrier.name}</td>
-                        <td>${carrier.shipments.toLocaleString('it-IT')}</td>
-                        <td>${carrier.successRate}%</td>
-                        <td>${carrier.avgTime} giorni</td>
-                        <td>${carrier.rating}/5</td>
-                    `;
-                });
-            } catch (error) {
-                console.error('Tables update error:', error);
-            }
-        }
-
-        // Update Charts
-        function updateCharts() {
-            try {
-                // Destroy existing charts
-                Object.values(charts).forEach(chart => {
-                    if (chart) chart.destroy();
-                });
-                charts = {};
-
-                // Recreate all charts
-                initCharts();
-            } catch (error) {
-                console.error('Charts update error:', error);
-            }
-        }
-
-        // Initialize Charts
-        function initCharts() {
-            try {
-                // Revenue Chart (Line)
-                const revenueCtx = document.getElementById('revenueChart');
-                if (revenueCtx) {
-                    charts.revenue = new Chart(revenueCtx, {
-                        type: 'line',
-                        data: {
-                            labels: dashboardData.revenue.map(item => item.month),
-                            datasets: [{
-                                label: 'Fatturato Mensile',
-                                data: dashboardData.revenue.map(item => item.value),
-                                borderColor: '#007aff',
-                                backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: '#007aff',
-                                pointBorderColor: '#ffffff',
-                                pointBorderWidth: 2,
-                                pointRadius: 6,
-                                pointHoverRadius: 8
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                },
-                                y: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6',
-                                        callback: function(value) {
-                                            return '€' + (value / 1000) + 'K';
-                                        }
-                                    }
-                                }
-                            }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
+                    },
+                    formatter: function(value) {
+                        if (value >= 1000) {
+                            return (value / 1000).toFixed(0) + 'k';
                         }
-                    });
-                }
-
-                // Carriers Chart (Bar)
-                const carriersCtx = document.getElementById('carriersChart');
-                if (carriersCtx) {
-                    const carriersData = Object.entries(dashboardData.shipments);
-                    charts.carriers = new Chart(carriersCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: carriersData.map(([name]) => name),
-                            datasets: [{
-                                label: 'Spedizioni',
-                                data: carriersData.map(([, count]) => count),
-                                backgroundColor: [
-                                    '#007aff',
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#ff3b30',
-                                    '#5ac8fa'
-                                ],
-                                borderRadius: 8,
-                                borderSkipped: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                },
-                                y: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Performance Chart (Doughnut)
-                const performanceCtx = document.getElementById('performanceChart');
-                if (performanceCtx) {
-                    charts.performance = new Chart(performanceCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Puntuali', 'In Ritardo', 'Fallite'],
-                            datasets: [{
-                                data: [
-                                    parseFloat(dashboardData.performance.onTime),
-                                    parseFloat(dashboardData.performance.delayed),
-                                    parseFloat(dashboardData.performance.failed)
-                                ],
-                                backgroundColor: [
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#ff3b30'
-                                ],
-                                borderWidth: 0,
-                                cutout: '70%'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: '#a1a1a6',
-                                        usePointStyle: true,
-                                        padding: 20
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Geographic Chart (Polar Area)
-                const geographicCtx = document.getElementById('geographicChart');
-                if (geographicCtx) {
-                    const geoData = Object.entries(dashboardData.geographic);
-                    charts.geographic = new Chart(geographicCtx, {
-                        type: 'polarArea',
-                        data: {
-                            labels: geoData.map(([region]) => region),
-                            datasets: [{
-                                data: geoData.map(([, percentage]) => percentage),
-                                backgroundColor: [
-                                    'rgba(0, 122, 255, 0.8)',
-                                    'rgba(52, 199, 89, 0.8)',
-                                    'rgba(255, 149, 0, 0.8)',
-                                    'rgba(90, 200, 250, 0.8)'
-                                ],
-                                borderColor: [
-                                    '#007aff',
-                                    '#34c759',
-                                    '#ff9500',
-                                    '#5ac8fa'
-                                ],
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: '#a1a1a6',
-                                        usePointStyle: true,
-                                        padding: 15
-                                    }
-                                }
-                            },
-                            scales: {
-                                r: {
-                                    grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
-                                    },
-                                    ticks: {
-                                        color: '#a1a1a6',
-                                        backdropColor: 'transparent'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Charts initialization error:', error);
-                showNotification('Avviso', 'Alcuni grafici potrebbero non essere disponibili', 'info');
-            }
-        }
-
-        // Export to PDF
-        function exportToPDF() {
-            try {
-                showNotification('Export PDF', 'Generazione report PDF in corso...', 'info');
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                // Header
-                doc.setFontSize(20);
-                doc.text('Supply Chain Hub - Report', 20, 30);
-                
-                doc.setFontSize(12);
-                doc.text(`Data generazione: ${new Date().toLocaleDateString('it-IT')}`, 20, 45);
-
-                // KPIs
-                doc.setFontSize(16);
-                doc.text('Indicatori Chiave di Performance', 20, 65);
-                
-                doc.setFontSize(12);
-                let yPos = 80;
-                doc.text(`Fatturato Totale: €${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`, 20, yPos);
-                yPos += 10;
-                doc.text(`Spedizioni Totali: ${dashboardData.kpi.totalShipments.toLocaleString('it-IT')}`, 20, yPos);
-                yPos += 10;
-                doc.text(`Tempo Medio Consegna: ${dashboardData.kpi.avgDeliveryTime} giorni`, 20, yPos);
-                yPos += 10;
-                doc.text(`Tasso Puntualità: ${dashboardData.kpi.onTimeRate}%`, 20, yPos);
-
-                // Shipments Table
-                yPos += 30;
-                doc.setFontSize(16);
-                doc.text('Spedizioni Recenti', 20, yPos);
-                
-                yPos += 15;
-                doc.setFontSize(10);
-                doc.text('ID Tracking', 20, yPos);
-                doc.text('Destinazione', 60, yPos);
-                doc.text('Corriere', 110, yPos);
-                doc.text('Stato', 140, yPos);
-                doc.text('Valore', 170, yPos);
-                
-                yPos += 5;
-                dashboardData.shipmentsData.slice(0, 10).forEach(shipment => {
-                    yPos += 10;
-                    doc.text(shipment.trackingId, 20, yPos);
-                    doc.text(shipment.destination, 60, yPos);
-                    doc.text(shipment.carrier, 110, yPos);
-                    doc.text(shipment.status, 140, yPos);
-                    doc.text(`€${shipment.value.toLocaleString('it-IT')}`, 170, yPos);
-                });
-
-                // Carriers Performance
-                if (yPos > 220) {
-                    doc.addPage();
-                    yPos = 30;
-                }
-
-                yPos += 20;
-                doc.setFontSize(16);
-                doc.text('Performance Corrieri', 20, yPos);
-                
-                yPos += 15;
-                doc.setFontSize(10);
-                doc.text('Corriere', 20, yPos);
-                doc.text('Spedizioni', 60, yPos);
-                doc.text('Tasso Successo', 110, yPos);
-                doc.text('Tempo Medio', 150, yPos);
-                doc.text('Rating', 180, yPos);
-                
-                yPos += 5;
-                dashboardData.carriersData.slice(0, 10).forEach(carrier => {
-                    yPos += 10;
-                    doc.text(carrier.name, 20, yPos);
-                    doc.text(carrier.shipments.toString(), 60, yPos);
-                    doc.text(`${carrier.successRate}%`, 110, yPos);
-                    doc.text(`${carrier.avgTime} gg`, 150, yPos);
-                    doc.text(`${carrier.rating}/5`, 180, yPos);
-                });
-
-                // Save PDF
-                doc.save(`supply-chain-report-${new Date().toISOString().split('T')[0]}.pdf`);
-                showNotification('Successo', 'Report PDF generato con successo', 'success');
-            } catch (error) {
-                console.error('PDF export error:', error);
-                showNotification('Errore', 'Errore nella generazione del PDF', 'error');
-            }
-        }
-
-        // Export to Excel
-        function exportToExcel() {
-            try {
-                showNotification('Export Excel', 'Generazione file Excel in corso...', 'info');
-
-                const wb = XLSX.utils.book_new();
-
-                // KPIs Sheet
-                const kpiData = [
-                    ['Indicatore', 'Valore', 'Trend'],
-                    ['Fatturato Totale', `€${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`, `${dashboardData.kpi.trends.revenue}%`],
-                    ['Spedizioni Totali', dashboardData.kpi.totalShipments, `${dashboardData.kpi.trends.shipments}%`],
-                    ['Tempo Medio Consegna', `${dashboardData.kpi.avgDeliveryTime} giorni`, `${dashboardData.kpi.trends.delivery}%`],
-                    ['Tasso Puntualità', `${dashboardData.kpi.onTimeRate}%`, `${dashboardData.kpi.trends.onTime}%`]
-                ];
-                const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
-                XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
-
-                // Shipments Sheet
-                const shipmentsData = [
-                    ['Tracking ID', 'Destinazione', 'Corriere', 'Stato', 'Valore', 'Data Spedizione', 'Consegna Prevista']
-                ];
-                dashboardData.shipmentsData.forEach(shipment => {
-                    shipmentsData.push([
-                        shipment.trackingId,
-                        shipment.destination,
-                        shipment.carrier,
-                        shipment.status,
-                        shipment.value,
-                        shipment.shipDate || '',
-                        shipment.expectedDelivery || ''
-                    ]);
-                });
-                const shipmentsSheet = XLSX.utils.aoa_to_sheet(shipmentsData);
-                XLSX.utils.book_append_sheet(wb, shipmentsSheet, 'Spedizioni');
-
-                // Carriers Sheet
-                const carriersData = [
-                    ['Corriere', 'Spedizioni', 'Tasso Successo', 'Tempo Medio', 'Rating']
-                ];
-                dashboardData.carriersData.forEach(carrier => {
-                    carriersData.push([
-                        carrier.name,
-                        carrier.shipments,
-                        `${carrier.successRate}%`,
-                        `${carrier.avgTime} giorni`,
-                        `${carrier.rating}/5`
-                    ]);
-                });
-                const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData);
-                XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri');
-
-                // Revenue Sheet
-                const revenueData = [
-                    ['Mese', 'Fatturato']
-                ];
-                dashboardData.revenue.forEach(item => {
-                    revenueData.push([item.month, item.value]);
-                });
-                const revenueSheet = XLSX.utils.aoa_to_sheet(revenueData);
-                XLSX.utils.book_append_sheet(wb, revenueSheet, 'Fatturato');
-
-                // Performance Sheet
-                const performanceData = [
-                    ['Categoria', 'Percentuale'],
-                    ['Consegne Puntuali', `${dashboardData.performance.onTime}%`],
-                    ['Consegne in Ritardo', `${dashboardData.performance.delayed}%`],
-                    ['Consegne Fallite', `${dashboardData.performance.failed}%`]
-                ];
-                const performanceSheet = XLSX.utils.aoa_to_sheet(performanceData);
-                XLSX.utils.book_append_sheet(wb, performanceSheet, 'Performance');
-
-                // Geographic Sheet
-                const geographicData = [
-                    ['Regione', 'Percentuale']
-                ];
-                Object.entries(dashboardData.geographic).forEach(([region, percentage]) => {
-                    geographicData.push([region, `${percentage}%`]);
-                });
-                const geographicSheet = XLSX.utils.aoa_to_sheet(geographicData);
-                XLSX.utils.book_append_sheet(wb, geographicSheet, 'Distribuzione Geografica');
-
-                // Save Excel file
-                XLSX.writeFile(wb, `supply-chain-data-${new Date().toISOString().split('T')[0]}.xlsx`);
-                showNotification('Successo', 'File Excel generato con successo', 'success');
-            } catch (error) {
-                console.error('Excel export error:', error);
-                showNotification('Errore', 'Errore nella generazione del file Excel', 'error');
-            }
-        }
-
-        // Refresh Dashboard
-        function refreshDashboard() {
-            try {
-                showNotification('Aggiornamento', 'Aggiornamento dashboard in corso...', 'info');
-                
-                // Add small random variations to simulate real-time updates
-                dashboardData.kpi.totalRevenue += Math.floor(Math.random() * 10000) - 5000;
-                dashboardData.kpi.totalShipments += Math.floor(Math.random() * 20) - 10;
-                dashboardData.kpi.avgDeliveryTime += (Math.random() * 0.2) - 0.1;
-                dashboardData.kpi.onTimeRate += (Math.random() * 2) - 1;
-
-                // Ensure reasonable bounds
-                dashboardData.kpi.totalRevenue = Math.max(0, dashboardData.kpi.totalRevenue);
-                dashboardData.kpi.totalShipments = Math.max(0, dashboardData.kpi.totalShipments);
-                dashboardData.kpi.avgDeliveryTime = Math.max(1, Math.min(10, dashboardData.kpi.avgDeliveryTime));
-                dashboardData.kpi.onTimeRate = Math.max(80, Math.min(100, dashboardData.kpi.onTimeRate));
-
-                // Update trends
-                dashboardData.kpi.trends.revenue += (Math.random() * 2) - 1;
-                dashboardData.kpi.trends.shipments += (Math.random() * 2) - 1;
-                dashboardData.kpi.trends.delivery += (Math.random() * 1) - 0.5;
-                dashboardData.kpi.trends.onTime += (Math.random() * 1) - 0.5;
-
-                // Round values
-                dashboardData.kpi.avgDeliveryTime = parseFloat(dashboardData.kpi.avgDeliveryTime.toFixed(1));
-                dashboardData.kpi.onTimeRate = parseFloat(dashboardData.kpi.onTimeRate.toFixed(1));
-                dashboardData.kpi.trends.revenue = parseFloat(dashboardData.kpi.trends.revenue.toFixed(1));
-                dashboardData.kpi.trends.shipments = parseFloat(dashboardData.kpi.trends.shipments.toFixed(1));
-                dashboardData.kpi.trends.delivery = parseFloat(dashboardData.kpi.trends.delivery.toFixed(1));
-                dashboardData.kpi.trends.onTime = parseFloat(dashboardData.kpi.trends.onTime.toFixed(1));
-
-                // Update performance based on new on-time rate
-                dashboardData.performance.onTime = dashboardData.kpi.onTimeRate;
-                dashboardData.performance.delayed = (Math.random() * 5 + 2).toFixed(1);
-                dashboardData.performance.failed = (100 - parseFloat(dashboardData.performance.onTime) - parseFloat(dashboardData.performance.delayed)).toFixed(1);
-
-                updateDashboard();
-                showNotification('Successo', 'Dashboard aggiornata con successo', 'success');
-            } catch (error) {
-                console.error('Dashboard refresh error:', error);
-                showNotification('Errore', 'Errore nell\'aggiornamento della dashboard', 'error');
-            }
-        }
-
-        // Initialize Dashboard
-        function initDashboard() {
-            try {
-                console.log('Initializing Supply Chain Hub Dashboard...');
-                
-                // Check for Chart.js availability
-                if (typeof Chart === 'undefined') {
-                    showNotification('Avviso', 'Chart.js non disponibile. I grafici potrebbero non funzionare.', 'info');
-                    console.warn('Chart.js not loaded. Charts will not be available.');
-                }
-
-                // Setup file upload functionality
-                setupFileUpload();
-
-                // Initialize dashboard components
-                updateKPIs();
-                updateTables();
-                
-                // Initialize charts with delay to ensure DOM is ready
-                setTimeout(() => {
-                    if (typeof Chart !== 'undefined') {
-                        initCharts();
-                        console.log('Charts initialized successfully');
+                        return value;
                     }
-                }, 100);
-
-                // Show welcome notification
-                setTimeout(() => {
-                    showNotification(
-                        'Dashboard Pronta', 
-                        'Supply Chain Hub caricato con successo. Carica i tuoi file per iniziare l\'analisi.', 
-                        'success'
-                    );
-                }, 500);
-
-                console.log('Dashboard initialization completed');
-            } catch (error) {
-                console.error('Dashboard initialization error:', error);
-                showNotification('Errore', 'Errore nell\'inizializzazione della dashboard', 'error');
+                }
+            },
+            legend: {
+                labels: {
+                    colors: 'rgba(255, 255, 255, 0.8)'
+                },
+                position: 'bottom',
+                horizontalAlign: 'center'
+            },
+            tooltip: {
+                theme: 'dark',
+                style: {
+                    fontSize: '12px'
+                },
+                y: {
+                    formatter: function(value) {
+                        if (typeof value === 'number') {
+                            return value.toLocaleString('it-IT');
+                        }
+                        return value;
+                    }
+                }
             }
-        }
-
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', initDashboard);
-
-        // Global error handler
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
-            showNotification('Errore Sistema', 'Si è verificato un errore imprevisto', 'error');
-        });
-
-        // Handle unhandled promise rejections
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
-            showNotification('Errore', 'Errore durante l\'elaborazione dei dati', 'error');
-        });
-
-        // Expose global functions for debugging (development only)
-        if (typeof window !== 'undefined') {
-            window.SupplyChainHub = {
-                data: dashboardData,
-                refresh: refreshDashboard,
-                exportPDF: exportToPDF,
-                exportExcel: exportToExcel,
-                updateDashboard: updateDashboard,
-                version: '1.0.0'
-            };
-        }
-    </script>
-</body>
-</html>
+        };
