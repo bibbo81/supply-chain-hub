@@ -243,18 +243,23 @@
             try {
                 console.log('Loading configuration...');
                 const response = await fetch('/.netlify/functions/config');
+                
+                if (!response.ok) {
+                    throw new Error(`Config endpoint returned ${response.status}`);
+                }
+                
                 const config = await response.json();
+                console.log('Config loaded successfully');
                 
                 if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-                    console.log('Config loaded successfully');
                     supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
                     configLoaded = true;
                     
-                    // NOW check for existing session
+                    // Check for existing session AFTER Supabase is initialized
                     checkExistingSession();
                     return true;
                 }
-                throw new Error('Invalid configuration');
+                throw new Error('Invalid configuration received');
             } catch (error) {
                 console.error('Failed to load configuration:', error);
                 showMessage('Errore di configurazione. Riprova più tardi.', 'error');
@@ -262,7 +267,7 @@
             }
         }
         
-        // Check for existing session
+        // Check for existing session (only called after config is loaded)
         async function checkExistingSession() {
             if (!supabase || !configLoaded) {
                 console.log('Supabase not ready for session check');
@@ -270,7 +275,13 @@
             }
             
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    return;
+                }
+                
                 if (session) {
                     console.log('Existing session found, redirecting...');
                     window.location.href = '/dashboard.html';
@@ -325,6 +336,13 @@
             messageContainer.classList.remove('hidden');
             messageBox.className = `p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-500 bg-opacity-20 text-green-100' : 'bg-red-500 bg-opacity-20 text-red-100'}`;
             messageBox.textContent = message;
+            
+            // Auto-hide error messages after 5 seconds
+            if (type === 'error') {
+                setTimeout(() => {
+                    hideMessage();
+                }, 5000);
+            }
         }
 
         function hideMessage() {
@@ -379,6 +397,7 @@
                     }, 1000);
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 showMessage(error.message || 'Errore durante l\'accesso. Riprova.');
             } finally {
                 // Reset button state
@@ -420,6 +439,8 @@
             hideMessage();
             
             try {
+                console.log('Creating organization...');
+                
                 // First, create the organization using the service endpoint
                 const orgResponse = await fetch('/.netlify/functions/create-organization', {
                     method: 'POST',
@@ -433,11 +454,12 @@
                 });
                 
                 if (!orgResponse.ok) {
-                    const error = await orgResponse.json();
-                    throw new Error(error.message || 'Errore nella creazione organizzazione');
+                    const errorData = await orgResponse.json().catch(() => ({ error: 'Errore del server' }));
+                    throw new Error(errorData.error || errorData.message || 'Errore nella creazione organizzazione');
                 }
                 
-                const { organizationId } = await orgResponse.json();
+                const orgData = await orgResponse.json();
+                console.log('Organization created:', orgData.organizationId);
                 
                 // Then create the user with the organization ID
                 const { data, error } = await supabase.auth.signUp({
@@ -445,10 +467,11 @@
                     password: password,
                     options: {
                         data: {
-                            organizzazione_id: organizationId,
+                            organizzazione_id: orgData.organizationId,
                             nome_organizzazione: orgName,
                             ruolo: 'admin'
-                        }
+                        },
+                        emailRedirectTo: `${window.location.origin}/dashboard.html`
                     }
                 });
                 
@@ -465,6 +488,7 @@
                 }, 3000);
                 
             } catch (error) {
+                console.error('Registration error:', error);
                 showMessage(error.message || 'Errore durante la registrazione. Riprova.');
             } finally {
                 // Reset button state
