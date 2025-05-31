@@ -1,5 +1,5 @@
-// ===== NETLIFY FUNCTION: SHIPMENTS API - VERSIONE CORRETTA =====
-// Gestisce tutte le operazioni CRUD per le spedizioni
+// ===== NETLIFY FUNCTION: SHIPMENTS API - VERSIONE MULTI-TENANT =====
+// Gestisce tutte le operazioni CRUD per le spedizioni con supporto multi-tenancy
 // Endpoint: /.netlify/functions/shipments
 
 const { createClient } = require('@supabase/supabase-js');
@@ -18,6 +18,9 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
+// ID organizzazione di default per test
+const DEFAULT_ORG_ID = 'bb70d86e-bf38-4a85-adc3-76be46705d52';
+
 // Handler principale della function
 exports.handler = async (event, context) => {
   console.log('🚀 Shipments API called:', event.httpMethod, event.path);
@@ -32,16 +35,20 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Estrai organizzazione_id dal token JWT o usa default
+    const organizzazione_id = await getOrganizzazioneId(event);
+    console.log('🏢 Organization ID:', organizzazione_id);
+
     // Router per i diversi metodi HTTP
     switch (event.httpMethod) {
       case 'GET':
-        return await handleGet(event);
+        return await handleGet(event, organizzazione_id);
       case 'POST':
-        return await handlePost(event);
+        return await handlePost(event, organizzazione_id);
       case 'PUT':
-        return await handlePut(event);
+        return await handlePut(event, organizzazione_id);
       case 'DELETE':
-        return await handleDelete(event);
+        return await handleDelete(event, organizzazione_id);
       default:
         return createResponse(405, { error: 'Method not allowed' });
     }
@@ -55,8 +62,43 @@ exports.handler = async (event, context) => {
   }
 };
 
+// ===== Estrai organizzazione_id dal JWT o usa default =====
+async function getOrganizzazioneId(event) {
+  try {
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('⚠️ No auth token found, using default organization');
+      return DEFAULT_ORG_ID;
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verifica il token e ottieni l'utente
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.log('⚠️ Invalid token, using default organization');
+      return DEFAULT_ORG_ID;
+    }
+
+    // Estrai organizzazione_id dai metadati dell'utente
+    const organizzazione_id = user.app_metadata?.organizzazione_id || user.user_metadata?.organizzazione_id;
+    
+    if (!organizzazione_id) {
+      console.log('⚠️ No organization ID in user metadata, using default');
+      return DEFAULT_ORG_ID;
+    }
+
+    return organizzazione_id;
+  } catch (error) {
+    console.error('❌ Error extracting organization ID:', error);
+    return DEFAULT_ORG_ID;
+  }
+}
+
 // ===== GET - Ottieni spedizioni =====
-async function handleGet(event) {
+async function handleGet(event, organizzazione_id) {
   const { id } = event.queryStringParameters || {};
   
   try {
@@ -66,6 +108,7 @@ async function handleGet(event) {
         .from('shipments')
         .select('*')
         .eq('id', id)
+        .eq('organizzazione_id', organizzazione_id)
         .single();
 
       if (error) throw error;
@@ -76,10 +119,11 @@ async function handleGet(event) {
 
       return createResponse(200, transformShipmentData(data));
     } else {
-      // Ottieni tutte le spedizioni
+      // Ottieni tutte le spedizioni dell'organizzazione
       const { data, error } = await supabase
         .from('shipments')
         .select('*')
+        .eq('organizzazione_id', organizzazione_id)
         .order('created_at', { ascending: false })
         .limit(1000); // Limite per performance
 
@@ -87,7 +131,7 @@ async function handleGet(event) {
 
       const transformedData = data.map(transformShipmentData);
       
-      console.log(`✅ Retrieved ${transformedData.length} shipments`);
+      console.log(`✅ Retrieved ${transformedData.length} shipments for org ${organizzazione_id}`);
       
       return createResponse(200, {
         shipments: transformedData,
@@ -102,7 +146,7 @@ async function handleGet(event) {
 }
 
 // ===== POST - Crea nuova spedizione =====
-async function handlePost(event) {
+async function handlePost(event, organizzazione_id) {
   try {
     const shipmentData = JSON.parse(event.body);
     console.log('📦 Creating shipment:', shipmentData.rif_spedizione);
@@ -116,8 +160,11 @@ async function handlePost(event) {
       });
     }
 
-    // Prepara dati per inserimento
-    const cleanData = cleanShipmentData(shipmentData);
+    // Prepara dati per inserimento con organizzazione_id
+    const cleanData = {
+      ...cleanShipmentData(shipmentData),
+      organizzazione_id: organizzazione_id
+    };
     
     // Inserisci nel database
     const { data, error } = await supabase
@@ -129,14 +176,14 @@ async function handlePost(event) {
     if (error) {
       if (error.code === '23505') { // Unique constraint violation
         return createResponse(409, { 
-          error: 'RIF. SPEDIZIONE già esistente',
+          error: 'RIF. SPEDIZIONE già esistente per questa organizzazione',
           code: 'DUPLICATE_REFERENCE'
         });
       }
       throw error;
     }
 
-    console.log('✅ Shipment created:', data.id);
+    console.log('✅ Shipment created:', data.id, 'for org:', organizzazione_id);
     
     return createResponse(201, {
       message: 'Spedizione creata con successo',
@@ -155,7 +202,7 @@ async function handlePost(event) {
 }
 
 // ===== PUT - Aggiorna spedizione =====
-async function handlePut(event) {
+async function handlePut(event, organizzazione_id) {
   try {
     const shipmentData = JSON.parse(event.body);
     const { id } = shipmentData;
@@ -178,18 +225,19 @@ async function handlePut(event) {
     // Rimuovi ID dai dati di aggiornamento
     const { id: _, ...updateData } = cleanShipmentData(shipmentData);
 
-    // Aggiorna nel database
+    // Aggiorna nel database solo per l'organizzazione corrente
     const { data, error } = await supabase
       .from('shipments')
       .update(updateData)
       .eq('id', id)
+      .eq('organizzazione_id', organizzazione_id)
       .select()
       .single();
 
     if (error) {
       if (error.code === '23505') {
         return createResponse(409, { 
-          error: 'RIF. SPEDIZIONE già esistente',
+          error: 'RIF. SPEDIZIONE già esistente per questa organizzazione',
           code: 'DUPLICATE_REFERENCE'
         });
       }
@@ -197,10 +245,10 @@ async function handlePut(event) {
     }
 
     if (!data) {
-      return createResponse(404, { error: 'Spedizione non trovata' });
+      return createResponse(404, { error: 'Spedizione non trovata o non autorizzato' });
     }
 
-    console.log('✅ Shipment updated:', id);
+    console.log('✅ Shipment updated:', id, 'for org:', organizzazione_id);
 
     return createResponse(200, {
       message: 'Spedizione aggiornata con successo',
@@ -219,7 +267,7 @@ async function handlePut(event) {
 }
 
 // ===== DELETE - Elimina spedizione =====
-async function handleDelete(event) {
+async function handleDelete(event, organizzazione_id) {
   try {
     const { id } = event.queryStringParameters || {};
 
@@ -229,15 +277,28 @@ async function handleDelete(event) {
 
     console.log('🗑️ Deleting shipment:', id);
 
+    // Prima verifica che la spedizione appartenga all'organizzazione
+    const { data: existing, error: checkError } = await supabase
+      .from('shipments')
+      .select('id')
+      .eq('id', id)
+      .eq('organizzazione_id', organizzazione_id)
+      .single();
+
+    if (checkError || !existing) {
+      return createResponse(404, { error: 'Spedizione non trovata o non autorizzato' });
+    }
+
     // Elimina dal database
     const { error } = await supabase
       .from('shipments')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('organizzazione_id', organizzazione_id);
 
     if (error) throw error;
 
-    console.log('✅ Shipment deleted:', id);
+    console.log('✅ Shipment deleted:', id, 'for org:', organizzazione_id);
 
     return createResponse(200, {
       message: 'Spedizione eliminata con successo',
@@ -361,7 +422,9 @@ function transformShipmentData(dbData) {
     costoUnitario: dbData.costo_unitario_trasporto || 0,
     dazio: dbData.percentuale_dazio || 0,
     createdAt: dbData.created_at,
-    updatedAt: dbData.updated_at
+    updatedAt: dbData.updated_at,
+    // Aggiungi anche l'ID organizzazione per debug
+    organizzazioneId: dbData.organizzazione_id
   };
 }
 
