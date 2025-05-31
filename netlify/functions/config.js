@@ -53,13 +53,13 @@ const handler = async (event, context) => {
       };
     }
 
-    // Ritorniamo la configurazione
+    // Ritorniamo la configurazione nel formato atteso dal frontend
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        supabaseUrl,
-        supabaseAnonKey
+        SUPABASE_URL: supabaseUrl,
+        SUPABASE_ANON_KEY: supabaseAnonKey
       })
     };
 
