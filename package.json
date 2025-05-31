@@ -2,31 +2,10 @@
   "name": "supply-chain-hub",
   "version": "1.0.0",
   "description": "Supply Chain Hub - Multi-tenant SaaS Platform",
-  "main": "index.js",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo 'No build step required'",
-    "test": "echo 'No tests yet'"
+    "dev": "netlify dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.15.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/your-username/supply-chain-hub.git"
-  },
-  "keywords": [
-    "supply-chain",
-    "logistics",
-    "saas",
-    "multi-tenant"
-  ],
-  "author": "Your Name",
-  "license": "ISC"
+  }
 }
