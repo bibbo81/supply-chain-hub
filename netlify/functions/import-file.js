@@ -1,10 +1,6 @@
-// ===== NETLIFY FUNCTION: IMPORT FILE API =====
-// Gestisce l'import di file CSV e Excel
-// Endpoint: /.netlify/functions/import-file
-
 const { createClient } = require('@supabase/supabase-js');
-const XLSX = require('xlsx');
 const Papa = require('papaparse');
+const XLSX = require('xlsx');
 
 // Inizializza client Supabase
 const supabase = createClient(
@@ -12,21 +8,43 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Headers CORS
+// Headers CORS per tutte le risposte
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json'
 };
 
-// Limite dimensione file (10MB)
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// ID organizzazione di default per test
+const DEFAULT_ORG_ID = 'bb70d86e-bf38-4a85-adc3-76be46705d52';
 
+// Mappatura colonne per import
+const COLUMN_MAPPING = {
+  // Colonne Excel/CSV -> campi database
+  'RIF. SPEDIZIONE': 'rif_spedizione',
+  'N. ODA': 'n_oda',
+  'ANNO': 'anno',
+  'COD. ART.': 'cod_art',
+  'FORNITORE': 'fornitore',
+  'UM': 'um',
+  'QTY': 'qty',
+  'FATTURA FORNITORE': 'fattura_fornitore',
+  'COSTO TRASPORTO': 'costo_trasporto',
+  'TIPO SPEDIZIONE': 'tipo_spedizione',
+  'SPEDIZIONIERE': 'spedizioniere',
+  'COMPAGNIA': 'compagnia',
+  'STATO SPEDIZIONE': 'stato_spedizione',
+  'DATA PARTENZA': 'data_partenza',
+  'DATA ARRIVO': 'data_arrivo_effettiva',
+  'PERCENTUALE DAZIO': 'percentuale_dazio'
+};
+
+// Handler principale della function
 exports.handler = async (event, context) => {
-  console.log('📂 Import File API called:', event.httpMethod);
-
-  // Gestisci preflight CORS
+  console.log('📥 Import File API called:', event.httpMethod);
+  
+  // Gestisci preflight CORS request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -35,388 +53,334 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Solo POST è permesso
   if (event.httpMethod !== 'POST') {
     return createResponse(405, { error: 'Method not allowed' });
   }
 
   try {
-    const { fileData, fileType, mapping, fileName } = JSON.parse(event.body);
+    // Estrai organizzazione_id dal token JWT o usa default
+    const organizzazione_id = await getOrganizzazioneId(event);
+    console.log('🏢 Organization ID:', organizzazione_id);
 
-    // Validazione input
-    if (!fileData || !fileType || !mapping) {
-      return createResponse(400, { 
-        error: 'Parametri mancanti: fileData, fileType, mapping richiesti' 
-      });
+    // Parse del body
+    const { file, filename, type } = JSON.parse(event.body);
+
+    if (!file) {
+      return createResponse(400, { error: 'File mancante' });
     }
 
-    console.log(`📥 Processing ${fileType} file: ${fileName || 'unnamed'}`);
+    // Determina il tipo di file
+    const fileType = type || detectFileType(filename);
+    console.log('📄 File type:', fileType);
 
-    // Controllo dimensione file (approssimativo)
-    const fileSizeBytes = (fileData.length * 3) / 4; // base64 to bytes
-    if (fileSizeBytes > MAX_FILE_SIZE) {
-      return createResponse(413, { 
-        error: `File troppo grande. Massimo ${MAX_FILE_SIZE / 1024 / 1024}MB consentiti` 
-      });
-    }
-
-    // Parse del file
-    let parsedData = [];
-    
-    if (fileType === 'xlsx' || fileType === 'xls') {
-      parsedData = await parseExcelFile(fileData);
-    } else if (fileType === 'csv') {
-      parsedData = await parseCsvFile(fileData);
+    // Processa il file in base al tipo
+    let data;
+    if (fileType === 'csv') {
+      data = await processCSV(file);
+    } else if (fileType === 'excel') {
+      data = await processExcel(file);
     } else {
-      return createResponse(400, { error: 'Tipo file non supportato. Solo CSV e Excel.' });
-    }
-
-    console.log(`📋 Parsed ${parsedData.length} rows from file`);
-
-    if (parsedData.length === 0) {
-      return createResponse(400, { error: 'File vuoto o formato non valido' });
-    }
-
-    // Validazione mapping
-    const mappingValidation = validateMapping(mapping, parsedData[0]);
-    if (!mappingValidation.isValid) {
       return createResponse(400, { 
-        error: 'Mapping colonne non valido', 
-        details: mappingValidation.errors 
+        error: 'Tipo file non supportato. Usa CSV o Excel (.xlsx, .xls)' 
       });
     }
 
-    // Trasforma dati usando il mapping
-    const transformedData = await transformImportData(parsedData, mapping);
-    
-    console.log(`🔄 Transformed ${transformedData.validRecords.length} valid records`);
+    console.log(`📊 Parsed ${data.length} rows`);
 
-    // Import nel database
-    const importResults = await bulkInsertShipments(transformedData.validRecords);
+    // Importa i dati nel database
+    const result = await importData(data, organizzazione_id);
 
-    // Prepara risultati dettagliati
-    const results = {
-      success: true,
-      summary: {
-        totalRows: parsedData.length,
-        validRows: transformedData.validRecords.length,
-        transformErrors: transformedData.errors.length,
-        imported: importResults.success.length,
-        importErrors: importResults.errors.length
-      },
-      imported: importResults.success,
-      errors: [
-        ...transformedData.errors.map(e => ({ type: 'transformation', ...e })),
-        ...importResults.errors.map(e => ({ type: 'database', ...e }))
-      ]
-    };
-
-    console.log(`✅ Import completed: ${results.summary.imported}/${results.summary.totalRows} records imported`);
-
-    return createResponse(200, results);
+    return createResponse(200, {
+      message: 'Import completato con successo',
+      result,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('❌ Error in import-file function:', error);
-    
-    if (error.message.includes('JSON')) {
-      return createResponse(400, { error: 'Formato richiesta non valido' });
-    }
-
     return createResponse(500, { 
-      error: 'Errore interno del server',
-      message: error.message 
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 };
 
-// ===== PARSER FUNCTIONS =====
+// ===== Estrai organizzazione_id dal JWT o usa default =====
+async function getOrganizzazioneId(event) {
+  try {
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('⚠️ No auth token found, using default organization');
+      return DEFAULT_ORG_ID;
+    }
 
-// Parse file Excel
-async function parseExcelFile(base64Data) {
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verifica il token e ottieni l'utente
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.log('⚠️ Invalid token, using default organization');
+      return DEFAULT_ORG_ID;
+    }
+
+    // Estrai organizzazione_id dai metadati dell'utente
+    const organizzazione_id = user.app_metadata?.organizzazione_id || user.user_metadata?.organizzazione_id;
+    
+    if (!organizzazione_id) {
+      console.log('⚠️ No organization ID in user metadata, using default');
+      return DEFAULT_ORG_ID;
+    }
+
+    return organizzazione_id;
+  } catch (error) {
+    console.error('❌ Error extracting organization ID:', error);
+    return DEFAULT_ORG_ID;
+  }
+}
+
+// ===== Rileva tipo file dall'estensione =====
+function detectFileType(filename) {
+  if (!filename) return null;
+  
+  const ext = filename.toLowerCase().split('.').pop();
+  
+  if (ext === 'csv') return 'csv';
+  if (['xlsx', 'xls'].includes(ext)) return 'excel';
+  
+  return null;
+}
+
+// ===== Processa file CSV =====
+async function processCSV(fileContent) {
+  return new Promise((resolve, reject) => {
+    // Decodifica base64 se necessario
+    const csvString = fileContent.includes('base64,') 
+      ? Buffer.from(fileContent.split('base64,')[1], 'base64').toString('utf-8')
+      : fileContent;
+
+    Papa.parse(csvString, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          console.error('CSV parsing errors:', results.errors);
+        }
+        resolve(results.data);
+      },
+      error: (error) => {
+        reject(new Error(`Errore parsing CSV: ${error.message}`));
+      }
+    });
+  });
+}
+
+// ===== Processa file Excel =====
+async function processExcel(fileContent) {
   try {
     // Decodifica base64
-    const buffer = Buffer.from(base64Data, 'base64');
+    const buffer = Buffer.from(fileContent.split('base64,')[1], 'base64');
     
-    // Leggi workbook
-    const workbook = XLSX.read(buffer, { 
-      type: 'buffer',
-      cellDates: true,
-      cellNF: false,
-      cellText: false
-    });
+    // Leggi il workbook
+    const workbook = XLSX.read(buffer, { type: 'buffer' });
     
-    // Prendi il primo foglio
+    // Prendi il primo sheet
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     
-    // Converti in JSON con header dalla prima riga
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-      header: 1, // Usa la prima riga come indici
-      defval: '', // Valore default per celle vuote
-      raw: false // Converti tutto in stringhe
+    // Converti in JSON
+    const data = XLSX.utils.sheet_to_json(worksheet, {
+      raw: false, // Formatta date come stringhe
+      dateNF: 'yyyy-mm-dd'
     });
-    
-    if (jsonData.length < 2) {
-      throw new Error('File deve contenere almeno header e una riga dati');
-    }
 
-    // Rimuovi righe completamente vuote
-    const cleanData = jsonData.filter(row => 
-      row.some(cell => cell !== null && cell !== undefined && cell !== '')
-    );
-
-    return cleanData;
-
+    return data;
   } catch (error) {
-    console.error('❌ Error parsing Excel file:', error);
     throw new Error(`Errore parsing Excel: ${error.message}`);
   }
 }
 
-// Parse file CSV
-async function parseCsvFile(base64Data) {
-  try {
-    // Decodifica base64
-    const csvContent = Buffer.from(base64Data, 'base64').toString('utf-8');
-    
-    return new Promise((resolve, reject) => {
-      Papa.parse(csvContent, {
-        header: false, // Non usare header automatico
-        skipEmptyLines: 'greedy',
-        delimiter: '', // Auto-detect
-        dynamicTyping: false, // Mantieni tutto come stringhe
-        encoding: 'utf-8',
-        complete: (results) => {
-          if (results.errors.length > 0) {
-            console.warn('⚠️ CSV parsing warnings:', results.errors);
-          }
-          
-          if (results.data.length < 2) {
-            reject(new Error('File CSV deve contenere almeno header e una riga dati'));
-          } else {
-            resolve(results.data);
-          }
-        },
-        error: (error) => {
-          reject(new Error(`Errore parsing CSV: ${error.message}`));
-        }
-      });
-    });
-
-  } catch (error) {
-    console.error('❌ Error parsing CSV file:', error);
-    throw new Error(`Errore parsing CSV: ${error.message}`);
-  }
-}
-
-// ===== VALIDATION & TRANSFORMATION =====
-
-// Valida mapping colonne
-function validateMapping(mapping, firstRow) {
-  const errors = [];
-  const requiredFields = ['rif_spedizione', 'cod_art', 'qty'];
-  
-  // Controlla campi obbligatori
-  for (const field of requiredFields) {
-    if (!mapping[field] && mapping[field] !== 0) {
-      errors.push(`Campo obbligatorio non mappato: ${field}`);
-    }
-  }
-  
-  // Controlla che gli indici siano validi
-  const maxIndex = firstRow.length - 1;
-  for (const [field, index] of Object.entries(mapping)) {
-    if (index !== '' && (index < 0 || index > maxIndex)) {
-      errors.push(`Indice colonna non valido per ${field}: ${index}`);
-    }
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
+// ===== Importa dati nel database =====
+async function importData(data, organizzazione_id) {
+  const results = {
+    total: data.length,
+    imported: 0,
+    skipped: 0,
+    errors: []
   };
-}
 
-// Trasforma dati importati
-async function transformImportData(rawData, mapping) {
-  const validRecords = [];
-  const errors = [];
+  // Batch size per insert
+  const BATCH_SIZE = 100;
   
-  // Skip header row
-  const dataRows = rawData.slice(1);
-  
-  for (let i = 0; i < dataRows.length; i++) {
-    const row = dataRows[i];
-    const rowIndex = i + 2; // +2 perché skippiamo header e gli array sono 0-based
-    
-    try {
-      const record = extractRecordFromRow(row, mapping);
-      
-      // Validazioni specifiche
-      const validation = validateImportRecord(record);
-      if (!validation.isValid) {
-        errors.push({
-          row: rowIndex,
-          data: row,
-          errors: validation.errors
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
+    const mappedBatch = [];
+
+    for (const row of batch) {
+      try {
+        const mappedRow = mapRowToDatabase(row, organizzazione_id);
+        
+        // Valida riga
+        const validation = validateShipmentData(mappedRow);
+        if (!validation.isValid) {
+          results.skipped++;
+          results.errors.push({
+            row: i + batch.indexOf(row) + 1,
+            errors: validation.errors
+          });
+          continue;
+        }
+
+        mappedBatch.push(mappedRow);
+      } catch (error) {
+        results.skipped++;
+        results.errors.push({
+          row: i + batch.indexOf(row) + 1,
+          error: error.message
         });
-        continue;
       }
-      
-      validRecords.push(record);
-      
-    } catch (error) {
-      errors.push({
-        row: rowIndex,
-        data: row,
-        errors: [error.message]
-      });
+    }
+
+    // Inserisci il batch
+    if (mappedBatch.length > 0) {
+      const { error } = await supabase
+        .from('spedizioni')
+        .upsert(mappedBatch, {
+          onConflict: 'rif_spedizione,organizzazione_id',
+          ignoreDuplicates: false
+        });
+
+      if (error) {
+        console.error('Batch insert error:', error);
+        results.errors.push({
+          batch: `${i + 1}-${Math.min(i + BATCH_SIZE, data.length)}`,
+          error: error.message
+        });
+      } else {
+        results.imported += mappedBatch.length;
+      }
     }
   }
-  
-  return { validRecords, errors };
+
+  return results;
 }
 
-// Estrae record da riga usando mapping
-function extractRecordFromRow(row, mapping) {
-  const record = {};
-  
-  // Estrai campi usando mapping
-  for (const [field, index] of Object.entries(mapping)) {
-    if (index !== '' && index !== null && index !== undefined) {
-      const value = row[parseInt(index)] || '';
-      record[field] = value.toString().trim();
+// ===== Mappa riga Excel/CSV ai campi database =====
+function mapRowToDatabase(row, organizzazione_id) {
+  const mapped = {
+    organizzazione_id: organizzazione_id
+  };
+
+  // Mappa le colonne usando il mapping definito
+  for (const [excelCol, dbField] of Object.entries(COLUMN_MAPPING)) {
+    if (row[excelCol] !== undefined && row[excelCol] !== null && row[excelCol] !== '') {
+      mapped[dbField] = row[excelCol];
     }
   }
-  
-  // Trasformazioni specifiche
-  
-  // COD. ART: formato 00000000
-  if (record.cod_art) {
-    record.cod_art = record.cod_art.replace(/\D/g, '').padStart(8, '0');
+
+  // Conversioni specifiche
+  if (mapped.cod_art) {
+    // Assicurati che sia formato 00000000
+    mapped.cod_art = String(mapped.cod_art).replace(/\D/g, '').padStart(8, '0');
   }
-  
-  // Quantità: converti in numero
-  if (record.qty) {
-    record.qty = parseFloat(record.qty.replace(',', '.'));
-    if (isNaN(record.qty)) {
-      throw new Error('Quantità non è un numero valido');
-    }
+
+  if (mapped.anno) {
+    mapped.anno = parseInt(mapped.anno) || null;
   }
-  
-  // Anno: converti in numero
-  if (record.anno) {
-    record.anno = parseInt(record.anno);
-    if (isNaN(record.anno)) {
-      throw new Error('Anno non è un numero valido');
-    }
+
+  if (mapped.qty) {
+    mapped.qty = parseFloat(mapped.qty) || null;
   }
-  
-  // Costo trasporto: converti in numero
-  if (record.costo_trasporto) {
-    record.costo_trasporto = parseFloat(record.costo_trasporto.replace(',', '.'));
-    if (isNaN(record.costo_trasporto)) {
-      record.costo_trasporto = 0;
-    }
+
+  if (mapped.costo_trasporto) {
+    mapped.costo_trasporto = parseFloat(mapped.costo_trasporto) || null;
   }
-  
-  // U.M.: default
-  if (!record.um) {
-    record.um = 'PZ';
+
+  if (mapped.percentuale_dazio) {
+    mapped.percentuale_dazio = parseFloat(mapped.percentuale_dazio) || null;
   }
-  
-  return record;
+
+  // Formatta date
+  if (mapped.data_partenza) {
+    mapped.data_partenza = formatDate(mapped.data_partenza);
+  }
+
+  if (mapped.data_arrivo_effettiva) {
+    mapped.data_arrivo_effettiva = formatDate(mapped.data_arrivo_effettiva);
+  }
+
+  return mapped;
 }
 
-// Valida record importato
-function validateImportRecord(record) {
+// ===== Formatta data per PostgreSQL =====
+function formatDate(dateValue) {
+  if (!dateValue) return null;
+
+  try {
+    // Se è già una data valida ISO
+    const date = new Date(dateValue);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+
+    // Prova formati comuni italiani
+    const parts = dateValue.toString().split(/[\/-]/);
+    if (parts.length === 3) {
+      // Assume DD/MM/YYYY o DD-MM-YYYY
+      const day = parseInt(parts[0]);
+      const month = parseInt(parts[1]);
+      const year = parseInt(parts[2]);
+      
+      if (year > 1900 && year < 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// ===== Valida dati spedizione =====
+function validateShipmentData(data) {
   const errors = [];
-  
-  // Campi obbligatori
-  if (!record.rif_spedizione) {
-    errors.push('RIF. SPEDIZIONE obbligatorio');
+
+  // Campo obbligatorio
+  if (!data.rif_spedizione || data.rif_spedizione.trim() === '') {
+    errors.push('RIF. SPEDIZIONE è obbligatorio');
   }
-  
-  if (!record.cod_art || record.cod_art.length !== 8) {
-    errors.push('COD. ART. deve essere 8 cifre');
-  }
-  
-  if (!record.qty || record.qty <= 0) {
-    errors.push('Quantità deve essere maggiore di zero');
-  }
-  
+
   // Validazioni formato
-  if (record.anno && (record.anno < 2020 || record.anno > 2030)) {
-    errors.push('Anno deve essere tra 2020 e 2030');
+  if (data.cod_art && !/^[0-9]{8}$/.test(data.cod_art)) {
+    errors.push('COD. ART. deve essere 8 cifre numeriche');
   }
-  
-  if (record.costo_trasporto && record.costo_trasporto < 0) {
-    errors.push('Costo trasporto non può essere negativo');
+
+  if (data.anno && (data.anno < 2020 || data.anno > 2030)) {
+    errors.push('ANNO deve essere tra 2020 e 2030');
   }
-  
+
+  if (data.qty !== null && data.qty !== undefined && data.qty < 0) {
+    errors.push('QTY non può essere negativo');
+  }
+
+  if (data.costo_trasporto !== null && data.costo_trasporto !== undefined && data.costo_trasporto < 0) {
+    errors.push('COSTO TRASPORTO non può essere negativo');
+  }
+
   return {
     isValid: errors.length === 0,
     errors
   };
 }
 
-// ===== DATABASE OPERATIONS =====
+// ===== UTILITY FUNCTIONS =====
 
-// Insert multipli nel database
-async function bulkInsertShipments(records) {
-  const success = [];
-  const errors = [];
-  
-  for (let i = 0; i < records.length; i++) {
-    const record = records[i];
-    
-    try {
-      // Mappa i campi al formato database
-      const dbRecord = {
-        rif_spedizione: record.rif_spedizione,
-        n_oda: record.n_oda || null,
-        anno: record.anno || null,
-        cod_art: record.cod_art,
-        fornitore: record.fornitore || null,
-        um: record.um || 'PZ',
-        qty: record.qty,
-        fattura_fornitore: record.fattura_fornitore || null,
-        costo_trasporto: record.costo_trasporto || 0
-      };
-      
-      const { data, error } = await supabase
-        .from('shipments')
-        .insert([dbRecord])
-        .select();
-      
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          errors.push({
-            record,
-            error: `RIF. SPEDIZIONE '${record.rif_spedizione}' già esistente`
-          });
-        } else {
-          errors.push({
-            record,
-            error: error.message
-          });
-        }
-      } else {
-        success.push(data[0]);
-      }
-      
-    } catch (error) {
-      errors.push({
-        record,
-        error: error.message
-      });
-    }
-  }
-  
-  return { success, errors };
-}
-
-// ===== UTILITY =====
-
+// Crea risposta HTTP standardizzata
 function createResponse(statusCode, data) {
   return {
     statusCode,
