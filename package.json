@@ -6,6 +6,21 @@
     "dev": "netlify dev"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.3"
-  }
+    "@supabase/supabase-js": "^2.49.8",
+    "papaparse": "^5.5.3",
+    "xlsx": "^0.18.5"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bibbo81/supply-chain-hub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bibbo81/supply-chain-hub/issues"
+  },
+  "homepage": "https://github.com/bibbo81/supply-chain-hub#readme"
 }

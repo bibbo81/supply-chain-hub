@@ -2,8 +2,8 @@
   # Directory to publish
   publish = "public"
   
-  # Build command
-  command = "chmod +x build.sh && ./build.sh"
+  # Build command  
+  command = "npm install && chmod +x build.sh && ./build.sh"
   
   # Functions directory
   functions = "netlify/functions"
