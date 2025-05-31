@@ -1,68 +1,51 @@
-# Configurazione Netlify per Supply Chain Hub
 [build]
-  # Cartella delle functions serverless
-  functions = "netlify/functions"
-  
-  # Cartella da pubblicare (static files)
+  # Directory to publish
   publish = "public"
   
-  # Comando di build (opzionale per progetti statici)
-  command = "npm run build"
+  # Build command
+  command = "chmod +x build.sh && ./build.sh"
+  
+  # Functions directory
+  functions = "netlify/functions"
 
 [build.environment]
-  # Versione Node.js da usare
-  NODE_VERSION = "20"
-  
-  # Variabili di build
-  NPM_FLAGS = "--production=false"
+  # Node version for functions
+  NODE_VERSION = "18"
 
-# Redirects per API routing
-[[redirects]]
-  # Tutte le chiamate /api/* vanno alle functions
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"
 
+# Redirects
 [[redirects]]
-  # Redirect root alla dashboard
   from = "/"
   to = "/index.html"
   status = 200
 
-# Configurazione sviluppo locale
-[dev]
-  # Framework per sviluppo locale
-  framework = "#static"
-  
-  # Porta per dev server
-  targetPort = 8080
-  
-  # Auto-open browser
-  autoLaunch = true
+# API proxy (optional - for hiding API endpoints)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
-# Headers di sicurezza
-[[headers]]
-  for = "/*"
-  [headers.values]
-    # CORS headers
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-    
-    # Security headers
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+# Redirect to login if not authenticated (handled by JavaScript)
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200
 
-# Headers specifici per le API
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type"
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
 
-# Plugin (per funzionalità avanzate future)
-# [[plugins]]
-#   # Plugin per scheduled functions (cron jobs) - commentato per ora
-#   package = "@netlify/plugin-scheduled-functions"
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 404

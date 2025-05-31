@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Supply Chain Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="/config.js"></script>
+    <style>
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tab-active {
+            background: rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid white;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <!-- Background decorations -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full opacity-20 floating"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 rounded-full opacity-20 floating" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="glassmorphism rounded-2xl p-8 w-full max-w-md relative z-10">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
+                <i class="fas fa-truck text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Supply Chain Hub</h1>
+            <p class="text-white text-opacity-80">Accedi al tuo account</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex mb-6">
+            <button id="loginTab" class="flex-1 py-2 px-4 text-white font-medium rounded-tl-lg rounded-bl-lg tab-active transition-all duration-300">
+                Accedi
+            </button>
+            <button id="registerTab" class="flex-1 py-2 px-4 text-white font-medium rounded-tr-lg rounded-br-lg transition-all duration-300 hover:bg-white hover:bg-opacity-10">
+                Registrati
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Email</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input 
+                        type="email" 
+                        id="loginEmail"
+                        required
+                        class="w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="nome@azienda.com"
+                    >
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input 
+                        type="password" 
+                        id="loginPassword"
+                        required
+                        class="w-full pl-10 pr-10 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="••••••••"
+                    >
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-white text-opacity-50 hover:text-opacity-100">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <label class="flex items-center">
+                    <input type="checkbox" class="mr-2 rounded" id="rememberMe">
+                    <span class="text-white text-sm">Ricordami</span>
+                </label>
+                <a href="#" class="text-white text-sm hover:underline">Password dimenticata?</a>
+            </div>
+
+            <button 
+                type="submit" 
+                id="loginButton"
+                class="w-full py-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
+            >
+                <span id="loginButtonText">Accedi</span>
+                <div id="loginLoader" class="loader hidden ml-2"></div>
+            </button>
+        </form>
+
+        <!-- Register Form (hidden by default) -->
+        <form id="registerForm" class="space-y-6 hidden">
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Nome Organizzazione</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-building"></i>
+                    </span>
+                    <input 
+                        type="text" 
+                        id="orgName"
+                        required
+                        class="w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="Nome della tua azienda"
+                    >
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Email</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input 
+                        type="email" 
+                        id="registerEmail"
+                        required
+                        class="w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="nome@azienda.com"
+                    >
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input 
+                        type="password" 
+                        id="registerPassword"
+                        required
+                        minlength="6"
+                        class="w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="Minimo 6 caratteri"
+                    >
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-white text-sm font-medium mb-2">Conferma Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-white text-opacity-50">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input 
+                        type="password" 
+                        id="confirmPassword"
+                        required
+                        minlength="6"
+                        class="w-full pl-10 pr-3 py-3 bg-white bg-opacity-20 border border-white border-opacity-20 rounded-lg text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-white input-focus"
+                        placeholder="Ripeti la password"
+                    >
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="acceptTerms" class="mr-2 rounded" required>
+                <label for="acceptTerms" class="text-white text-sm">
+                    Accetto i <a href="#" class="underline">termini di servizio</a> e la <a href="#" class="underline">privacy policy</a>
+                </label>
+            </div>
+
+            <button 
+                type="submit" 
+                id="registerButton"
+                class="w-full py-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
+            >
+                <span id="registerButtonText">Crea Account</span>
+                <div id="registerLoader" class="loader hidden ml-2"></div>
+            </button>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="mt-4 hidden">
+            <div id="messageBox" class="p-4 rounded-lg text-sm">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Tab switching
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+
+        loginTab.addEventListener('click', () => {
+            loginTab.classList.add('tab-active');
+            registerTab.classList.remove('tab-active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            hideMessage();
+        });
+
+        registerTab.addEventListener('click', () => {
+            registerTab.classList.add('tab-active');
+            loginTab.classList.remove('tab-active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            hideMessage();
+        });
+
+        // Password toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const loginPassword = document.getElementById('loginPassword');
+        
+        togglePassword.addEventListener('click', () => {
+            const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            loginPassword.setAttribute('type', type);
+            togglePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+
+        // Message handling
+        function showMessage(message, type = 'error') {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageBox = document.getElementById('messageBox');
+            
+            messageContainer.classList.remove('hidden');
+            messageBox.className = `p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-500 bg-opacity-20 text-green-100' : 'bg-red-500 bg-opacity-20 text-red-100'}`;
+            messageBox.textContent = message;
+        }
+
+        function hideMessage() {
+            document.getElementById('messageContainer').classList.add('hidden');
+        }
+
+        // Login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginButton = document.getElementById('loginButton');
+            const loginButtonText = document.getElementById('loginButtonText');
+            const loginLoader = document.getElementById('loginLoader');
+            
+            // Show loading state
+            loginButton.disabled = true;
+            loginButtonText.textContent = 'Accesso in corso...';
+            loginLoader.classList.remove('hidden');
+            hideMessage();
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                // Store auth token
+                if (data.session) {
+                    localStorage.setItem('supabase.auth.token', data.session.access_token);
+                    
+                    // Check if remember me is checked
+                    if (document.getElementById('rememberMe').checked) {
+                        localStorage.setItem('rememberMe', 'true');
+                    }
+                    
+                    showMessage('Accesso effettuato con successo! Reindirizzamento...', 'success');
+                    
+                    // Redirect to dashboard after 1 second
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1000);
+                }
+            } catch (error) {
+                showMessage(error.message || 'Errore durante l\'accesso. Riprova.');
+            } finally {
+                // Reset button state
+                loginButton.disabled = false;
+                loginButtonText.textContent = 'Accedi';
+                loginLoader.classList.add('hidden');
+            }
+        });
+
+        // Register form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const orgName = document.getElementById('orgName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const registerButton = document.getElementById('registerButton');
+            const registerButtonText = document.getElementById('registerButtonText');
+            const registerLoader = document.getElementById('registerLoader');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showMessage('Le password non corrispondono');
+                return;
+            }
+            
+            // Show loading state
+            registerButton.disabled = true;
+            registerButtonText.textContent = 'Creazione account...';
+            registerLoader.classList.remove('hidden');
+            hideMessage();
+            
+            try {
+                // First, create the organization
+                const { data: orgData, error: orgError } = await supabase
+                    .from('organizzazioni')
+                    .insert({
+                        nome: orgName,
+                        piano: 'free',
+                        limite_utenti: 5,
+                        limite_spedizioni_mese: 100,
+                        features: {
+                            import_csv: true,
+                            import_excel: false,
+                            api_access: false,
+                            notifications: false
+                        },
+                        attiva: true,
+                        data_scadenza_trial: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days trial
+                    })
+                    .select()
+                    .single();
+                
+                if (orgError) throw orgError;
+                
+                // Then create the user with the organization ID
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            organizzazione_id: orgData.id,
+                            nome_organizzazione: orgName,
+                            ruolo: 'admin'
+                        }
+                    }
+                });
+                
+                if (error) throw error;
+                
+                showMessage('Account creato con successo! Controlla la tua email per confermare la registrazione.', 'success');
+                
+                // Switch to login tab after 3 seconds
+                setTimeout(() => {
+                    loginTab.click();
+                }, 3000);
+                
+            } catch (error) {
+                // If user creation failed, we might need to clean up the organization
+                showMessage(error.message || 'Errore durante la registrazione. Riprova.');
+            } finally {
+                // Reset button state
+                registerButton.disabled = false;
+                registerButtonText.textContent = 'Crea Account';
+                registerLoader.classList.add('hidden');
+            }
+        });
+
+        // Check if user is already logged in
+        window.addEventListener('load', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.href = '/dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>
