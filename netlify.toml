@@ -33,18 +33,18 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Redirect to login if not authenticated (handled by JavaScript)
-[[redirects]]
-  from = "/dashboard"
-  to = "/dashboard.html"
-  status = 200
+# Remove these redirects - they're causing issues
+# [[redirects]]
+#   from = "/dashboard"
+#   to = "/dashboard.html"
+#   status = 200
 
-[[redirects]]
-  from = "/login"
-  to = "/login.html"
-  status = 200
+# [[redirects]]
+#   from = "/login"
+#   to = "/login.html"
+#   status = 200
 
-# SPA fallback
+# SPA fallback - only for true 404s
 [[redirects]]
   from = "/*"
   to = "/index.html"
