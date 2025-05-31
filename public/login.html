@@ -361,6 +361,12 @@
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Ensure config is loaded
+            if (!supabase) {
+                showMessage('Configurazione non ancora caricata. Riprova.');
+                return;
+            }
+            
             const orgName = document.getElementById('orgName').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
@@ -382,27 +388,24 @@
             hideMessage();
             
             try {
-                // First, create the organization
-                const { data: orgData, error: orgError } = await supabase
-                    .from('organizzazioni')
-                    .insert({
-                        nome: orgName,
-                        piano: 'free',
-                        limite_utenti: 5,
-                        limite_spedizioni_mese: 100,
-                        features: {
-                            import_csv: true,
-                            import_excel: false,
-                            api_access: false,
-                            notifications: false
-                        },
-                        attiva: true,
-                        data_scadenza_trial: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days trial
+                // First, create the organization using the service endpoint
+                const orgResponse = await fetch('/.netlify/functions/create-organization', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nome_azienda: orgName,
+                        email: email
                     })
-                    .select()
-                    .single();
+                });
                 
-                if (orgError) throw orgError;
+                if (!orgResponse.ok) {
+                    const error = await orgResponse.json();
+                    throw new Error(error.message || 'Errore nella creazione organizzazione');
+                }
+                
+                const { organizationId } = await orgResponse.json();
                 
                 // Then create the user with the organization ID
                 const { data, error } = await supabase.auth.signUp({
@@ -410,7 +413,7 @@
                     password: password,
                     options: {
                         data: {
-                            organizzazione_id: orgData.id,
+                            organizzazione_id: organizationId,
                             nome_organizzazione: orgName,
                             ruolo: 'admin'
                         }
@@ -427,7 +430,6 @@
                 }, 3000);
                 
             } catch (error) {
-                // If user creation failed, we might need to clean up the organization
                 showMessage(error.message || 'Errore durante la registrazione. Riprova.');
             } finally {
                 // Reset button state
