@@ -22,6 +22,7 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding-top: 80px; /* Spazio per il menu hamburger */
         }
         
         .header {
@@ -346,34 +347,9 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #2c3e50;
-            padding: 10px 15px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-
-        .back-button:hover {
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-button">
-        <i class="fas fa-arrow-left"></i> Dashboard
-    </a>
-
     <div class="container">
         <div class="header">
             <h1>
@@ -1148,5 +1124,8 @@
             }, 5000);
         }
     </script>
+    
+    <!-- Include sidebar component -->
+    <script src="/components/sidebar.js"></script>
 </body>
 </html>
