@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Config will be injected by Netlify Edge Functions -->
     <style>
         .glassmorphism {
             background: rgba(255, 255, 255, 0.1);
@@ -237,15 +236,22 @@
     <script>
         // Initialize Supabase with dynamic config
         let supabase;
+        let configLoaded = false;
         
         // Load configuration
         async function loadConfig() {
             try {
+                console.log('Loading configuration...');
                 const response = await fetch('/.netlify/functions/config');
                 const config = await response.json();
                 
                 if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+                    console.log('Config loaded successfully');
                     supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    configLoaded = true;
+                    
+                    // NOW check for existing session
+                    checkExistingSession();
                     return true;
                 }
                 throw new Error('Invalid configuration');
@@ -253,6 +259,24 @@
                 console.error('Failed to load configuration:', error);
                 showMessage('Errore di configurazione. Riprova più tardi.', 'error');
                 return false;
+            }
+        }
+        
+        // Check for existing session
+        async function checkExistingSession() {
+            if (!supabase || !configLoaded) {
+                console.log('Supabase not ready for session check');
+                return;
+            }
+            
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    console.log('Existing session found, redirecting...');
+                    window.location.href = '/dashboard.html';
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
             }
         }
         
@@ -311,6 +335,13 @@
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Ensure config is loaded
+            if (!supabase || !configLoaded) {
+                showMessage('Sistema non ancora pronto. Riprova tra qualche secondo.');
+                await loadConfig();
+                return;
+            }
+            
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const loginButton = document.getElementById('loginButton');
@@ -362,8 +393,9 @@
             e.preventDefault();
             
             // Ensure config is loaded
-            if (!supabase) {
-                showMessage('Configurazione non ancora caricata. Riprova.');
+            if (!supabase || !configLoaded) {
+                showMessage('Sistema non ancora pronto. Riprova tra qualche secondo.');
+                await loadConfig();
                 return;
             }
             
@@ -424,6 +456,9 @@
                 
                 showMessage('Account creato con successo! Controlla la tua email per confermare la registrazione.', 'success');
                 
+                // Clear form
+                registerForm.reset();
+                
                 // Switch to login tab after 3 seconds
                 setTimeout(() => {
                     loginTab.click();
@@ -436,14 +471,6 @@
                 registerButton.disabled = false;
                 registerButtonText.textContent = 'Crea Account';
                 registerLoader.classList.add('hidden');
-            }
-        });
-
-        // Check if user is already logged in
-        window.addEventListener('load', async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                window.location.href = '/dashboard.html';
             }
         });
     </script>
