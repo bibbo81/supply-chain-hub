@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="/config.js"></script>
+    <!-- Config will be injected by Netlify Edge Functions -->
     <style>
         .glassmorphism {
             background: rgba(255, 255, 255, 0.1);
@@ -235,10 +235,31 @@
     </div>
 
     <script>
-        // Initialize Supabase
-        const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialize Supabase with dynamic config
+        let supabase;
+        
+        // Load configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/.netlify/functions/config');
+                const config = await response.json();
+                
+                if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+                    supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+                    return true;
+                }
+                throw new Error('Invalid configuration');
+            } catch (error) {
+                console.error('Failed to load configuration:', error);
+                showMessage('Errore di configurazione. Riprova più tardi.', 'error');
+                return false;
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadConfig();
+        });
 
         // Tab switching
         const loginTab = document.getElementById('loginTab');

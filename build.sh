@@ -1,18 +1,21 @@
 #!/bin/bash
 
-# build.sh - Netlify build script
-# This script replaces placeholders with actual environment variables
+# build.sh - Netlify build script for Supply Chain Hub
+# This script runs during Netlify build process
 
 echo "Building Supply Chain Hub..."
 
-# Create config.js with actual environment variables
-cat > public/config.js << EOF
-// Auto-generated configuration file
-window.SUPABASE_URL = '${VITE_SUPABASE_URL}';
-window.SUPABASE_ANON_KEY = '${VITE_SUPABASE_ANON_KEY}';
-EOF
+# Since we're now using the API endpoint for configuration,
+# we don't need to create any config files
 
-echo "Configuration file created successfully"
+# Add any other build steps here if needed in the future
+# For example:
+# - Minify CSS/JS
+# - Optimize images
+# - Run tests
+# - etc.
 
-# If you have other build steps, add them here
-# npm run build (if needed)
+echo "Build completed successfully"
+
+# Exit with success code
+exit 0
