@@ -522,11 +522,55 @@
             margin-bottom: 2rem;
         }
 
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filters-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filters-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--sol-text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: var(--sol-transition);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filters-toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
         .filters-grid {
             display: grid;
-            grid-template-columns: 2fr repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
-            align-items: end;
+            margin-bottom: 1rem;
+        }
+
+        .filters-advanced {
+            display: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .filters-advanced.active {
+            display: block;
         }
 
         .filter-group {
@@ -538,6 +582,7 @@
         .filter-label {
             font-size: 0.875rem;
             color: var(--sol-text-secondary);
+            font-weight: 500;
         }
 
         .filter-input,
@@ -548,6 +593,25 @@
             padding: 0.75rem 1rem;
             color: var(--sol-text-primary);
             transition: var(--sol-transition);
+            font-size: 0.875rem;
+        }
+
+        .filter-range {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-range-separator {
+            color: var(--sol-text-muted);
+        }
+
+        .filters-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
         }
 
         .filter-input:focus,
@@ -942,13 +1006,29 @@
 
         <!-- Filters -->
         <div class="filters-section">
+            <div class="filters-header">
+                <h3 class="filters-title">
+                    <i class="fas fa-filter"></i>
+                    Filtri di Ricerca
+                </h3>
+                <button class="filters-toggle" id="toggleAdvancedFilters">
+                    <i class="fas fa-sliders-h"></i>
+                    Filtri Avanzati
+                </button>
+            </div>
+            
+            <!-- Basic Filters -->
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label class="filter-label" for="searchFilter">Cerca per tracking, destinazione...</label>
-                    <input type="text" id="searchFilter" class="filter-input" placeholder="Inserisci ricerca...">
+                    <label class="filter-label" for="searchFilter">
+                        <i class="fas fa-search"></i> Cerca
+                    </label>
+                    <input type="text" id="searchFilter" class="filter-input" placeholder="Tracking, destinatario, città...">
                 </div>
                 <div class="filter-group">
-                    <label class="filter-label" for="statusFilter">Stato</label>
+                    <label class="filter-label" for="statusFilter">
+                        <i class="fas fa-info-circle"></i> Stato
+                    </label>
                     <select id="statusFilter" class="filter-select">
                         <option value="">Tutti gli stati</option>
                         <option value="pending">In Attesa</option>
@@ -958,7 +1038,9 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label class="filter-label" for="carrierFilter">Corriere</label>
+                    <label class="filter-label" for="carrierFilter">
+                        <i class="fas fa-truck"></i> Corriere
+                    </label>
                     <select id="carrierFilter" class="filter-select">
                         <option value="">Tutti i corrieri</option>
                         <option value="dhl">DHL</option>
@@ -966,17 +1048,81 @@
                         <option value="ups">UPS</option>
                         <option value="brt">BRT</option>
                         <option value="gls">GLS</option>
+                        <option value="tnt">TNT</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label class="filter-label" for="dateFilter">Data</label>
+                    <label class="filter-label" for="dateFilter">
+                        <i class="fas fa-calendar"></i> Data Spedizione
+                    </label>
                     <input type="date" id="dateFilter" class="filter-input">
                 </div>
             </div>
-            <div style="margin-top: 1rem;">
+            
+            <!-- Advanced Filters -->
+            <div class="filters-advanced" id="advancedFilters">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label" for="senderFilter">
+                            <i class="fas fa-user"></i> Mittente
+                        </label>
+                        <input type="text" id="senderFilter" class="filter-input" placeholder="Nome mittente...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="recipientFilter">
+                            <i class="fas fa-user-tie"></i> Destinatario
+                        </label>
+                        <input type="text" id="recipientFilter" class="filter-input" placeholder="Nome destinatario...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="cityFilter">
+                            <i class="fas fa-map-marker-alt"></i> Città
+                        </label>
+                        <input type="text" id="cityFilter" class="filter-input" placeholder="Città di destinazione...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-euro-sign"></i> Range Valore
+                        </label>
+                        <div class="filter-range">
+                            <input type="number" id="valueMin" class="filter-input" placeholder="Min" min="0">
+                            <span class="filter-range-separator">-</span>
+                            <input type="number" id="valueMax" class="filter-input" placeholder="Max" min="0">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-calendar-alt"></i> Periodo
+                        </label>
+                        <div class="filter-range">
+                            <input type="date" id="dateFrom" class="filter-input">
+                            <span class="filter-range-separator">-</span>
+                            <input type="date" id="dateTo" class="filter-input">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label" for="regionFilter">
+                            <i class="fas fa-globe-europe"></i> Regione
+                        </label>
+                        <select id="regionFilter" class="filter-select">
+                            <option value="">Tutte le regioni</option>
+                            <option value="nord">Nord Italia</option>
+                            <option value="centro">Centro Italia</option>
+                            <option value="sud">Sud Italia</option>
+                            <option value="isole">Isole</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filters-actions">
+                <button class="btn btn-secondary" id="applyFilters">
+                    <i class="fas fa-check"></i>
+                    Applica Filtri
+                </button>
                 <button class="btn btn-secondary" id="resetFilters">
                     <i class="fas fa-times"></i>
-                    Resetta filtri
+                    Resetta Filtri
                 </button>
             </div>
         </div>
@@ -1209,16 +1355,51 @@
             });
 
             // Filters
-            document.getElementById('searchFilter').addEventListener('input', applyFilters);
+            document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
             document.getElementById('statusFilter').addEventListener('change', applyFilters);
             document.getElementById('carrierFilter').addEventListener('change', applyFilters);
             document.getElementById('dateFilter').addEventListener('change', applyFilters);
             
+            // Advanced filters toggle
+            document.getElementById('toggleAdvancedFilters').addEventListener('click', function() {
+                const advancedFilters = document.getElementById('advancedFilters');
+                advancedFilters.classList.toggle('active');
+                this.innerHTML = advancedFilters.classList.contains('active') 
+                    ? '<i class="fas fa-sliders-h"></i> Nascondi Filtri'
+                    : '<i class="fas fa-sliders-h"></i> Filtri Avanzati';
+            });
+            
+            // Advanced filters
+            document.getElementById('senderFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('recipientFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('cityFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('valueMin').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('valueMax').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('dateFrom').addEventListener('change', applyFilters);
+            document.getElementById('dateTo').addEventListener('change', applyFilters);
+            document.getElementById('regionFilter').addEventListener('change', applyFilters);
+            
+            // Apply filters button
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            
+            // Reset filters
             document.getElementById('resetFilters').addEventListener('click', function() {
+                // Reset basic filters
                 document.getElementById('searchFilter').value = '';
                 document.getElementById('statusFilter').value = '';
                 document.getElementById('carrierFilter').value = '';
                 document.getElementById('dateFilter').value = '';
+                
+                // Reset advanced filters
+                document.getElementById('senderFilter').value = '';
+                document.getElementById('recipientFilter').value = '';
+                document.getElementById('cityFilter').value = '';
+                document.getElementById('valueMin').value = '';
+                document.getElementById('valueMax').value = '';
+                document.getElementById('dateFrom').value = '';
+                document.getElementById('dateTo').value = '';
+                document.getElementById('regionFilter').value = '';
+                
                 applyFilters();
             });
 
@@ -1350,26 +1531,116 @@
 
         // Apply filters
         function applyFilters() {
+            // Basic filters
             const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const carrierFilter = document.getElementById('carrierFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
             
+            // Advanced filters
+            const senderFilter = document.getElementById('senderFilter').value.toLowerCase();
+            const recipientFilter = document.getElementById('recipientFilter').value.toLowerCase();
+            const cityFilter = document.getElementById('cityFilter').value.toLowerCase();
+            const valueMin = parseFloat(document.getElementById('valueMin').value) || 0;
+            const valueMax = parseFloat(document.getElementById('valueMax').value) || Infinity;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const regionFilter = document.getElementById('regionFilter').value;
+            
             filteredShipments = shipments.filter(shipment => {
+                // Basic search
                 const matchesSearch = !searchTerm || 
                     shipment.tracking.toLowerCase().includes(searchTerm) ||
                     shipment.recipient.toLowerCase().includes(searchTerm) ||
+                    shipment.sender.toLowerCase().includes(searchTerm) ||
                     shipment.city.toLowerCase().includes(searchTerm);
                 
+                // Status filter
                 const matchesStatus = !statusFilter || shipment.status === statusFilter;
+                
+                // Carrier filter
                 const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
+                
+                // Date filter
                 const matchesDate = !dateFilter || shipment.date === dateFilter;
                 
-                return matchesSearch && matchesStatus && matchesCarrier && matchesDate;
+                // Advanced filters
+                const matchesSender = !senderFilter || shipment.sender.toLowerCase().includes(senderFilter);
+                const matchesRecipient = !recipientFilter || shipment.recipient.toLowerCase().includes(recipientFilter);
+                const matchesCity = !cityFilter || shipment.city.toLowerCase().includes(cityFilter);
+                const matchesValue = shipment.value >= valueMin && shipment.value <= valueMax;
+                
+                // Date range filter
+                let matchesDateRange = true;
+                if (dateFrom || dateTo) {
+                    const shipmentDate = new Date(shipment.date);
+                    if (dateFrom) {
+                        const fromDate = new Date(dateFrom);
+                        matchesDateRange = matchesDateRange && shipmentDate >= fromDate;
+                    }
+                    if (dateTo) {
+                        const toDate = new Date(dateTo);
+                        matchesDateRange = matchesDateRange && shipmentDate <= toDate;
+                    }
+                }
+                
+                // Region filter (simplified mapping)
+                let matchesRegion = !regionFilter;
+                if (regionFilter) {
+                    const northCities = ['Milano', 'Torino', 'Genova', 'Venezia', 'Bologna'];
+                    const centerCities = ['Roma', 'Firenze', 'Perugia', 'Ancona'];
+                    const southCities = ['Napoli', 'Bari', 'Reggio Calabria'];
+                    const islandCities = ['Palermo', 'Catania', 'Cagliari'];
+                    
+                    switch(regionFilter) {
+                        case 'nord':
+                            matchesRegion = northCities.includes(shipment.city);
+                            break;
+                        case 'centro':
+                            matchesRegion = centerCities.includes(shipment.city);
+                            break;
+                        case 'sud':
+                            matchesRegion = southCities.includes(shipment.city);
+                            break;
+                        case 'isole':
+                            matchesRegion = islandCities.includes(shipment.city);
+                            break;
+                    }
+                }
+                
+                return matchesSearch && matchesStatus && matchesCarrier && matchesDate && 
+                       matchesSender && matchesRecipient && matchesCity && matchesValue && 
+                       matchesDateRange && matchesRegion;
             });
             
             updateStats();
             renderTable();
+            
+            // Update filter count badge
+            const activeFilters = [
+                searchTerm, statusFilter, carrierFilter, dateFilter,
+                senderFilter, recipientFilter, cityFilter,
+                valueMin > 0 ? 'valueMin' : '',
+                valueMax < Infinity ? 'valueMax' : '',
+                dateFrom, dateTo, regionFilter
+            ].filter(f => f).length;
+            
+            if (activeFilters > 0) {
+                showNotification('Filtri Applicati', `${activeFilters} filtri attivi, ${filteredShipments.length} risultati trovati`, 'info');
+            }
+        }
+        
+        // Debounce function for input filters
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
 
         // Update statistics
@@ -1465,12 +1736,116 @@
         // Export functions
         function exportToPDF() {
             showNotification('Export PDF', 'Generazione PDF in corso...', 'info');
-            // PDF export logic here
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Header
+                doc.setFontSize(20);
+                doc.text('Supply Chain Hub - Report Spedizioni', 20, 20);
+                
+                doc.setFontSize(12);
+                doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 20, 35);
+                doc.text(`Totale spedizioni: ${filteredShipments.length}`, 20, 45);
+                
+                // Table headers
+                let yPos = 60;
+                doc.setFontSize(10);
+                doc.text('Tracking', 20, yPos);
+                doc.text('Data', 50, yPos);
+                doc.text('Destinatario', 80, yPos);
+                doc.text('Città', 120, yPos);
+                doc.text('Corriere', 150, yPos);
+                doc.text('Stato', 180, yPos);
+                
+                // Table data
+                yPos += 10;
+                filteredShipments.slice(0, 50).forEach(shipment => {
+                    doc.text(shipment.tracking, 20, yPos);
+                    doc.text(formatDate(shipment.date), 50, yPos);
+                    doc.text(shipment.recipient.substring(0, 20), 80, yPos);
+                    doc.text(shipment.city, 120, yPos);
+                    doc.text(shipment.carrier, 150, yPos);
+                    doc.text(shipment.status, 180, yPos);
+                    
+                    yPos += 8;
+                    
+                    if (yPos > 280) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                });
+                
+                doc.save(`spedizioni-${new Date().toISOString().split('T')[0]}.pdf`);
+                showNotification('Successo', 'PDF generato con successo', 'success');
+            } catch (error) {
+                console.error('PDF export error:', error);
+                showNotification('Errore', 'Errore nella generazione del PDF', 'error');
+            }
         }
 
         function exportToExcel() {
             showNotification('Export Excel', 'Generazione Excel in corso...', 'info');
-            // Excel export logic here
+            
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Prepare data
+                const excelData = filteredShipments.map(shipment => ({
+                    'Tracking ID': shipment.tracking,
+                    'Data Spedizione': shipment.date,
+                    'Mittente': shipment.sender,
+                    'Destinatario': shipment.recipient,
+                    'Città': shipment.city,
+                    'Corriere': shipment.carrier,
+                    'Stato': shipment.status,
+                    'Valore (€)': shipment.value
+                }));
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                
+                // Set column widths
+                const colWidths = [
+                    { wch: 15 }, // Tracking
+                    { wch: 12 }, // Data
+                    { wch: 20 }, // Mittente
+                    { wch: 20 }, // Destinatario
+                    { wch: 15 }, // Città
+                    { wch: 10 }, // Corriere
+                    { wch: 12 }, // Stato
+                    { wch: 10 }  // Valore
+                ];
+                ws['!cols'] = colWidths;
+                
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'Spedizioni');
+                
+                // Create summary sheet
+                const summaryData = [
+                    ['Report Spedizioni Supply Chain Hub'],
+                    [''],
+                    ['Data Generazione', new Date().toLocaleDateString('it-IT')],
+                    ['Totale Spedizioni', filteredShipments.length],
+                    ['In Transito', filteredShipments.filter(s => s.status === 'transit').length],
+                    ['Consegnate', filteredShipments.filter(s => s.status === 'delivered').length],
+                    ['In Ritardo', filteredShipments.filter(s => s.status === 'delayed').length],
+                    ['In Attesa', filteredShipments.filter(s => s.status === 'pending').length],
+                    [''],
+                    ['Valore Totale', '€' + filteredShipments.reduce((sum, s) => sum + s.value, 0).toFixed(2)]
+                ];
+                
+                const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(wb, wsSummary, 'Riepilogo');
+                
+                // Save file
+                XLSX.writeFile(wb, `spedizioni-${new Date().toISOString().split('T')[0]}.xlsx`);
+                showNotification('Successo', 'File Excel generato con successo', 'success');
+            } catch (error) {
+                console.error('Excel export error:', error);
+                showNotification('Errore', 'Errore nella generazione del file Excel', 'error');
+            }
         }
 
         // Action button styles
