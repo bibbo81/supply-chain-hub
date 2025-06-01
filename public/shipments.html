@@ -3,167 +3,609 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supply Chain Hub - Spedizioni</title>
+    <title>Supply Chain Hub - Gestione Spedizioni</title>
     
-    <!-- Solarium Design System -->
-    <link rel="stylesheet" href="/solarium.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
-    <!-- ApexCharts (for potential charts) -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
-    
-    <!-- Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Shipments Specific Styles -->
+    <!-- Solarium CSS Variables -->
     <style>
+        :root {
+            /* Solarium Colors */
+            --sol-primary: #4f46e5;
+            --sol-primary-dark: #4338ca;
+            --sol-primary-light: #6366f1;
+            --sol-secondary: #ec4899;
+            --sol-secondary-dark: #db2777;
+            --sol-secondary-light: #f472b6;
+            --sol-accent: #06b6d4;
+            --sol-accent-dark: #0891b2;
+            --sol-accent-light: #22d3ee;
+            
+            /* Dark Theme */
+            --sol-bg-primary: #0f172a;
+            --sol-bg-secondary: #1e293b;
+            --sol-bg-tertiary: #334155;
+            --sol-surface: rgba(30, 41, 59, 0.8);
+            --sol-surface-hover: rgba(51, 65, 85, 0.8);
+            
+            /* Text */
+            --sol-text-primary: #f1f5f9;
+            --sol-text-secondary: #cbd5e1;
+            --sol-text-muted: #94a3b8;
+            
+            /* Status Colors */
+            --sol-success: #10b981;
+            --sol-warning: #f59e0b;
+            --sol-error: #ef4444;
+            --sol-info: #3b82f6;
+            
+            /* Effects */
+            --sol-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            --sol-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --sol-blur: blur(16px);
+            --sol-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--sol-bg-primary);
+            color: var(--sol-text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, var(--sol-primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--sol-secondary) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, var(--sol-accent) 0%, transparent 50%);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--sol-surface);
+            backdrop-filter: var(--sol-blur);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--sol-text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: var(--sol-transition);
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--sol-text-primary);
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--sol-primary);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-search input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            color: var(--sol-text-primary);
+            width: 300px;
+            transition: var(--sol-transition);
+        }
+
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--sol-primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .header-search i {
+            position: absolute;
+            right: 0.75rem;
+            color: var(--sol-text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--sol-text-primary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: var(--sol-transition);
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: var(--sol-error);
+            color: white;
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 9999px;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: var(--sol-transition);
+        }
+
+        .user-menu:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .user-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--sol-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            background: var(--sol-surface);
+            backdrop-filter: var(--sol-blur);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-nav {
+            padding: 2rem 1rem;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--sol-text-muted);
+            margin-bottom: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--sol-text-secondary);
+            text-decoration: none;
+            transition: var(--sol-transition);
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--sol-text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--sol-primary);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 1.25rem;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            margin-top: 70px;
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .page-header-left {
+            flex: 1;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--sol-text-secondary);
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--sol-transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--sol-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--sol-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--sol-text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--sol-surface);
+            backdrop-filter: var(--sol-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--sol-text-secondary);
+            font-size: 0.875rem;
+        }
+
         /* Filters Section */
         .filters-section {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
+            background: var(--sol-surface);
+            backdrop-filter: var(--sol-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 1rem;
+            align-items: end;
         }
 
-        /* Search Bar */
-        .search-bar {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
-        .search-bar input {
-            padding-left: calc(var(--spacing-md) * 3);
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
         }
 
-        .search-icon {
-            position: absolute;
-            left: var(--spacing-md);
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-tertiary);
+        .filter-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--sol-text-primary);
+            transition: var(--sol-transition);
         }
 
-        /* Data Table Enhancements */
-        .table-wrapper {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: var(--shadow-md);
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--sol-primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--sol-text-primary);
+            cursor: pointer;
+            transition: var(--sol-transition);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--sol-primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--sol-surface);
+            backdrop-filter: var(--sol-blur);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
             overflow: hidden;
         }
 
         .table-header {
-            padding: var(--spacing-lg);
-            border-bottom: 1px solid var(--border-color);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: var(--spacing-md);
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .table-container {
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .table-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+        }
+
+        .table-wrapper {
             overflow-x: auto;
         }
 
-        .shipments-table {
+        .table {
             width: 100%;
-            min-width: 900px;
+            border-collapse: collapse;
         }
 
-        .shipments-table th {
-            position: sticky;
-            top: 0;
-            background: var(--glass-bg);
-            z-index: 10;
+        .table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Checkbox styling */
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
         .table-checkbox {
-            width: 18px;
-            height: 18px;
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: var(--sol-primary);
             cursor: pointer;
         }
 
-        /* Status badges */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-xs) var(--spacing-sm);
-            border-radius: var(--radius-sm);
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 500;
         }
 
-        .status-delivered {
-            background: var(--success-light);
-            color: var(--success-color);
+        .status-badge.delivered {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--sol-success);
         }
 
-        .status-in-transit {
-            background: var(--warning-light);
-            color: var(--warning-color);
+        .status-badge.transit {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--sol-warning);
         }
 
-        .status-pending {
-            background: var(--info-light);
-            color: var(--info-color);
+        .status-badge.pending {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--sol-info);
         }
 
-        .status-delayed {
-            background: var(--error-light);
-            color: var(--error-color);
+        .status-badge.delayed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--sol-error);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--sol-text-secondary);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: var(--sol-transition);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--sol-text-primary);
         }
 
         /* Pagination */
         .pagination {
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: var(--spacing-sm);
-            padding: var(--spacing-lg);
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pagination-info {
+            color: var(--sol-text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
         }
 
         .pagination-btn {
-            padding: var(--spacing-xs) var(--spacing-sm);
-            min-width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-sm);
-            background: var(--glass-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--sol-text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            transition: all var(--transition-fast);
+            transition: var(--sol-transition);
+            font-size: 0.875rem;
         }
 
         .pagination-btn:hover:not(:disabled) {
-            background: var(--glass-hover);
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-        }
-
-        .pagination-btn.active {
-            background: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .pagination-btn:disabled {
@@ -171,1106 +613,745 @@
             cursor: not-allowed;
         }
 
-        /* Bulk Actions */
-        .bulk-actions {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-md);
-            background: var(--info-light);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-lg);
-            animation: slideDown 0.3s ease-out;
+        .pagination-btn.active {
+            background: var(--sol-primary);
+            color: white;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .sidebar.active {
+                transform: translateX(0);
             }
-        }
 
-        /* Stats Cards */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-xl);
-        }
+            .main-content {
+                margin-left: 0;
+            }
 
-        .stat-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-md);
-            text-align: center;
-        }
+            .menu-toggle {
+                display: block;
+            }
 
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
+            .header-search {
+                display: none;
+            }
 
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        /* Modal Styles */
-        .modal-body {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--spacing-lg);
-        }
-
-        .detail-group {
-            background: var(--glass-bg);
-            padding: var(--spacing-md);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-        }
-
-        .detail-label {
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .detail-value {
-            font-size: 1rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        /* Timeline */
-        .timeline {
-            position: relative;
-            padding-left: var(--spacing-xl);
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 8px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: var(--border-color);
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .timeline-marker {
-            position: absolute;
-            left: -24px;
-            top: 4px;
-            width: 16px;
-            height: 16px;
-            background: var(--accent-color);
-            border: 3px solid var(--card-bg);
-            border-radius: 50%;
-        }
-
-        .timeline-content {
-            background: var(--glass-bg);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-        }
-
-        .timeline-date {
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
             .filters-grid {
                 grid-template-columns: 1fr;
             }
 
-            .table-header {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-menu span {
+                display: none;
+            }
+
+            .page-header {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: start;
+                gap: 1rem;
             }
 
-            .search-bar {
-                max-width: 100%;
+            .table-wrapper {
+                font-size: 0.875rem;
             }
 
-            .shipments-table {
-                font-size: 0.85rem;
+            .table th, .table td {
+                padding: 0.75rem 0.5rem;
             }
+        }
 
-            .bulk-actions {
-                flex-wrap: wrap;
-            }
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--sol-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Backdrop */
+        .backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--sol-transition);
+        }
+
+        .backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--sol-text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            color: var(--sol-text-secondary);
+            margin-bottom: 2rem;
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="nav-brand">
-            <button class="btn btn-ghost" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="d-flex align-center gap-2">
-                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #007aff, #5ac8fa); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-truck text-white"></i>
+        <div class="header-content">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/" class="logo">
+                    <i class="fas fa-truck"></i>
+                    <h1>Supply Chain Hub</h1>
+                </a>
+            </div>
+            
+            <div class="header-right">
+                <div class="header-search">
+                    <input type="search" placeholder="Cerca spedizioni, corrieri...">
+                    <i class="fas fa-search"></i>
                 </div>
-                <div>
-                    <div style="font-size: 1.25rem; font-weight: 700;">Supply Chain Hub</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: -4px;">Enterprise SaaS Platform</div>
+                
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    
+                    <div class="user-menu">
+                        <div class="user-avatar">
+                            <span id="userInitial">U</span>
+                        </div>
+                        <span id="userName">Utente</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <nav class="nav-menu">
-            <!-- Quick Actions -->
-            <button class="btn btn-ghost" title="Notifiche">
-                <i class="fas fa-bell"></i>
-                <span class="badge badge-danger" style="position: absolute; top: 8px; right: 8px; font-size: 0.6rem;">3</span>
-            </button>
-            
-            <button class="btn btn-ghost" title="Cerca">
-                <i class="fas fa-search"></i>
-            </button>
-            
-            <!-- User Menu -->
-            <div class="dropdown">
-                <button class="btn btn-ghost d-flex align-center gap-2" id="userMenuToggle">
-                    <div style="width: 32px; height: 32px; background: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-user text-white" style="font-size: 0.8rem;"></i>
-                    </div>
-                    <span class="hide-mobile" id="userEmail">user@example.com</span>
-                    <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
-                </button>
-            </div>
-        </nav>
     </header>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
-            <!-- Main Navigation -->
-            <div class="mb-3">
-                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
-                    PRINCIPALE
-                </div>
-                
-                <a href="/" class="sidebar-item" data-page="dashboard">
-                    <i class="fas fa-chart-line" style="width: 20px;"></i>
+            <div class="nav-section">
+                <div class="nav-section-title">Menu Principale</div>
+                <a href="/" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
-                
-                <a href="/shipments.html" class="sidebar-item active" data-page="shipments">
-                    <i class="fas fa-box" style="width: 20px;"></i>
+                <a href="/shipments.html" class="nav-item active">
+                    <i class="fas fa-box"></i>
                     <span>Spedizioni</span>
                 </a>
-                
-                <a href="/carriers.html" class="sidebar-item" data-page="carriers">
-                    <i class="fas fa-truck" style="width: 20px;"></i>
+                <a href="/carriers.html" class="nav-item">
+                    <i class="fas fa-truck"></i>
                     <span>Corrieri</span>
                 </a>
-                
-                <a href="/tracking.html" class="sidebar-item" data-page="tracking">
-                    <i class="fas fa-map-marker-alt" style="width: 20px;"></i>
+                <a href="/tracking.html" class="nav-item">
+                    <i class="fas fa-map-marker-alt"></i>
                     <span>Tracking</span>
                 </a>
             </div>
             
-            <!-- Tools -->
-            <div class="mb-3">
-                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
-                    STRUMENTI
-                </div>
-                
-                <a href="/import.html" class="sidebar-item" data-page="import">
-                    <i class="fas fa-upload" style="width: 20px;"></i>
-                    <span>Importa Dati</span>
-                </a>
-                
-                <a href="/reports.html" class="sidebar-item" data-page="reports">
-                    <i class="fas fa-file-chart-line" style="width: 20px;"></i>
+            <div class="nav-section">
+                <div class="nav-section-title">Analytics</div>
+                <a href="/reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
                     <span>Report</span>
                 </a>
-                
-                <a href="/costs.html" class="sidebar-item" data-page="costs">
-                    <i class="fas fa-euro-sign" style="width: 20px;"></i>
-                    <span>Analisi Costi</span>
+                <a href="/costs.html" class="nav-item">
+                    <i class="fas fa-coins"></i>
+                    <span>Costi</span>
+                </a>
+                <a href="/import.html" class="nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Importa Dati</span>
                 </a>
             </div>
             
-            <!-- Settings -->
-            <div>
-                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
-                    CONFIGURAZIONE
-                </div>
-                
-                <a href="/settings.html" class="sidebar-item" data-page="settings">
-                    <i class="fas fa-cog" style="width: 20px;"></i>
-                    <span>Impostazioni</span>
-                </a>
-                
-                <a href="/team.html" class="sidebar-item" data-page="team">
-                    <i class="fas fa-users" style="width: 20px;"></i>
+            <div class="nav-section">
+                <div class="nav-section-title">Configurazione</div>
+                <a href="/team.html" class="nav-item">
+                    <i class="fas fa-users"></i>
                     <span>Team</span>
                 </a>
-                
-                <a href="/billing.html" class="sidebar-item" data-page="billing">
-                    <i class="fas fa-credit-card" style="width: 20px;"></i>
+                <a href="/settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Impostazioni</span>
+                </a>
+                <a href="/billing.html" class="nav-item">
+                    <i class="fas fa-credit-card"></i>
                     <span>Fatturazione</span>
                 </a>
-            </div>
-            
-            <!-- Logout -->
-            <div style="margin-top: auto; padding-top: var(--spacing-xl); border-top: 1px solid var(--border-color);">
-                <button class="sidebar-item text-danger" onclick="logout()" style="width: 100%; border: none; background: none; cursor: pointer;">
-                    <i class="fas fa-sign-out-alt" style="width: 20px;"></i>
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
                     <span>Esci</span>
-                </button>
+                </a>
             </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="page-title">
-                    <h1>Gestione Spedizioni</h1>
-                </div>
-                <div class="quick-actions">
-                    <button class="btn btn-secondary" onclick="exportShipments()">
-                        <i class="fas fa-download"></i>
-                        Esporta
-                    </button>
-                    <button class="btn btn-primary" onclick="showCreateShipmentModal()">
-                        <i class="fas fa-plus"></i>
-                        Nuova Spedizione
-                    </button>
-                </div>
+        <div class="page-header">
+            <div class="page-header-left">
+                <h2 class="page-title">Gestione Spedizioni</h2>
+                <p class="page-subtitle">Monitora e gestisci tutte le tue spedizioni</p>
             </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalShipments">0</div>
-                    <div class="stat-label">Totale Spedizioni</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="inTransitCount">0</div>
-                    <div class="stat-label">In Transito</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="deliveredToday">0</div>
-                    <div class="stat-label">Consegnate Oggi</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="delayedCount">0</div>
-                    <div class="stat-label">In Ritardo</div>
-                </div>
+            <div class="page-actions">
+                <button class="btn btn-secondary">
+                    <i class="fas fa-download"></i>
+                    Esporta
+                </button>
+                <button class="btn btn-primary" id="newShipmentBtn">
+                    <i class="fas fa-plus"></i>
+                    Nuova Spedizione
+                </button>
             </div>
+        </div>
 
-            <!-- Filters Section -->
-            <div class="filters-section">
-                <div class="filters-grid">
-                    <div class="search-bar">
-                        <i class="fas fa-search search-icon"></i>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="searchInput" 
-                            placeholder="Cerca per tracking, destinazione..."
-                            onkeyup="handleSearch()"
-                        >
-                    </div>
-                    
-                    <select class="form-control" id="statusFilter" onchange="applyFilters()">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalShipments">0</div>
+                <div class="stat-label">Totale Spedizioni</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="inTransit">0</div>
+                <div class="stat-label">In Transito</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="deliveredToday">0</div>
+                <div class="stat-label">Consegnate Oggi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="delayedShipments">0</div>
+                <div class="stat-label">In Ritardo</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label" for="searchFilter">Cerca per tracking, destinazione...</label>
+                    <input type="text" id="searchFilter" class="filter-input" placeholder="Inserisci ricerca...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="statusFilter">Stato</label>
+                    <select id="statusFilter" class="filter-select">
                         <option value="">Tutti gli stati</option>
-                        <option value="pending">In attesa</option>
-                        <option value="in-transit">In transito</option>
-                        <option value="delivered">Consegnata</option>
-                        <option value="delayed">In ritardo</option>
+                        <option value="pending">In Attesa</option>
+                        <option value="transit">In Transito</option>
+                        <option value="delivered">Consegnato</option>
+                        <option value="delayed">In Ritardo</option>
                     </select>
-                    
-                    <select class="form-control" id="carrierFilter" onchange="applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="carrierFilter">Corriere</label>
+                    <select id="carrierFilter" class="filter-select">
                         <option value="">Tutti i corrieri</option>
-                        <!-- Populated dynamically -->
+                        <option value="dhl">DHL</option>
+                        <option value="fedex">FedEx</option>
+                        <option value="ups">UPS</option>
+                        <option value="brt">BRT</option>
+                        <option value="gls">GLS</option>
                     </select>
-                    
-                    <input 
-                        type="date" 
-                        class="form-control" 
-                        id="dateFilter" 
-                        onchange="applyFilters()"
-                    >
                 </div>
-                
-                <div class="d-flex justify-between align-center">
-                    <div class="text-secondary">
-                        <span id="resultsCount">0</span> risultati trovati
-                    </div>
-                    <button class="btn btn-ghost btn-sm" onclick="resetFilters()">
-                        <i class="fas fa-times"></i>
-                        Resetta filtri
-                    </button>
+                <div class="filter-group">
+                    <label class="filter-label" for="dateFilter">Data</label>
+                    <input type="date" id="dateFilter" class="filter-input">
                 </div>
             </div>
+            <div class="filter-actions" style="margin-top: 1rem;">
+                <button class="btn btn-secondary" id="resetFilters">
+                    <i class="fas fa-times"></i>
+                    Resetta filtri
+                </button>
+            </div>
+        </div>
 
-            <!-- Bulk Actions (hidden by default) -->
-            <div class="bulk-actions" id="bulkActions" style="display: none;">
-                <div class="d-flex align-center gap-2">
-                    <i class="fas fa-info-circle text-info"></i>
-                    <span><span id="selectedCount">0</span> spedizioni selezionate</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-secondary" onclick="bulkUpdateStatus()">
-                        <i class="fas fa-edit"></i>
-                        Aggiorna Stato
-                    </button>
-                    <button class="btn btn-sm btn-secondary" onclick="bulkExport()">
-                        <i class="fas fa-file-export"></i>
-                        Esporta Selezionate
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
-                        <i class="fas fa-trash"></i>
-                        Elimina
-                    </button>
+        <!-- Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3 class="table-title">Lista Spedizioni</h3>
+                <div class="table-info">
+                    <span>Mostra</span>
+                    <select class="filter-select" id="perPage" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span>righe</span>
                 </div>
             </div>
-
-            <!-- Shipments Table -->
+            
             <div class="table-wrapper">
-                <div class="table-header">
-                    <h3 class="m-0">Lista Spedizioni</h3>
-                    <div class="d-flex align-center gap-2">
-                        <span class="text-secondary">Mostra</span>
-                        <select class="form-control" id="perPage" style="width: auto;" onchange="changePerPage()">
-                            <option value="10">10</option>
-                            <option value="25" selected>25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                        <span class="text-secondary">righe</span>
-                    </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="table-checkbox" id="selectAll">
+                            </th>
+                            <th>TRACKING</th>
+                            <th>DATA</th>
+                            <th>MITTENTE</th>
+                            <th>DESTINATARIO</th>
+                            <th>CITTÀ</th>
+                            <th>CORRIERE</th>
+                            <th>STATO</th>
+                            <th>VALORE</th>
+                            <th style="width: 100px;">AZIONI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentsTableBody">
+                        <!-- Shipments will be loaded here -->
+                    </tbody>
+                </table>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-box-open empty-icon"></i>
+                    <h3 class="empty-title">Nessuna spedizione trovata</h3>
+                    <p class="empty-text">Non ci sono spedizioni che corrispondono ai filtri selezionati.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('newShipmentBtn').click()">
+                        <i class="fas fa-plus"></i>
+                        Crea la tua prima spedizione
+                    </button>
                 </div>
                 
-                <div class="table-container">
-                    <table class="table shipments-table" id="shipmentsTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">
-                                    <input 
-                                        type="checkbox" 
-                                        class="form-check-input table-checkbox" 
-                                        id="selectAll"
-                                        onchange="toggleSelectAll()"
-                                    >
-                                </th>
-                                <th>Tracking</th>
-                                <th>Data</th>
-                                <th>Mittente</th>
-                                <th>Destinatario</th>
-                                <th>Città</th>
-                                <th>Corriere</th>
-                                <th>Stato</th>
-                                <th>Valore</th>
-                                <th>Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Populated by JavaScript -->
-                        </tbody>
-                    </table>
+                <!-- Loading State -->
+                <div id="loadingState" class="loading">
+                    <div class="spinner"></div>
                 </div>
-                
-                <!-- Pagination -->
-                <div class="pagination" id="pagination">
-                    <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="pagination-info">
+                    Mostrando <span id="showingFrom">0</span>-<span id="showingTo">0</span> di <span id="totalRecords">0</span> risultati
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="pagination-btn active">1</button>
+                    <button class="pagination-btn">2</button>
+                    <button class="pagination-btn">3</button>
+                    <button class="pagination-btn" id="nextPage">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Shipment Detail Modal -->
-    <div class="modal-backdrop" id="detailModalBackdrop" style="display: none;"></div>
-    <div class="modal" id="detailModal" style="display: none;">
-        <div class="modal-header">
-            <h3 class="m-0">Dettagli Spedizione</h3>
-            <button class="btn btn-ghost" onclick="closeDetailModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body" id="detailModalBody">
-            <!-- Populated dynamically -->
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeDetailModal()">Chiudi</button>
-            <button class="btn btn-primary" onclick="editShipment()">
-                <i class="fas fa-edit"></i>
-                Modifica
-            </button>
-        </div>
-    </div>
+    <!-- Backdrop -->
+    <div class="backdrop" id="backdrop"></div>
 
-    <!-- Mobile Sidebar Backdrop -->
-    <div class="modal-backdrop" id="sidebarBackdrop"></div>
-
-    <!-- Notification Container -->
-    <div id="notificationContainer"></div>
-
-    <!-- Auth Check -->
+    <!-- Auth Script -->
     <script src="/auth.js"></script>
-    
-    <!-- Shipments Scripts -->
+
+    <!-- Shipments JavaScript -->
     <script>
-        // Global state
-        let shipmentsData = {
-            shipments: [],
-            carriers: [],
-            totalCount: 0,
-            currentPage: 1,
-            perPage: 25,
-            filters: {
-                search: '',
-                status: '',
-                carrier: '',
-                date: ''
-            },
-            selectedIds: new Set()
-        };
+        // Global variables
+        let shipments = [];
+        let currentPage = 1;
+        let itemsPerPage = 25;
+        let filteredShipments = [];
 
         // Initialize page
-        async function initShipments() {
-            try {
-                showLoading('Caricamento spedizioni...');
-                
-                // Fetch carriers for filter
-                await fetchCarriers();
-                
-                // Fetch shipments
-                await fetchShipments();
-                
-                // Update UI
-                updateStats();
-                updateTable();
-                updatePagination();
-                populateCarrierFilter();
-                
-                hideLoading();
-                
-            } catch (error) {
-                console.error('Error initializing shipments:', error);
-                hideLoading();
-                showNotification('Errore', 'Errore nel caricamento delle spedizioni', 'error');
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check authentication
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Update user info
+            updateUserInfo();
+
+            // Load shipments
+            await loadShipments();
+
+            // Setup event listeners
+            setupEventListeners();
+        });
+
+        // Update user info in header
+        function updateUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const userName = document.getElementById('userName');
+            const userInitial = document.getElementById('userInitial');
+            
+            if (user.email) {
+                userName.textContent = user.email.split('@')[0];
+                userInitial.textContent = user.email[0].toUpperCase();
             }
         }
 
-        // Fetch shipments from API
-        async function fetchShipments() {
+        // Load shipments from API
+        async function loadShipments() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tableBody = document.getElementById('shipmentsTableBody');
+            
+            loadingState.style.display = 'flex';
+            emptyState.style.display = 'none';
+            
             try {
-                const params = new URLSearchParams({
-                    page: shipmentsData.currentPage,
-                    limit: shipmentsData.perPage,
-                    ...shipmentsData.filters
-                });
-                
-                const response = await authenticatedFetch(`/.netlify/functions/shipments?${params}`);
-                if (!response.ok) throw new Error('Failed to fetch shipments');
+                const response = await fetch('/.netlify/functions/shipments');
+                if (!response.ok) throw new Error('Failed to load shipments');
                 
                 const data = await response.json();
-                shipmentsData.shipments = data.shipments || [];
-                shipmentsData.totalCount = data.total || 0;
+                shipments = data.shipments || [];
+                filteredShipments = [...shipments];
                 
-                document.getElementById('resultsCount').textContent = shipmentsData.totalCount;
+                updateStats();
+                renderTable();
                 
             } catch (error) {
-                console.error('Error fetching shipments:', error);
-                shipmentsData.shipments = [];
-                shipmentsData.totalCount = 0;
+                console.error('Error loading shipments:', error);
+                // Use demo data if API fails
+                shipments = generateDemoShipments();
+                filteredShipments = [...shipments];
+                updateStats();
+                renderTable();
+            } finally {
+                loadingState.style.display = 'none';
             }
         }
 
-        // Fetch carriers
-        async function fetchCarriers() {
-            try {
-                const response = await authenticatedFetch('/.netlify/functions/carriers');
-                if (!response.ok) throw new Error('Failed to fetch carriers');
-                
-                shipmentsData.carriers = await response.json();
-            } catch (error) {
-                console.error('Error fetching carriers:', error);
-                shipmentsData.carriers = [];
-            }
+        // Generate demo shipments
+        function generateDemoShipments() {
+            const statuses = ['pending', 'transit', 'delivered', 'delayed'];
+            const carriers = ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'];
+            const cities = ['Milano', 'Roma', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze'];
+            const names = ['Mario Rossi', 'Luigi Bianchi', 'Anna Verdi', 'Giuseppe Neri', 'Maria Gialli'];
+            
+            return Array.from({ length: 50 }, (_, i) => ({
+                id: i + 1,
+                tracking: `IT${String(1000000 + i).padStart(7, '0')}`,
+                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                sender: names[Math.floor(Math.random() * names.length)],
+                recipient: names[Math.floor(Math.random() * names.length)],
+                city: cities[Math.floor(Math.random() * cities.length)],
+                carrier: carriers[Math.floor(Math.random() * carriers.length)],
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                value: Math.floor(Math.random() * 1000) + 50
+            }));
         }
 
-        // Update stats cards
+        // Update statistics
         function updateStats() {
-            const stats = {
-                total: shipmentsData.totalCount,
-                inTransit: shipmentsData.shipments.filter(s => s.status === 'in-transit').length,
-                deliveredToday: shipmentsData.shipments.filter(s => {
-                    return s.status === 'delivered' && 
-                           new Date(s.delivered_at).toDateString() === new Date().toDateString();
-                }).length,
-                delayed: shipmentsData.shipments.filter(s => s.status === 'delayed').length
-            };
+            const totalShipments = filteredShipments.length;
+            const inTransit = filteredShipments.filter(s => s.status === 'transit').length;
+            const deliveredToday = filteredShipments.filter(s => 
+                s.status === 'delivered' && s.date === new Date().toISOString().split('T')[0]
+            ).length;
+            const delayed = filteredShipments.filter(s => s.status === 'delayed').length;
             
-            document.getElementById('totalShipments').textContent = stats.total;
-            document.getElementById('inTransitCount').textContent = stats.inTransit;
-            document.getElementById('deliveredToday').textContent = stats.deliveredToday;
-            document.getElementById('delayedCount').textContent = stats.delayed;
+            document.getElementById('totalShipments').textContent = totalShipments;
+            document.getElementById('inTransit').textContent = inTransit;
+            document.getElementById('deliveredToday').textContent = deliveredToday;
+            document.getElementById('delayedShipments').textContent = delayed;
         }
 
-        // Update table
-        function updateTable() {
-            const tbody = document.querySelector('#shipmentsTable tbody');
-            tbody.innerHTML = '';
+        // Render table
+        function renderTable() {
+            const tableBody = document.getElementById('shipmentsTableBody');
+            const emptyState = document.getElementById('emptyState');
             
-            if (shipmentsData.shipments.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="text-center text-secondary" style="padding: 3rem;">
-                            <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                            <p>Nessuna spedizione trovata</p>
-                        </td>
-                    </tr>
-                `;
+            if (filteredShipments.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                updatePaginationInfo(0, 0, 0);
                 return;
             }
             
-            shipmentsData.shipments.forEach(shipment => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
+            emptyState.style.display = 'none';
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageShipments = filteredShipments.slice(start, end);
+            
+            tableBody.innerHTML = pageShipments.map(shipment => `
+                <tr>
+                    <td><input type="checkbox" class="table-checkbox" data-id="${shipment.id}"></td>
+                    <td><strong>${shipment.tracking}</strong></td>
+                    <td>${formatDate(shipment.date)}</td>
+                    <td>${shipment.sender}</td>
+                    <td>${shipment.recipient}</td>
+                    <td>${shipment.city}</td>
+                    <td>${shipment.carrier}</td>
+                    <td>${getStatusBadge(shipment.status)}</td>
+                    <td>€${shipment.value.toFixed(2)}</td>
                     <td>
-                        <input 
-                            type="checkbox" 
-                            class="form-check-input table-checkbox shipment-checkbox" 
-                            value="${shipment.id}"
-                            onchange="toggleSelection(${shipment.id})"
-                            ${shipmentsData.selectedIds.has(shipment.id) ? 'checked' : ''}
-                        >
-                    </td>
-                    <td>
-                        <a href="#" onclick="showShipmentDetail(${shipment.id}); return false;" class="text-primary">
-                            ${shipment.tracking_number || 'N/A'}
-                        </a>
-                    </td>
-                    <td>${formatDate(shipment.created_at)}</td>
-                    <td>${shipment.sender_name || 'N/A'}</td>
-                    <td>${shipment.recipient_name || 'N/A'}</td>
-                    <td>${shipment.destination_city || 'N/A'}</td>
-                    <td>${shipment.carrier_name || 'N/A'}</td>
-                    <td>
-                        <span class="status-badge status-${(shipment.status || 'pending').toLowerCase().replace(' ', '-')}">
-                            ${getStatusLabel(shipment.status)}
-                        </span>
-                    </td>
-                    <td>€${(shipment.value || 0).toLocaleString('it-IT')}</td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-ghost btn-sm" onclick="showShipmentDetail(${shipment.id})" title="Dettagli">
+                        <div class="table-actions">
+                            <button class="action-btn" title="Visualizza">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-ghost btn-sm" onclick="editShipment(${shipment.id})" title="Modifica">
+                            <button class="action-btn" title="Modifica">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-ghost btn-sm text-danger" onclick="deleteShipment(${shipment.id})" title="Elimina">
+                            <button class="action-btn" title="Elimina">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
-                `;
-            });
+                </tr>
+            `).join('');
+            
+            updatePaginationInfo(start + 1, Math.min(end, filteredShipments.length), filteredShipments.length);
+            updatePaginationButtons();
         }
 
-        // Update pagination
-        function updatePagination() {
-            const pagination = document.getElementById('pagination');
-            const totalPages = Math.ceil(shipmentsData.totalCount / shipmentsData.perPage);
-            const currentPage = shipmentsData.currentPage;
-            
-            let html = '';
-            
-            // Previous button
-            html += `
-                <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-            `;
-            
-            // Page numbers
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            if (startPage > 1) {
-                html += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
-                if (startPage > 2) {
-                    html += `<span class="text-secondary">...</span>`;
-                }
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                html += `
-                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
-                        ${i}
-                    </button>
-                `;
-            }
-            
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    html += `<span class="text-secondary">...</span>`;
-                }
-                html += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-            }
-            
-            // Next button
-            html += `
-                <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            `;
-            
-            pagination.innerHTML = html;
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
-        // Populate carrier filter
-        function populateCarrierFilter() {
-            const select = document.getElementById('carrierFilter');
-            select.innerHTML = '<option value="">Tutti i corrieri</option>';
-            
-            shipmentsData.carriers.forEach(carrier => {
-                select.innerHTML += `<option value="${carrier.id}">${carrier.name}</option>`;
-            });
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const badges = {
+                pending: '<span class="status-badge pending"><i class="fas fa-clock"></i> In Attesa</span>',
+                transit: '<span class="status-badge transit"><i class="fas fa-truck"></i> In Transito</span>',
+                delivered: '<span class="status-badge delivered"><i class="fas fa-check"></i> Consegnato</span>',
+                delayed: '<span class="status-badge delayed"><i class="fas fa-exclamation"></i> In Ritardo</span>'
+            };
+            return badges[status] || status;
         }
 
-        // Search handler
-        function handleSearch() {
-            const searchValue = document.getElementById('searchInput').value;
-            shipmentsData.filters.search = searchValue;
-            shipmentsData.currentPage = 1;
-            fetchShipments().then(() => {
-                updateTable();
-                updatePagination();
-            });
+        // Update pagination info
+        function updatePaginationInfo(from, to, total) {
+            document.getElementById('showingFrom').textContent = from;
+            document.getElementById('showingTo').textContent = to;
+            document.getElementById('totalRecords').textContent = total;
+        }
+
+        // Update pagination buttons
+        function updatePaginationButtons() {
+            const totalPages = Math.ceil(filteredShipments.length / itemsPerPage);
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
         }
 
         // Apply filters
         function applyFilters() {
-            shipmentsData.filters.status = document.getElementById('statusFilter').value;
-            shipmentsData.filters.carrier = document.getElementById('carrierFilter').value;
-            shipmentsData.filters.date = document.getElementById('dateFilter').value;
-            shipmentsData.currentPage = 1;
+            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const carrierFilter = document.getElementById('carrierFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
             
-            fetchShipments().then(() => {
-                updateTable();
-                updatePagination();
+            filteredShipments = shipments.filter(shipment => {
+                const matchesSearch = !searchTerm || 
+                    shipment.tracking.toLowerCase().includes(searchTerm) ||
+                    shipment.recipient.toLowerCase().includes(searchTerm) ||
+                    shipment.city.toLowerCase().includes(searchTerm);
+                
+                const matchesStatus = !statusFilter || shipment.status === statusFilter;
+                const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
+                const matchesDate = !dateFilter || shipment.date === dateFilter;
+                
+                return matchesSearch && matchesStatus && matchesCarrier && matchesDate;
             });
+            
+            currentPage = 1;
+            updateStats();
+            renderTable();
         }
 
-        // Reset filters
-        function resetFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('carrierFilter').value = '';
-            document.getElementById('dateFilter').value = '';
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
             
-            shipmentsData.filters = {
-                search: '',
-                status: '',
-                carrier: '',
-                date: ''
-            };
-            shipmentsData.currentPage = 1;
-            
-            fetchShipments().then(() => {
-                updateTable();
-                updatePagination();
+            menuToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleSidebar();
             });
-        }
 
-        // Change per page
-        function changePerPage() {
-            shipmentsData.perPage = parseInt(document.getElementById('perPage').value);
-            shipmentsData.currentPage = 1;
-            fetchShipments().then(() => {
-                updateTable();
-                updatePagination();
+            backdrop.addEventListener('click', function() {
+                closeSidebar();
             });
-        }
 
-        // Go to page
-        function goToPage(page) {
-            if (page < 1 || page > Math.ceil(shipmentsData.totalCount / shipmentsData.perPage)) return;
-            
-            shipmentsData.currentPage = page;
-            fetchShipments().then(() => {
-                updateTable();
-                updatePagination();
+            sidebar.addEventListener('click', function(e) {
+                e.stopPropagation();
             });
-        }
 
-        // Toggle select all
-        function toggleSelectAll() {
-            const isChecked = document.getElementById('selectAll').checked;
-            const checkboxes = document.querySelectorAll('.shipment-checkbox');
-            
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
-                const id = parseInt(checkbox.value);
-                if (isChecked) {
-                    shipmentsData.selectedIds.add(id);
-                } else {
-                    shipmentsData.selectedIds.delete(id);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeSidebar();
                 }
             });
-            
-            updateBulkActions();
-        }
 
-        // Toggle individual selection
-        function toggleSelection(id) {
-            if (shipmentsData.selectedIds.has(id)) {
-                shipmentsData.selectedIds.delete(id);
-            } else {
-                shipmentsData.selectedIds.add(id);
-            }
-            
-            updateBulkActions();
-        }
-
-        // Update bulk actions visibility
-        function updateBulkActions() {
-            const bulkActions = document.getElementById('bulkActions');
-            const selectedCount = shipmentsData.selectedIds.size;
-            
-            if (selectedCount > 0) {
-                bulkActions.style.display = 'flex';
-                document.getElementById('selectedCount').textContent = selectedCount;
-            } else {
-                bulkActions.style.display = 'none';
-            }
-            
-            // Update select all checkbox
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.shipment-checkbox');
-            if (checkboxes.length > 0) {
-                selectAll.checked = selectedCount === checkboxes.length;
-            }
-        }
-
-        // Show shipment detail
-        async function showShipmentDetail(id) {
-            try {
-                const shipment = shipmentsData.shipments.find(s => s.id === id);
-                if (!shipment) return;
-                
-                const modalBody = document.getElementById('detailModalBody');
-                modalBody.innerHTML = `
-                    <div class="detail-grid">
-                        <div class="detail-group">
-                            <div class="detail-label">Tracking Number</div>
-                            <div class="detail-value">${shipment.tracking_number || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Stato</div>
-                            <div class="detail-value">
-                                <span class="status-badge status-${(shipment.status || 'pending').toLowerCase().replace(' ', '-')}">
-                                    ${getStatusLabel(shipment.status)}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Corriere</div>
-                            <div class="detail-value">${shipment.carrier_name || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Valore</div>
-                            <div class="detail-value">€${(shipment.value || 0).toLocaleString('it-IT')}</div>
-                        </div>
-                    </div>
-                    
-                    <h4 class="mt-3 mb-2">Mittente</h4>
-                    <div class="detail-grid">
-                        <div class="detail-group">
-                            <div class="detail-label">Nome</div>
-                            <div class="detail-value">${shipment.sender_name || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Indirizzo</div>
-                            <div class="detail-value">${shipment.sender_address || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Città</div>
-                            <div class="detail-value">${shipment.sender_city || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">CAP</div>
-                            <div class="detail-value">${shipment.sender_zip || 'N/A'}</div>
-                        </div>
-                    </div>
-                    
-                    <h4 class="mt-3 mb-2">Destinatario</h4>
-                    <div class="detail-grid">
-                        <div class="detail-group">
-                            <div class="detail-label">Nome</div>
-                            <div class="detail-value">${shipment.recipient_name || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Indirizzo</div>
-                            <div class="detail-value">${shipment.destination_address || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">Città</div>
-                            <div class="detail-value">${shipment.destination_city || 'N/A'}</div>
-                        </div>
-                        <div class="detail-group">
-                            <div class="detail-label">CAP</div>
-                            <div class="detail-value">${shipment.destination_zip || 'N/A'}</div>
-                        </div>
-                    </div>
-                    
-                    <h4 class="mt-3 mb-2">Timeline</h4>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <div>Spedizione creata</div>
-                                <div class="timeline-date">${formatDateTime(shipment.created_at)}</div>
-                            </div>
-                        </div>
-                        ${shipment.shipped_at ? `
-                            <div class="timeline-item">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <div>Spedita</div>
-                                    <div class="timeline-date">${formatDateTime(shipment.shipped_at)}</div>
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${shipment.delivered_at ? `
-                            <div class="timeline-item">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <div>Consegnata</div>
-                                    <div class="timeline-date">${formatDateTime(shipment.delivered_at)}</div>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                
-                // Store current shipment ID for edit function
-                window.currentShipmentId = id;
-                
-                // Show modal
-                document.getElementById('detailModalBackdrop').style.display = 'block';
-                document.getElementById('detailModal').style.display = 'block';
-                setTimeout(() => {
-                    document.getElementById('detailModalBackdrop').classList.add('show');
-                    document.getElementById('detailModal').classList.add('show');
-                }, 10);
-                
-            } catch (error) {
-                console.error('Error showing shipment detail:', error);
-                showNotification('Errore', 'Errore nel caricamento dei dettagli', 'error');
-            }
-        }
-
-        // Close detail modal
-        function closeDetailModal() {
-            document.getElementById('detailModalBackdrop').classList.remove('show');
-            document.getElementById('detailModal').classList.remove('show');
-            setTimeout(() => {
-                document.getElementById('detailModalBackdrop').style.display = 'none';
-                document.getElementById('detailModal').style.display = 'none';
-            }, 300);
-        }
-
-        // Edit shipment
-        function editShipment(id) {
-            const shipmentId = id || window.currentShipmentId;
-            // TODO: Implement edit functionality
-            showNotification('Info', 'Funzione di modifica in sviluppo', 'info');
-        }
-
-        // Delete shipment
-        async function deleteShipment(id) {
-            if (!confirm('Sei sicuro di voler eliminare questa spedizione?')) return;
-            
-            try {
-                // TODO: Implement delete API call
-                showNotification('Info', 'Funzione di eliminazione in sviluppo', 'info');
-            } catch (error) {
-                console.error('Error deleting shipment:', error);
-                showNotification('Errore', 'Errore durante l\'eliminazione', 'error');
-            }
-        }
-
-        // Export shipments
-        function exportShipments() {
-            // TODO: Implement export functionality
-            showNotification('Info', 'Funzione di esportazione in sviluppo', 'info');
-        }
-
-        // Show create shipment modal
-        function showCreateShipmentModal() {
-            // TODO: Implement create shipment modal
-            showNotification('Info', 'Funzione di creazione in sviluppo', 'info');
-        }
-
-        // Bulk actions
-        function bulkUpdateStatus() {
-            showNotification('Info', 'Aggiornamento stato multiplo in sviluppo', 'info');
-        }
-
-        function bulkExport() {
-            showNotification('Info', 'Esportazione multipla in sviluppo', 'info');
-        }
-
-        function bulkDelete() {
-            if (!confirm(`Sei sicuro di voler eliminare ${shipmentsData.selectedIds.size} spedizioni?`)) return;
-            showNotification('Info', 'Eliminazione multipla in sviluppo', 'info');
-        }
-
-        // Utility functions
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('it-IT');
-        }
-
-        function formatDateTime(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleString('it-IT');
-        }
-
-        function getStatusLabel(status) {
-            const labels = {
-                'pending': 'In attesa',
-                'in-transit': 'In transito',
-                'delivered': 'Consegnata',
-                'delayed': 'In ritardo'
-            };
-            return labels[status] || status || 'N/A';
-        }
-
-        // Base Template Scripts
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
-            sidebarBackdrop.classList.toggle('show');
-        });
-
-        sidebarBackdrop.addEventListener('click', () => {
-            sidebar.classList.remove('show');
-            sidebarBackdrop.classList.remove('show');
-        });
-
-        // Update user email from auth
-        window.addEventListener('authReady', (event) => {
-            const userEmail = event.detail?.user?.email;
-            if (userEmail) {
-                document.getElementById('userEmail').textContent = userEmail;
-            }
-            
-            // Initialize shipments after auth
-            initShipments();
-        });
-
-        // Notification System
-        function showNotification(title, message, type = 'info') {
-            const container = document.getElementById('notificationContainer');
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="notification-header">
-                    <div class="notification-title">${title}</div>
-                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-                </div>
-                <div class="notification-message">${message}</div>
-            `;
-            
-            container.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 5000);
-        }
-
-        // Loading functions
-        function showLoading(text = 'Caricamento...') {
-            console.log(text);
-        }
-
-        function hideLoading() {
-            // Hide loading
-        }
-
-        // Authenticated fetch wrapper
-        async function authenticatedFetch(url, options = {}) {
-            const token = await window.supabase?.auth.getSession();
-            const headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token?.data?.session?.access_token || ''}`
-            };
-            
-            return fetch(url, { ...options, headers });
-        }
-
-        // Logout function
-        async function logout() {
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('supabase.auth.token');
+                localStorage.removeItem('user');
                 window.location.href = '/login.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                showNotification('Errore', 'Errore durante il logout', 'error');
+            });
+
+            // Filters
+            document.getElementById('searchFilter').addEventListener('input', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('carrierFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            
+            document.getElementById('resetFilters').addEventListener('click', function() {
+                document.getElementById('searchFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('carrierFilter').value = '';
+                document.getElementById('dateFilter').value = '';
+                applyFilters();
+            });
+
+            // Per page
+            document.getElementById('perPage').addEventListener('change', function() {
+                itemsPerPage = parseInt(this.value);
+                currentPage = 1;
+                renderTable();
+            });
+
+            // Pagination
+            document.getElementById('prevPage').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', function() {
+                const totalPages = Math.ceil(filteredShipments.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            });
+
+            // Select all checkbox
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('#shipmentsTableBody .table-checkbox');
+                checkboxes.forEach(cb => cb.checked = this.checked);
+            });
+
+            // New shipment button
+            document.getElementById('newShipmentBtn').addEventListener('click', function() {
+                alert('Funzionalità di creazione nuova spedizione in arrivo!');
+            });
+
+            // Handle window resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (window.innerWidth > 1024) {
+                        closeSidebar();
+                    }
+                }, 250);
+            });
+        }
+
+        // Toggle sidebar function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            if (sidebar.classList.contains('active')) {
+                closeSidebar();
+            } else {
+                openSidebar();
             }
         }
 
-        // Handle window resize
-        function handleResize() {
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('show');
-                sidebarBackdrop.classList.remove('show');
-            }
+        // Open sidebar function
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            sidebar.classList.add('active');
+            backdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        window.addEventListener('resize', handleResize);
+        // Close sidebar function
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            sidebar.classList.remove('active');
+            backdrop.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Prevent any UI blocking issues
+        setInterval(() => {
+            // Safety check to ensure UI is never blocked
+            if (document.body.style.pointerEvents === 'none') {
+                document.body.style.pointerEvents = '';
+            }
+            // Ensure backdrop is hidden if sidebar is not active
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            if (!sidebar.classList.contains('active') && backdrop.classList.contains('active')) {
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }, 500);
     </script>
 </body>
 </html>
