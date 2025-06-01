@@ -1,7 +1,4 @@
-// ===== NETLIFY FUNCTION: SHIPMENTS API - VERSIONE MULTI-TENANT =====
-// Gestisce tutte le operazioni CRUD per le spedizioni con supporto multi-tenancy
-// Endpoint: /.netlify/functions/shipments
-
+// netlify/functions/shipments.js
 const { createClient } = require('@supabase/supabase-js');
 
 // Inizializza client Supabase
@@ -82,15 +79,19 @@ async function getOrganizzazioneId(event) {
       return DEFAULT_ORG_ID;
     }
 
-    // Estrai organizzazione_id dai metadati dell'utente
-    const organizzazione_id = user.app_metadata?.organizzazione_id || user.user_metadata?.organizzazione_id;
+    // Ottieni organizzazione_id dal profilo
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organizzazione_id')
+      .eq('id', user.id)
+      .single();
     
-    if (!organizzazione_id) {
-      console.log('⚠️ No organization ID in user metadata, using default');
+    if (profileError || !profile?.organizzazione_id) {
+      console.log('⚠️ No organization ID in profile, using default');
       return DEFAULT_ORG_ID;
     }
 
-    return organizzazione_id;
+    return profile.organizzazione_id;
   } catch (error) {
     console.error('❌ Error extracting organization ID:', error);
     return DEFAULT_ORG_ID;
@@ -99,45 +100,82 @@ async function getOrganizzazioneId(event) {
 
 // ===== GET - Ottieni spedizioni =====
 async function handleGet(event, organizzazione_id) {
-  const { id } = event.queryStringParameters || {};
+  const params = event.queryStringParameters || {};
   
   try {
-    if (id) {
+    if (params.id) {
       // Ottieni singola spedizione
       const { data, error } = await supabase
         .from('shipments')
         .select('*')
-        .eq('id', id)
+        .eq('id', params.id)
         .eq('organizzazione_id', organizzazione_id)
         .single();
 
       if (error) throw error;
       
       if (!data) {
-        return createResponse(404, { error: 'Spedizione non trovata' });
+        return createResponse(404, { error: 'Shipment not found' });
       }
 
-      return createResponse(200, transformShipmentData(data));
+      return createResponse(200, data);
     } else {
-      // Ottieni tutte le spedizioni dell'organizzazione
-      const { data, error } = await supabase
+      // Parametri di paginazione
+      const page = parseInt(params.page) || 1;
+      const limit = parseInt(params.limit) || 10;
+      const offset = (page - 1) * limit;
+      
+      // Costruisci query base
+      let query = supabase
         .from('shipments')
-        .select('*')
-        .eq('organizzazione_id', organizzazione_id)
-        .order('created_at', { ascending: false })
-        .limit(1000); // Limite per performance
-
-      if (error) throw error;
-
-      const transformedData = data.map(transformShipmentData);
+        .select('*', { count: 'exact' })
+        .eq('organizzazione_id', organizzazione_id);
       
-      console.log(`✅ Retrieved ${transformedData.length} shipments for org ${organizzazione_id}`);
+      // Applica filtri
+      if (params.status) {
+        query = query.eq('stato_spedizione', params.status);
+      }
+      if (params.carrier) {
+        query = query.eq('compagnia', params.carrier);
+      }
+      if (params.search) {
+        query = query.or(`rif_spedizione.ilike.%${params.search}%,fornitore.ilike.%${params.search}%,n_oda.ilike.%${params.search}%`);
+      }
+      if (params.date_from) {
+        query = query.gte('created_at', params.date_from);
+      }
+      if (params.date_to) {
+        query = query.lte('created_at', params.date_to);
+      }
       
-      return createResponse(200, {
-        shipments: transformedData,
-        total: transformedData.length,
-        timestamp: new Date().toISOString()
-      });
+      // Ordinamento
+      const orderBy = params.order_by || 'created_at';
+      const orderDirection = params.order_direction === 'asc' ? true : false;
+      query = query.order(orderBy, { ascending: orderDirection });
+      
+      // Paginazione
+      query = query.range(offset, offset + limit - 1);
+      
+      const { data, error, count } = await query;
+      
+      if (error) {
+        console.error('Shipments query error:', error);
+        throw error;
+      }
+
+      console.log(`✅ Retrieved ${data?.length || 0} shipments for org ${organizzazione_id}`);
+      
+      const response = {
+        data: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit)
+        }
+      };
+      
+      return createResponse(200, response);
     }
   } catch (error) {
     console.error('❌ Error in GET:', error);
@@ -155,7 +193,7 @@ async function handlePost(event, organizzazione_id) {
     const validation = validateShipmentData(shipmentData);
     if (!validation.isValid) {
       return createResponse(400, { 
-        error: 'Dati non validi', 
+        error: 'Invalid data', 
         details: validation.errors 
       });
     }
@@ -163,7 +201,9 @@ async function handlePost(event, organizzazione_id) {
     // Prepara dati per inserimento con organizzazione_id
     const cleanData = {
       ...cleanShipmentData(shipmentData),
-      organizzazione_id: organizzazione_id
+      organizzazione_id: organizzazione_id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     // Inserisci nel database
@@ -176,7 +216,7 @@ async function handlePost(event, organizzazione_id) {
     if (error) {
       if (error.code === '23505') { // Unique constraint violation
         return createResponse(409, { 
-          error: 'RIF. SPEDIZIONE già esistente per questa organizzazione',
+          error: 'RIF. SPEDIZIONE already exists for this organization',
           code: 'DUPLICATE_REFERENCE'
         });
       }
@@ -185,16 +225,13 @@ async function handlePost(event, organizzazione_id) {
 
     console.log('✅ Shipment created:', data.id, 'for org:', organizzazione_id);
     
-    return createResponse(201, {
-      message: 'Spedizione creata con successo',
-      shipment: transformShipmentData(data)
-    });
+    return createResponse(201, data);
 
   } catch (error) {
     console.error('❌ Error in POST:', error);
     
     if (error.message.includes('JSON')) {
-      return createResponse(400, { error: 'Formato JSON non valido' });
+      return createResponse(400, { error: 'Invalid JSON format' });
     }
     
     throw error;
@@ -208,7 +245,7 @@ async function handlePut(event, organizzazione_id) {
     const { id } = shipmentData;
 
     if (!id) {
-      return createResponse(400, { error: 'ID spedizione richiesto' });
+      return createResponse(400, { error: 'Shipment ID is required' });
     }
 
     console.log('📝 Updating shipment:', id);
@@ -217,13 +254,14 @@ async function handlePut(event, organizzazione_id) {
     const validation = validateShipmentData(shipmentData, true); // isUpdate = true
     if (!validation.isValid) {
       return createResponse(400, { 
-        error: 'Dati non validi', 
+        error: 'Invalid data', 
         details: validation.errors 
       });
     }
 
     // Rimuovi ID dai dati di aggiornamento
     const { id: _, ...updateData } = cleanShipmentData(shipmentData);
+    updateData.updated_at = new Date().toISOString();
 
     // Aggiorna nel database solo per l'organizzazione corrente
     const { data, error } = await supabase
@@ -237,7 +275,7 @@ async function handlePut(event, organizzazione_id) {
     if (error) {
       if (error.code === '23505') {
         return createResponse(409, { 
-          error: 'RIF. SPEDIZIONE già esistente per questa organizzazione',
+          error: 'RIF. SPEDIZIONE already exists for this organization',
           code: 'DUPLICATE_REFERENCE'
         });
       }
@@ -245,21 +283,18 @@ async function handlePut(event, organizzazione_id) {
     }
 
     if (!data) {
-      return createResponse(404, { error: 'Spedizione non trovata o non autorizzato' });
+      return createResponse(404, { error: 'Shipment not found or not authorized' });
     }
 
     console.log('✅ Shipment updated:', id, 'for org:', organizzazione_id);
 
-    return createResponse(200, {
-      message: 'Spedizione aggiornata con successo',
-      shipment: transformShipmentData(data)
-    });
+    return createResponse(200, data);
 
   } catch (error) {
     console.error('❌ Error in PUT:', error);
     
     if (error.message.includes('JSON')) {
-      return createResponse(400, { error: 'Formato JSON non valido' });
+      return createResponse(400, { error: 'Invalid JSON format' });
     }
     
     throw error;
@@ -272,7 +307,7 @@ async function handleDelete(event, organizzazione_id) {
     const { id } = event.queryStringParameters || {};
 
     if (!id) {
-      return createResponse(400, { error: 'ID spedizione richiesto' });
+      return createResponse(400, { error: 'Shipment ID is required' });
     }
 
     console.log('🗑️ Deleting shipment:', id);
@@ -280,13 +315,13 @@ async function handleDelete(event, organizzazione_id) {
     // Prima verifica che la spedizione appartenga all'organizzazione
     const { data: existing, error: checkError } = await supabase
       .from('shipments')
-      .select('id')
+      .select('id, rif_spedizione')
       .eq('id', id)
       .eq('organizzazione_id', organizzazione_id)
       .single();
 
     if (checkError || !existing) {
-      return createResponse(404, { error: 'Spedizione non trovata o non autorizzato' });
+      return createResponse(404, { error: 'Shipment not found or not authorized' });
     }
 
     // Elimina dal database
@@ -301,8 +336,9 @@ async function handleDelete(event, organizzazione_id) {
     console.log('✅ Shipment deleted:', id, 'for org:', organizzazione_id);
 
     return createResponse(200, {
-      message: 'Spedizione eliminata con successo',
-      deletedId: id
+      message: 'Shipment deleted successfully',
+      deletedId: id,
+      deletedRef: existing.rif_spedizione
     });
 
   } catch (error) {
@@ -320,25 +356,25 @@ function validateShipmentData(data, isUpdate = false) {
   // Campi obbligatori per creazione
   if (!isUpdate) {
     if (!data.rif_spedizione || data.rif_spedizione.trim() === '') {
-      errors.push('RIF. SPEDIZIONE è obbligatorio');
+      errors.push('RIF. SPEDIZIONE is required');
     }
   }
 
   // Validazioni sempre attive
   if (data.cod_art && !/^[0-9]{8}$/.test(data.cod_art)) {
-    errors.push('COD. ART. deve essere 8 cifre numeriche');
+    errors.push('COD. ART. must be 8 numeric digits');
   }
 
   if (data.qty !== undefined && data.qty !== null && data.qty <= 0) {
-    errors.push('Quantità deve essere maggiore di zero');
+    errors.push('Quantity must be greater than zero');
   }
 
   if (data.anno && (data.anno < 2020 || data.anno > 2030)) {
-    errors.push('Anno deve essere tra 2020 e 2030');
+    errors.push('Year must be between 2020 and 2030');
   }
 
   if (data.costo_trasporto && data.costo_trasporto < 0) {
-    errors.push('Costo trasporto non può essere negativo');
+    errors.push('Transport cost cannot be negative');
   }
 
   return {
@@ -351,12 +387,14 @@ function validateShipmentData(data, isUpdate = false) {
 function cleanShipmentData(data) {
   const cleaned = {};
 
-  // Copia solo i campi validi
+  // Copia solo i campi validi (usa i nomi italiani del DB)
   const allowedFields = [
     'rif_spedizione', 'n_oda', 'anno', 'cod_art', 'fornitore', 'um', 
     'qty', 'fattura_fornitore', 'costo_trasporto', 'tipo_spedizione', 
     'spedizioniere', 'compagnia', 'stato_spedizione', 'data_partenza', 
-    'data_arrivo_effettiva', 'percentuale_dazio'
+    'data_arrivo_effettiva', 'percentuale_dazio', 'descrizione',
+    'descrizione_estesa', 'costo_unitario_trasporto', 'transit_time_giorni',
+    'ritardo_giorni'
   ];
 
   for (const field of allowedFields) {
@@ -380,7 +418,7 @@ function cleanShipmentData(data) {
   }
 
   // Converti stringhe vuote in null per i campi numerici
-  ['qty', 'anno', 'costo_trasporto', 'percentuale_dazio'].forEach(field => {
+  ['qty', 'anno', 'costo_trasporto', 'percentuale_dazio', 'costo_unitario_trasporto', 'transit_time_giorni', 'ritardo_giorni'].forEach(field => {
     if (cleaned[field] === '' || cleaned[field] === undefined) {
       cleaned[field] = null;
     }
@@ -394,38 +432,6 @@ function cleanShipmentData(data) {
   });
 
   return cleaned;
-}
-
-// Trasforma i dati dal database al formato frontend
-function transformShipmentData(dbData) {
-  return {
-    id: dbData.id,
-    rifSpedizione: dbData.rif_spedizione,
-    nOda: dbData.n_oda,
-    anno: dbData.anno,
-    codArt: dbData.cod_art,
-    descrizione: dbData.descrizione || '',
-    descrizioneEstesa: dbData.descrizione_estesa || '',
-    fornitore: dbData.fornitore,
-    um: dbData.um || 'PZ',
-    qty: dbData.qty,
-    fatturaFornitore: dbData.fattura_fornitore,
-    tipoSpedizione: dbData.tipo_spedizione || '',
-    spedizioniere: dbData.spedizioniere || '',
-    compagnia: dbData.compagnia || '',
-    statoSpedizione: dbData.stato_spedizione || '',
-    dataPartenza: dbData.data_partenza || '',
-    dataArrivo: dbData.data_arrivo_effettiva || '',
-    transitTime: dbData.transit_time_giorni || '',
-    ritardo: dbData.ritardo_giorni || 0,
-    costoTrasporto: dbData.costo_trasporto || 0,
-    costoUnitario: dbData.costo_unitario_trasporto || 0,
-    dazio: dbData.percentuale_dazio || 0,
-    createdAt: dbData.created_at,
-    updatedAt: dbData.updated_at,
-    // Aggiungi anche l'ID organizzazione per debug
-    organizzazioneId: dbData.organizzazione_id
-  };
 }
 
 // Crea risposta HTTP standardizzata

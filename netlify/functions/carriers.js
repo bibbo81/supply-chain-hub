@@ -1,6 +1,7 @@
+// netlify/functions/carriers.js
 const { createClient } = require('@supabase/supabase-js');
 
-// Inizializza client Supabase
+// Inizializza client Supabase con le variabili corrette
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -78,15 +79,19 @@ async function getOrganizzazioneId(event) {
       return DEFAULT_ORG_ID;
     }
 
-    // Estrai organizzazione_id dai metadati dell'utente
-    const organizzazione_id = user.app_metadata?.organizzazione_id || user.user_metadata?.organizzazione_id;
+    // Ottieni organizzazione_id dal profilo
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organizzazione_id')
+      .eq('id', user.id)
+      .single();
     
-    if (!organizzazione_id) {
-      console.log('⚠️ No organization ID in user metadata, using default');
+    if (profileError || !profile?.organizzazione_id) {
+      console.log('⚠️ No organization ID in profile, using default');
       return DEFAULT_ORG_ID;
     }
 
-    return organizzazione_id;
+    return profile.organizzazione_id;
   } catch (error) {
     console.error('❌ Error extracting organization ID:', error);
     return DEFAULT_ORG_ID;
@@ -101,7 +106,7 @@ async function handleGet(event, organizzazione_id) {
     if (id) {
       // Ottieni singolo corriere
       const { data, error } = await supabase
-        .from('corrieri')
+        .from('carriers') // Tabella in inglese
         .select('*')
         .eq('id', id)
         .eq('organizzazione_id', organizzazione_id)
@@ -110,27 +115,24 @@ async function handleGet(event, organizzazione_id) {
       if (error) throw error;
       
       if (!data) {
-        return createResponse(404, { error: 'Corriere non trovato' });
+        return createResponse(404, { error: 'Carrier not found' });
       }
 
       return createResponse(200, data);
     } else {
       // Ottieni tutti i corrieri dell'organizzazione
       const { data, error } = await supabase
-        .from('corrieri')
+        .from('carriers') // Tabella in inglese
         .select('*')
         .eq('organizzazione_id', organizzazione_id)
-        .order('nome', { ascending: true });
+        .order('name', { ascending: true });
 
       if (error) throw error;
 
       console.log(`✅ Retrieved ${data.length} carriers for org ${organizzazione_id}`);
       
-      return createResponse(200, {
-        carriers: data,
-        total: data.length,
-        timestamp: new Date().toISOString()
-      });
+      // Ritorna array diretto per compatibilità con il frontend
+      return createResponse(200, data || []);
     }
   } catch (error) {
     console.error('❌ Error in GET:', error);
@@ -142,30 +144,31 @@ async function handleGet(event, organizzazione_id) {
 async function handlePost(event, organizzazione_id) {
   try {
     const carrierData = JSON.parse(event.body);
-    console.log('📦 Creating carrier:', carrierData.nome);
+    console.log('📦 Creating carrier:', carrierData.name);
 
     // Validazione dati obbligatori
-    if (!carrierData.nome || carrierData.nome.trim() === '') {
+    if (!carrierData.name || carrierData.name.trim() === '') {
       return createResponse(400, { 
-        error: 'Nome corriere è obbligatorio' 
+        error: 'Carrier name is required' 
       });
     }
 
     // Prepara dati per inserimento con organizzazione_id
     const cleanData = {
-      nome: carrierData.nome.trim(),
-      codice: carrierData.codice?.trim() || null,
-      telefono: carrierData.telefono?.trim() || null,
-      email: carrierData.email?.trim() || null,
-      sito_web: carrierData.sito_web?.trim() || null,
-      note: carrierData.note?.trim() || null,
-      attivo: carrierData.attivo !== false, // Default true
+      name: carrierData.name.trim(),
+      code: carrierData.code?.trim() || null,
+      contact_phone: carrierData.contact_phone?.trim() || null,
+      contact_email: carrierData.contact_email?.trim() || null,
+      website: carrierData.website?.trim() || null,
+      notes: carrierData.notes?.trim() || null,
+      is_active: carrierData.is_active !== false, // Default true
+      shipping_types: carrierData.shipping_types || [],
       organizzazione_id: organizzazione_id
     };
     
     // Inserisci nel database
     const { data, error } = await supabase
-      .from('corrieri')
+      .from('carriers')
       .insert([cleanData])
       .select()
       .single();
@@ -173,7 +176,7 @@ async function handlePost(event, organizzazione_id) {
     if (error) {
       if (error.code === '23505') { // Unique constraint violation
         return createResponse(409, { 
-          error: 'Corriere già esistente per questa organizzazione',
+          error: 'Carrier already exists for this organization',
           code: 'DUPLICATE_CARRIER'
         });
       }
@@ -182,16 +185,13 @@ async function handlePost(event, organizzazione_id) {
 
     console.log('✅ Carrier created:', data.id, 'for org:', organizzazione_id);
     
-    return createResponse(201, {
-      message: 'Corriere creato con successo',
-      carrier: data
-    });
+    return createResponse(201, data);
 
   } catch (error) {
     console.error('❌ Error in POST:', error);
     
     if (error.message.includes('JSON')) {
-      return createResponse(400, { error: 'Formato JSON non valido' });
+      return createResponse(400, { error: 'Invalid JSON format' });
     }
     
     throw error;
@@ -205,15 +205,15 @@ async function handlePut(event, organizzazione_id) {
     const { id } = carrierData;
 
     if (!id) {
-      return createResponse(400, { error: 'ID corriere richiesto' });
+      return createResponse(400, { error: 'Carrier ID is required' });
     }
 
     console.log('📝 Updating carrier:', id);
 
     // Validazione nome
-    if (carrierData.nome !== undefined && carrierData.nome.trim() === '') {
+    if (carrierData.name !== undefined && carrierData.name.trim() === '') {
       return createResponse(400, { 
-        error: 'Nome corriere non può essere vuoto' 
+        error: 'Carrier name cannot be empty' 
       });
     }
 
@@ -221,17 +221,21 @@ async function handlePut(event, organizzazione_id) {
     const updateData = {};
     
     // Aggiorna solo i campi forniti
-    if (carrierData.nome !== undefined) updateData.nome = carrierData.nome.trim();
-    if (carrierData.codice !== undefined) updateData.codice = carrierData.codice?.trim() || null;
-    if (carrierData.telefono !== undefined) updateData.telefono = carrierData.telefono?.trim() || null;
-    if (carrierData.email !== undefined) updateData.email = carrierData.email?.trim() || null;
-    if (carrierData.sito_web !== undefined) updateData.sito_web = carrierData.sito_web?.trim() || null;
-    if (carrierData.note !== undefined) updateData.note = carrierData.note?.trim() || null;
-    if (carrierData.attivo !== undefined) updateData.attivo = carrierData.attivo;
+    if (carrierData.name !== undefined) updateData.name = carrierData.name.trim();
+    if (carrierData.code !== undefined) updateData.code = carrierData.code?.trim() || null;
+    if (carrierData.contact_phone !== undefined) updateData.contact_phone = carrierData.contact_phone?.trim() || null;
+    if (carrierData.contact_email !== undefined) updateData.contact_email = carrierData.contact_email?.trim() || null;
+    if (carrierData.website !== undefined) updateData.website = carrierData.website?.trim() || null;
+    if (carrierData.notes !== undefined) updateData.notes = carrierData.notes?.trim() || null;
+    if (carrierData.is_active !== undefined) updateData.is_active = carrierData.is_active;
+    if (carrierData.shipping_types !== undefined) updateData.shipping_types = carrierData.shipping_types;
+
+    // Aggiungi timestamp
+    updateData.updated_at = new Date().toISOString();
 
     // Aggiorna nel database solo per l'organizzazione corrente
     const { data, error } = await supabase
-      .from('corrieri')
+      .from('carriers')
       .update(updateData)
       .eq('id', id)
       .eq('organizzazione_id', organizzazione_id)
@@ -241,7 +245,7 @@ async function handlePut(event, organizzazione_id) {
     if (error) {
       if (error.code === '23505') {
         return createResponse(409, { 
-          error: 'Corriere già esistente per questa organizzazione',
+          error: 'Carrier already exists for this organization',
           code: 'DUPLICATE_CARRIER'
         });
       }
@@ -249,21 +253,18 @@ async function handlePut(event, organizzazione_id) {
     }
 
     if (!data) {
-      return createResponse(404, { error: 'Corriere non trovato o non autorizzato' });
+      return createResponse(404, { error: 'Carrier not found or not authorized' });
     }
 
     console.log('✅ Carrier updated:', id, 'for org:', organizzazione_id);
 
-    return createResponse(200, {
-      message: 'Corriere aggiornato con successo',
-      carrier: data
-    });
+    return createResponse(200, data);
 
   } catch (error) {
     console.error('❌ Error in PUT:', error);
     
     if (error.message.includes('JSON')) {
-      return createResponse(400, { error: 'Formato JSON non valido' });
+      return createResponse(400, { error: 'Invalid JSON format' });
     }
     
     throw error;
@@ -276,42 +277,42 @@ async function handleDelete(event, organizzazione_id) {
     const { id } = event.queryStringParameters || {};
 
     if (!id) {
-      return createResponse(400, { error: 'ID corriere richiesto' });
+      return createResponse(400, { error: 'Carrier ID is required' });
     }
 
     console.log('🗑️ Deleting carrier:', id);
 
     // Prima verifica che il corriere appartenga all'organizzazione
     const { data: existing, error: checkError } = await supabase
-      .from('corrieri')
-      .select('id, nome')
+      .from('carriers')
+      .select('id, name')
       .eq('id', id)
       .eq('organizzazione_id', organizzazione_id)
       .single();
 
     if (checkError || !existing) {
-      return createResponse(404, { error: 'Corriere non trovato o non autorizzato' });
+      return createResponse(404, { error: 'Carrier not found or not authorized' });
     }
 
     // Verifica se ci sono spedizioni associate
     const { count, error: countError } = await supabase
-      .from('spedizioni')
+      .from('shipments')
       .select('id', { count: 'exact', head: true })
-      .eq('corriere_id', id)
+      .eq('compagnia', existing.name) // Confronta per nome
       .eq('organizzazione_id', organizzazione_id);
 
     if (countError) throw countError;
 
     if (count > 0) {
       return createResponse(409, { 
-        error: `Impossibile eliminare: ci sono ${count} spedizioni associate a questo corriere`,
+        error: `Cannot delete: ${count} shipments are associated with this carrier`,
         code: 'HAS_SHIPMENTS'
       });
     }
 
     // Elimina dal database
     const { error } = await supabase
-      .from('corrieri')
+      .from('carriers')
       .delete()
       .eq('id', id)
       .eq('organizzazione_id', organizzazione_id);
@@ -321,9 +322,9 @@ async function handleDelete(event, organizzazione_id) {
     console.log('✅ Carrier deleted:', id, 'for org:', organizzazione_id);
 
     return createResponse(200, {
-      message: 'Corriere eliminato con successo',
+      message: 'Carrier deleted successfully',
       deletedId: id,
-      deletedName: existing.nome
+      deletedName: existing.name
     });
 
   } catch (error) {
