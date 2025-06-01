@@ -3,23 +3,36 @@
 
 class AuthManager {
     constructor() {
-        // Initialize Supabase client
-        // In production, these will be injected by Netlify
-        this.SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-        this.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
-        this.supabase = window.supabase.createClient(this.SUPABASE_URL, this.SUPABASE_ANON_KEY);
-        
-        // Current user data
+        // Initialize properties
+        this.supabase = null;
         this.currentUser = null;
         this.currentSession = null;
         this.organizationId = null;
+        this.initialized = false;
     }
 
-    // Initialize authentication check
+    // Initialize Supabase and authentication
     async init(options = {}) {
         const { redirectToLogin = true, publicPage = false } = options;
         
         try {
+            // First, fetch configuration from Netlify function
+            const configResponse = await fetch('/.netlify/functions/config');
+            if (!configResponse.ok) {
+                throw new Error('Failed to fetch config');
+            }
+            
+            const config = await configResponse.json();
+            
+            // Dynamically import Supabase
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            
+            // Initialize Supabase client
+            this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+            
+            // Make supabase available globally for other scripts
+            window.supabase = this.supabase;
+            
             // Get current session
             const { data: { session }, error } = await this.supabase.auth.getSession();
             
@@ -39,6 +52,16 @@ class AuthManager {
                 // Update UI with user info
                 this.updateUserInterface();
                 
+                // Dispatch event for other scripts
+                window.dispatchEvent(new CustomEvent('authReady', {
+                    detail: {
+                        user: this.currentUser,
+                        session: this.currentSession,
+                        organizationId: this.organizationId
+                    }
+                }));
+                
+                this.initialized = true;
                 return true;
             } else if (!publicPage && redirectToLogin) {
                 // No session and not a public page, redirect to login
@@ -46,6 +69,7 @@ class AuthManager {
                 return false;
             }
             
+            this.initialized = true;
             return false;
         } catch (error) {
             console.error('Auth initialization error:', error);
@@ -70,9 +94,10 @@ class AuthManager {
         this.supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 this.currentSession = session;
-                this.currentUser = session.user;
-                this.organizationId = session.user.user_metadata?.organizzazione_id;
+                this.currentUser = session?.user;
+                this.organizationId = session?.user.user_metadata?.organizzazione_id;
                 this.updateAuthHeader();
+                this.updateUserInterface();
             } else if (event === 'SIGNED_OUT') {
                 this.handleLogout();
             }
@@ -81,6 +106,12 @@ class AuthManager {
 
     // Update UI elements with user information
     updateUserInterface() {
+        // Update user email in header if element exists
+        const userEmailElement = document.getElementById('userEmail');
+        if (userEmailElement && this.currentUser) {
+            userEmailElement.textContent = this.currentUser.email;
+        }
+        
         // Update user name in header if element exists
         const userNameElement = document.getElementById('userName');
         if (userNameElement && this.currentUser) {
@@ -96,6 +127,7 @@ class AuthManager {
         // Add logout functionality to logout button if exists
         const logoutButton = document.getElementById('logoutButton');
         if (logoutButton) {
+            logoutButton.removeEventListener('click', this.logout); // Remove any existing listener
             logoutButton.addEventListener('click', () => this.logout());
         }
     }
@@ -115,6 +147,11 @@ class AuthManager {
 
     // Make authenticated API call
     async apiCall(url, options = {}) {
+        // Wait for initialization if needed
+        if (!this.initialized) {
+            await this.init({ redirectToLogin: false });
+        }
+        
         const defaultOptions = {
             headers: this.getAuthHeader()
         };
@@ -212,4 +249,9 @@ async function requireAuth(options = {}) {
 // Helper function for API calls
 async function authenticatedFetch(url, options = {}) {
     return await window.authManager.apiCall(url, options);
+}
+
+// Auto-initialize on protected pages (all pages except login)
+if (!window.location.pathname.endsWith('/login.html')) {
+    window.authManager.init();
 }
