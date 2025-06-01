@@ -732,6 +732,14 @@
 
         /* Responsive */
         @media (max-width: 1024px) {
+            .menu-toggle {
+                display: block !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+            
             .main-content.sidebar-open {
                 margin-left: 0;
             }
@@ -1026,15 +1034,25 @@
     <!-- Backdrop -->
     <div class="backdrop" id="backdrop"></div>
 
-    <!-- Scripts -->
+    <!-- Auth Script - MUST be loaded before main script -->
+    <script src="/auth.js"></script>
+    
+    <!-- Main Script -->
     <script>
-        // Check if auth.js exists, otherwise define checkAuth
-        if (typeof checkAuth === 'undefined') {
-            async function checkAuth() {
-                const token = localStorage.getItem('supabase.auth.token');
-                return !!token;
+        // Fallback checkAuth if auth.js fails to load
+        window.checkAuth = window.checkAuth || async function() {
+            const token = localStorage.getItem('supabase.auth.token');
+            if (!token) return false;
+            
+            try {
+                const tokenData = JSON.parse(atob(token.split('.')[1]));
+                const expirationTime = tokenData.exp * 1000;
+                return Date.now() < expirationTime;
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                return false;
             }
-        }
+        };
 
         // Global variables
         let shipments = [];
@@ -1042,26 +1060,43 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Initializing shipments page...');
+            console.log('DOM loaded, initializing shipments page...');
             
-            // Check authentication
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) {
-                window.location.href = '/login.html';
-                return;
-            }
+            // Wait a bit to ensure all scripts are loaded
+            setTimeout(async () => {
+                try {
+                    // Check authentication
+                    const isAuthenticated = await checkAuth();
+                    console.log('Authentication check:', isAuthenticated);
+                    
+                    if (!isAuthenticated) {
+                        console.log('Not authenticated, redirecting to login...');
+                        window.location.href = '/login.html';
+                        return;
+                    }
 
-            // Update user info
-            updateUserInfo();
+                    // Update user info
+                    updateUserInfo();
 
-            // Setup event listeners
-            setupEventListeners();
+                    // Setup event listeners
+                    setupEventListeners();
 
-            // Setup file upload
-            setupFileUpload();
+                    // Setup file upload
+                    setupFileUpload();
 
-            // Load initial data
-            loadDemoData();
+                    // Load initial data
+                    loadDemoData();
+                    
+                    console.log('Initialization complete');
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    // Continue anyway with demo data
+                    updateUserInfo();
+                    setupEventListeners();
+                    setupFileUpload();
+                    loadDemoData();
+                }
+            }, 100);
         });
 
         // Update user info
@@ -1078,22 +1113,49 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            console.log('Setting up event listeners...');
+            
             // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
             const mainContent = document.getElementById('mainContent');
             
+            if (!menuToggle || !sidebar || !backdrop || !mainContent) {
+                console.error('Missing required elements:', {
+                    menuToggle: !!menuToggle,
+                    sidebar: !!sidebar,
+                    backdrop: !!backdrop,
+                    mainContent: !!mainContent
+                });
+                return;
+            }
+            
             menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
                 console.log('Menu toggle clicked');
-                sidebar.classList.toggle('active');
-                backdrop.classList.toggle('active');
-                mainContent.classList.toggle('sidebar-open');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                
+                const isActive = sidebar.classList.contains('active');
+                console.log('Sidebar active:', isActive);
+                
+                if (isActive) {
+                    // Close menu
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('active');
+                    mainContent.classList.remove('sidebar-open');
+                    document.body.style.overflow = '';
+                } else {
+                    // Open menu
+                    sidebar.classList.add('active');
+                    backdrop.classList.add('active');
+                    mainContent.classList.add('sidebar-open');
+                    document.body.style.overflow = 'hidden';
+                }
             });
 
             backdrop.addEventListener('click', function() {
+                console.log('Backdrop clicked');
                 sidebar.classList.remove('active');
                 backdrop.classList.remove('active');
                 mainContent.classList.remove('sidebar-open');
@@ -1104,15 +1166,28 @@
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
             
+            if (!userMenuBtn || !userDropdown) {
+                console.error('Missing user menu elements');
+                return;
+            }
+            
             userMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
                 console.log('User menu clicked');
                 userDropdown.classList.toggle('active');
             });
 
             // Close dropdown when clicking outside
-            document.addEventListener('click', function() {
-                userDropdown.classList.remove('active');
+            document.addEventListener('click', function(e) {
+                if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('active');
+                }
+            });
+
+            // Prevent clicks inside dropdown from closing it
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
             });
 
             // Logout
