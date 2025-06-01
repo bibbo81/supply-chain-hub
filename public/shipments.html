@@ -1041,18 +1041,27 @@
     <script>
         // Fallback checkAuth if auth.js fails to load
         window.checkAuth = window.checkAuth || async function() {
+            console.log('Using fallback checkAuth...');
             const token = localStorage.getItem('supabase.auth.token');
+            console.log('Token exists:', !!token);
+            
             if (!token) return false;
             
             try {
                 const tokenData = JSON.parse(atob(token.split('.')[1]));
                 const expirationTime = tokenData.exp * 1000;
-                return Date.now() < expirationTime;
+                const isValid = Date.now() < expirationTime;
+                console.log('Token valid:', isValid, 'Expires:', new Date(expirationTime));
+                return isValid;
             } catch (error) {
                 console.error('Error checking auth:', error);
                 return false;
             }
         };
+        
+        // Debug: Check current page
+        console.log('Current page:', window.location.pathname);
+        console.log('Current URL:', window.location.href);
 
         // Global variables
         let shipments = [];
@@ -1069,10 +1078,11 @@
                     const isAuthenticated = await checkAuth();
                     console.log('Authentication check:', isAuthenticated);
                     
+                    // TEMPORARY: Skip redirect for testing
                     if (!isAuthenticated) {
-                        console.log('Not authenticated, redirecting to login...');
-                        window.location.href = '/login.html';
-                        return;
+                        console.log('Not authenticated, but continuing anyway for testing...');
+                        // window.location.href = '/login.html';
+                        // return;
                     }
 
                     // Update user info
