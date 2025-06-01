@@ -6,944 +6,376 @@
     <title>Supply Chain Hub - Gestione Spedizioni</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ApexCharts -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
-    
-    <!-- Papa Parse for CSV -->
+    <!-- Papa Parse & SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    
-    <!-- SheetJS for Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- jsPDF for PDF export -->
+    <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
-    <!-- Solarium CSS -->
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="/solarium.css">
+    
     <style>
-        :root {
-            /* Solarium Colors */
-            --sol-primary: #4f46e5;
-            --sol-primary-dark: #4338ca;
-            --sol-primary-light: #6366f1;
-            --sol-secondary: #ec4899;
-            --sol-success: #10b981;
-            --sol-warning: #f59e0b;
-            --sol-error: #ef4444;
-            --sol-info: #3b82f6;
-            
-            /* Dark Theme */
-            --sol-bg-primary: #0f172a;
-            --sol-bg-secondary: #1e293b;
-            --sol-bg-tertiary: #334155;
-            --sol-surface: rgba(30, 41, 59, 0.8);
-            --sol-surface-hover: rgba(51, 65, 85, 0.8);
-            
-            /* Text */
-            --sol-text-primary: #f1f5f9;
-            --sol-text-secondary: #cbd5e1;
-            --sol-text-muted: #94a3b8;
-            
-            /* Effects */
-            --sol-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            --sol-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            --sol-blur: blur(16px);
-            --sol-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Page Specific Styles */
+        .sol-main-content {
+            margin-top: 80px;
+            padding: var(--sol-space-xl);
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--sol-bg-primary);
-            color: var(--sol-text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Background Pattern */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, var(--sol-primary) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--sol-secondary) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, var(--sol-info) 0%, transparent 50%);
-            opacity: 0.1;
-            z-index: -1;
-        }
-
-        /* Header */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000;
+        
+        .sol-page-header {
             display: flex;
-            align-items: center;
-            padding: 0 2rem;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            width: 100%;
-        }
-
-        .header-left {
-            display: flex;
             align-items: center;
-            gap: 2rem;
+            margin-bottom: var(--sol-space-2xl);
+            flex-wrap: wrap;
+            gap: var(--sol-space-lg);
         }
-
-        .menu-toggle {
-            background: none;
-            border: none;
-            color: var(--sol-text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--sol-transition);
-        }
-
-        .menu-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--sol-text-primary);
-        }
-
-        .logo i {
+        
+        .sol-page-title {
             font-size: 2rem;
-            color: var(--sol-primary);
-        }
-
-        .logo h1 {
-            font-size: 1.5rem;
             font-weight: 700;
+            margin-bottom: var(--sol-space-xs);
         }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
+        
+        .sol-page-subtitle {
+            font-size: 1rem;
+            color: var(--sol-text-tertiary);
         }
-
-        .header-search {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .header-search input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.5rem;
-            padding: 0.5rem 2.5rem 0.5rem 1rem;
-            color: var(--sol-text-primary);
-            width: 300px;
-            transition: var(--sol-transition);
-        }
-
-        .header-search input:focus {
-            outline: none;
-            border-color: var(--sol-primary);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .header-search i {
-            position: absolute;
-            right: 0.75rem;
-            color: var(--sol-text-muted);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .header-btn {
-            background: none;
-            border: none;
-            color: var(--sol-text-primary);
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--sol-transition);
-            position: relative;
-        }
-
-        .header-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            background: var(--sol-error);
-            color: white;
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            border-radius: 9999px;
-        }
-
-        /* User Menu Dropdown */
-        .user-menu-wrapper {
-            position: relative;
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-            border: none;
-            color: var(--sol-text-primary);
-        }
-
-        .user-menu:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .user-avatar {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-            background: var(--sol-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 0.5rem;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
+        
+        /* Filters Section */
+        .sol-filters-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.5rem;
-            min-width: 200px;
-            padding: 0.5rem;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: var(--sol-transition);
-            box-shadow: var(--sol-shadow-lg);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-xl);
+            margin-bottom: var(--sol-space-xl);
+            box-shadow: var(--sol-shadow-md);
         }
-
-        .user-dropdown.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .dropdown-item {
-            display: block;
-            padding: 0.75rem 1rem;
-            color: var(--sol-text-primary);
-            text-decoration: none;
-            border-radius: 0.375rem;
-            transition: var(--sol-transition);
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.1);
-            margin: 0.5rem 0;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 70px;
-            left: 0;
-            bottom: 0;
-            width: 280px;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            overflow-y: auto;
-            z-index: 999;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar.active {
-            transform: translateX(0);
-        }
-
-        .sidebar-nav {
-            padding: 2rem 1rem;
-        }
-
-        .nav-section {
-            margin-bottom: 2rem;
-        }
-
-        .nav-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--sol-text-muted);
-            margin-bottom: 0.5rem;
-            padding: 0 1rem;
-        }
-
-        .nav-item {
+        
+        .sol-filters-header {
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            color: var(--sol-text-secondary);
-            text-decoration: none;
-            transition: var(--sol-transition);
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--sol-text-primary);
-        }
-
-        .nav-item.active {
-            background: var(--sol-primary);
-            color: white;
-        }
-
-        .nav-item i {
-            width: 1.25rem;
-            text-align: center;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-top: 70px;
-            padding: 2rem;
-            min-height: calc(100vh - 70px);
-            transition: margin-left 0.3s ease;
-        }
-
-        .main-content.sidebar-open {
-            margin-left: 280px;
-        }
-
-        /* Page Header */
-        .page-header {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+            align-items: center;
+            margin-bottom: var(--sol-space-lg);
         }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: var(--sol-text-secondary);
-        }
-
-        .page-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--sol-transition);
-            border: none;
+        
+        .sol-filters-title {
+            font-size: 1.125rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            white-space: nowrap;
+            gap: var(--sol-space-sm);
         }
-
-        .btn-primary {
-            background: var(--sol-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--sol-primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--sol-text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        /* Stats Cards */
-        .stats-grid {
+        
+        .sol-filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-lg);
         }
-
-        .stat-card {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            text-align: center;
-            transition: var(--sol-transition);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--sol-shadow);
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--sol-text-secondary);
-            font-size: 0.875rem;
-        }
-
-        /* Upload Section */
-        .upload-section {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 0.75rem;
-            padding: 3rem 2rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-        }
-
-        .upload-area:hover,
-        .upload-area.dragover {
-            border-color: var(--sol-primary);
-            background: rgba(79, 70, 229, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--sol-text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            font-size: 1.125rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-hint {
-            color: var(--sol-text-secondary);
-            font-size: 0.875rem;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        /* Filters Section */
-        .filters-section {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filters-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .filters-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .filters-toggle {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--sol-text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .filters-toggle:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .filters-advanced {
-            display: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 1rem;
-            margin-top: 1rem;
-        }
-
-        .filters-advanced.active {
-            display: block;
-        }
-
-        .filter-group {
+        
+        .sol-filter-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: var(--sol-space-sm);
         }
-
-        .filter-label {
+        
+        .sol-filter-label {
             font-size: 0.875rem;
             color: var(--sol-text-secondary);
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
         }
-
-        .filter-input,
-        .filter-select {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
+        
+        .sol-filter-input,
+        .sol-filter-select {
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-sm) var(--sol-space-md);
             color: var(--sol-text-primary);
-            transition: var(--sol-transition);
-            font-size: 0.875rem;
+            transition: var(--sol-transition-base);
+            width: 100%;
         }
-
-        .filter-range {
+        
+        .sol-filter-input:focus,
+        .sol-filter-select:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            background: var(--sol-glass-heavy);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
+        .sol-filters-advanced {
+            display: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: var(--sol-space-lg);
+            margin-top: var(--sol-space-lg);
+        }
+        
+        .sol-filters-advanced.active {
+            display: block;
+        }
+        
+        .sol-filter-range {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
-            gap: 0.5rem;
+            gap: var(--sol-space-sm);
             align-items: center;
         }
-
-        .filter-range-separator {
-            color: var(--sol-text-muted);
-        }
-
-        .filters-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            justify-content: flex-end;
-        }
-
-        .filter-input:focus,
-        .filter-select:focus {
-            outline: none;
-            border-color: var(--sol-primary);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .filter-select option {
-            background: var(--sol-bg-secondary);
-            color: var(--sol-text-primary);
-        }
-
-        /* Table */
-        .table-container {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
+        
+        /* Table Styles */
+        .sol-table-wrapper {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
+            border-radius: var(--sol-radius-xl);
             overflow: hidden;
+            box-shadow: var(--sol-shadow-md);
         }
-
-        .table-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem;
+        
+        .sol-table-header {
+            padding: var(--sol-space-lg) var(--sol-space-xl);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        .table-title {
-            font-size: 1.25rem;
+        
+        .sol-table-title {
+            font-size: 1.125rem;
             font-weight: 600;
         }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .table th {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
+        
+        .sol-table-info {
             font-size: 0.875rem;
             color: var(--sol-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .table td {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        
+        .sol-table-container {
+            overflow-x: auto;
         }
-
-        .table tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-badge.delivered {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--sol-success);
-        }
-
-        .status-badge.transit {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--sol-warning);
-        }
-
-        .status-badge.pending {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--sol-info);
-        }
-
-        .status-badge.delayed {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--sol-error);
-        }
-
+        
         /* Empty State */
-        .empty-state {
+        .sol-empty-state {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: var(--sol-space-3xl);
         }
-
-        .empty-icon {
+        
+        .sol-empty-icon {
             font-size: 4rem;
-            color: var(--sol-text-muted);
-            margin-bottom: 1rem;
+            opacity: 0.3;
+            margin-bottom: var(--sol-space-lg);
         }
-
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 90px;
-            right: 20px;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
+        
+        .sol-empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--sol-space-sm);
+        }
+        
+        .sol-empty-text {
+            color: var(--sol-text-secondary);
+            margin-bottom: var(--sol-space-xl);
+        }
+        
+        /* Stats Cards */
+        .sol-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-xl);
+        }
+        
+        .sol-stat-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            padding: 1rem 1.5rem;
-            min-width: 300px;
-            box-shadow: var(--sol-shadow-lg);
-            z-index: 2000;
-            transform: translateX(400px);
-            transition: transform var(--sol-transition);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-lg);
+            text-align: center;
+            box-shadow: var(--sol-shadow-sm);
+            transition: var(--sol-transition-base);
         }
-
-        .notification.show {
-            transform: translateX(0);
+        
+        .sol-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sol-shadow-md);
         }
-
-        .notification.success {
-            border-left: 4px solid var(--sol-success);
+        
+        .sol-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--sol-text-primary) 0%, var(--sol-text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-
-        .notification.error {
-            border-left: 4px solid var(--sol-error);
+        
+        .sol-stat-label {
+            font-size: 0.875rem;
+            color: var(--sol-text-tertiary);
+            margin-top: var(--sol-space-xs);
         }
-
-        .notification.info {
-            border-left: 4px solid var(--sol-info);
+        
+        /* Pagination */
+        .sol-pagination {
+            padding: var(--sol-space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* Loading */
-        .loading {
+        
+        .sol-pagination-info {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+        }
+        
+        .sol-pagination-controls {
+            display: flex;
+            gap: var(--sol-space-sm);
+            align-items: center;
+        }
+        
+        .sol-pagination-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--sol-text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 200px;
+            cursor: pointer;
+            transition: var(--sol-transition-base);
         }
-
-        .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--sol-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        
+        .sol-pagination-btn:hover:not(:disabled) {
+            background: var(--sol-glass-heavy);
+            transform: scale(1.1);
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Backdrop */
-        .backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 998;
-            opacity: 0;
-            visibility: hidden;
-            transition: var(--sol-transition);
-        }
-
-        .backdrop.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .menu-toggle {
-                display: block !important;
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-            
-            .main-content.sidebar-open {
-                margin-left: 0;
-            }
-
-            .header-search {
-                display: none;
-            }
-
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: start;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .user-menu span {
-                display: none;
-            }
-
-            .page-actions {
-                width: 100%;
-            }
-
-            .btn {
-                flex: 1;
-                justify-content: center;
-            }
+        
+        .sol-pagination-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="header-left">
-                <button class="menu-toggle" id="menuToggle">
+    <!-- Header (Same as Dashboard) -->
+    <header class="sol-header">
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a href="/" class="logo">
-                    <i class="fas fa-truck"></i>
-                    <h1>Supply Chain Hub</h1>
+                <a href="/" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
                 </a>
             </div>
             
-            <div class="header-right">
-                <div class="header-search">
-                    <input type="search" placeholder="Cerca spedizioni, corrieri...">
-                    <i class="fas fa-search"></i>
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
                 </div>
+            </div>
+            
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm);">
+                    <i class="fas fa-bell"></i>
+                    <span style="position: absolute; top: -4px; right: -4px; background: var(--sol-gradient-error); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">3</span>
+                </button>
                 
-                <div class="header-actions">
-                    <button class="header-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    
-                    <div class="user-menu-wrapper">
-                        <button class="user-menu" id="userMenuBtn">
-                            <div class="user-avatar">
-                                <span id="userInitial">U</span>
-                            </div>
-                            <span id="userName">Utente</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="user-dropdown" id="userDropdown">
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-user"></i> Profilo
-                            </a>
-                            <a href="/settings.html" class="dropdown-item">
-                                <i class="fas fa-cog"></i> Impostazioni
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item" id="logoutBtn">
-                                <i class="fas fa-sign-out-alt"></i> Esci
-                            </button>
-                        </div>
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <span id="userInitial">U</span>
                     </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: var(--sol-glass-heavy); backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none;">
+                    <a href="#" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Menu Principale</div>
-                <a href="/" class="nav-item">
+    <!-- Sidebar (Same as Dashboard) -->
+    <aside class="sol-sidebar" id="sidebar">
+        <nav style="padding: var(--sol-space-lg) 0;">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
+                <a href="/" class="sol-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/shipments.html" class="nav-item active">
+                <a href="/shipments.html" class="sol-nav-item active">
                     <i class="fas fa-box"></i>
                     <span>Spedizioni</span>
                 </a>
-                <a href="/carriers.html" class="nav-item">
+                <a href="/carriers.html" class="sol-nav-item">
                     <i class="fas fa-truck"></i>
                     <span>Corrieri</span>
                 </a>
-                <a href="/tracking.html" class="nav-item">
+                <a href="/tracking.html" class="sol-nav-item">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Tracking</span>
                 </a>
             </div>
             
-            <div class="nav-section">
-                <div class="nav-section-title">Analytics</div>
-                <a href="/reports.html" class="nav-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Report</span>
-                </a>
-                <a href="/costs.html" class="nav-item">
-                    <i class="fas fa-coins"></i>
-                    <span>Costi</span>
-                </a>
-                <a href="/import.html" class="nav-item">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
+                <a href="/import.html" class="sol-nav-item">
                     <i class="fas fa-upload"></i>
                     <span>Importa Dati</span>
                 </a>
+                <a href="/reports.html" class="sol-nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Report</span>
+                </a>
+                <a href="/costs.html" class="sol-nav-item">
+                    <i class="fas fa-coins"></i>
+                    <span>Analisi Costi</span>
+                </a>
             </div>
             
-            <div class="nav-section">
-                <div class="nav-section-title">Configurazione</div>
-                <a href="/team.html" class="nav-item">
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
+                <a href="/team.html" class="sol-nav-item">
                     <i class="fas fa-users"></i>
                     <span>Team</span>
                 </a>
-                <a href="/settings.html" class="nav-item">
+                <a href="/settings.html" class="sol-nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Impostazioni</span>
                 </a>
-                <a href="/billing.html" class="nav-item">
+                <a href="/billing.html" class="sol-nav-item">
                     <i class="fas fa-credit-card"></i>
                     <span>Fatturazione</span>
                 </a>
@@ -952,22 +384,23 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <div class="page-header">
-            <div class="page-header-left">
-                <h2 class="page-title">Gestione Spedizioni</h2>
-                <p class="page-subtitle">Monitora e gestisci tutte le tue spedizioni</p>
+    <main class="sol-main-content">
+        <!-- Page Header -->
+        <div class="sol-page-header">
+            <div>
+                <h1 class="sol-page-title">Gestione Spedizioni</h1>
+                <p class="sol-page-subtitle">Monitora e gestisci tutte le tue spedizioni</p>
             </div>
-            <div class="page-actions">
-                <button class="btn btn-secondary" onclick="exportToPDF()">
+            <div style="display: flex; gap: var(--sol-space-md); flex-wrap: wrap;">
+                <button class="sol-btn sol-btn-glass" onclick="exportToPDF()">
                     <i class="fas fa-file-pdf"></i>
                     Export PDF
                 </button>
-                <button class="btn btn-secondary" onclick="exportToExcel()">
+                <button class="sol-btn sol-btn-glass" onclick="exportToExcel()">
                     <i class="fas fa-file-excel"></i>
                     Export Excel
                 </button>
-                <button class="btn btn-primary" id="newShipmentBtn">
+                <button class="sol-btn sol-btn-primary" id="newShipmentBtn">
                     <i class="fas fa-plus"></i>
                     Nuova Spedizione
                 </button>
@@ -975,61 +408,59 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="totalShipments">0</div>
-                <div class="stat-label">Totale Spedizioni</div>
+        <div class="sol-stats-grid">
+            <div class="sol-stat-card">
+                <div class="sol-stat-value" id="totalShipments">20</div>
+                <div class="sol-stat-label">Totale Spedizioni</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="inTransit">0</div>
-                <div class="stat-label">In Transito</div>
+            <div class="sol-stat-card">
+                <div class="sol-stat-value" id="inTransit">4</div>
+                <div class="sol-stat-label">In Transito</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="deliveredToday">0</div>
-                <div class="stat-label">Consegnate Oggi</div>
+            <div class="sol-stat-card">
+                <div class="sol-stat-value" id="deliveredToday">1</div>
+                <div class="sol-stat-label">Consegnate Oggi</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value" id="delayedShipments">0</div>
-                <div class="stat-label">In Ritardo</div>
+            <div class="sol-stat-card">
+                <div class="sol-stat-value" id="delayedShipments">6</div>
+                <div class="sol-stat-label">In Ritardo</div>
             </div>
         </div>
 
-        <!-- Upload Section -->
-        <div class="upload-section">
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
-                <div class="upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
-            </div>
-            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple>
+        <!-- Upload Area -->
+        <div class="sol-upload-area" id="uploadArea" style="margin-bottom: var(--sol-space-xl);">
+            <div class="sol-upload-icon">📁</div>
+            <div class="sol-upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
+            <div class="sol-upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
         </div>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple style="display: none;">
 
         <!-- Filters -->
-        <div class="filters-section">
-            <div class="filters-header">
-                <h3 class="filters-title">
+        <div class="sol-filters-card">
+            <div class="sol-filters-header">
+                <h3 class="sol-filters-title">
                     <i class="fas fa-filter"></i>
                     Filtri di Ricerca
                 </h3>
-                <button class="filters-toggle" id="toggleAdvancedFilters">
+                <button class="sol-btn sol-btn-glass" id="toggleAdvancedFilters" style="font-size: 0.875rem;">
                     <i class="fas fa-sliders-h"></i>
                     Filtri Avanzati
                 </button>
             </div>
             
             <!-- Basic Filters -->
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label class="filter-label" for="searchFilter">
+            <div class="sol-filters-grid">
+                <div class="sol-filter-group">
+                    <label class="sol-filter-label">
                         <i class="fas fa-search"></i> Cerca
                     </label>
-                    <input type="text" id="searchFilter" class="filter-input" placeholder="Tracking, destinatario, città...">
+                    <input type="text" id="searchFilter" class="sol-filter-input" placeholder="Tracking, destinatario, città...">
                 </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="statusFilter">
+                <div class="sol-filter-group">
+                    <label class="sol-filter-label">
                         <i class="fas fa-info-circle"></i> Stato
                     </label>
-                    <select id="statusFilter" class="filter-select">
+                    <select id="statusFilter" class="sol-filter-select">
                         <option value="">Tutti gli stati</option>
                         <option value="pending">In Attesa</option>
                         <option value="transit">In Transito</option>
@@ -1037,11 +468,11 @@
                         <option value="delayed">In Ritardo</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="carrierFilter">
+                <div class="sol-filter-group">
+                    <label class="sol-filter-label">
                         <i class="fas fa-truck"></i> Corriere
                     </label>
-                    <select id="carrierFilter" class="filter-select">
+                    <select id="carrierFilter" class="sol-filter-select">
                         <option value="">Tutti i corrieri</option>
                         <option value="dhl">DHL</option>
                         <option value="fedex">FedEx</option>
@@ -1051,60 +482,60 @@
                         <option value="tnt">TNT</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label class="filter-label" for="dateFilter">
+                <div class="sol-filter-group">
+                    <label class="sol-filter-label">
                         <i class="fas fa-calendar"></i> Data Spedizione
                     </label>
-                    <input type="date" id="dateFilter" class="filter-input">
+                    <input type="date" id="dateFilter" class="sol-filter-input">
                 </div>
             </div>
             
             <!-- Advanced Filters -->
-            <div class="filters-advanced" id="advancedFilters">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label class="filter-label" for="senderFilter">
+            <div class="sol-filters-advanced" id="advancedFilters">
+                <div class="sol-filters-grid">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-user"></i> Mittente
                         </label>
-                        <input type="text" id="senderFilter" class="filter-input" placeholder="Nome mittente...">
+                        <input type="text" id="senderFilter" class="sol-filter-input" placeholder="Nome mittente...">
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="recipientFilter">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-user-tie"></i> Destinatario
                         </label>
-                        <input type="text" id="recipientFilter" class="filter-input" placeholder="Nome destinatario...">
+                        <input type="text" id="recipientFilter" class="sol-filter-input" placeholder="Nome destinatario...">
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="cityFilter">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-map-marker-alt"></i> Città
                         </label>
-                        <input type="text" id="cityFilter" class="filter-input" placeholder="Città di destinazione...">
+                        <input type="text" id="cityFilter" class="sol-filter-input" placeholder="Città di destinazione...">
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-euro-sign"></i> Range Valore
                         </label>
-                        <div class="filter-range">
-                            <input type="number" id="valueMin" class="filter-input" placeholder="Min" min="0">
-                            <span class="filter-range-separator">-</span>
-                            <input type="number" id="valueMax" class="filter-input" placeholder="Max" min="0">
+                        <div class="sol-filter-range">
+                            <input type="number" id="valueMin" class="sol-filter-input" placeholder="Min" min="0">
+                            <span style="color: var(--sol-text-tertiary);">-</span>
+                            <input type="number" id="valueMax" class="sol-filter-input" placeholder="Max" min="0">
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-calendar-alt"></i> Periodo
                         </label>
-                        <div class="filter-range">
-                            <input type="date" id="dateFrom" class="filter-input">
-                            <span class="filter-range-separator">-</span>
-                            <input type="date" id="dateTo" class="filter-input">
+                        <div class="sol-filter-range">
+                            <input type="date" id="dateFrom" class="sol-filter-input">
+                            <span style="color: var(--sol-text-tertiary);">-</span>
+                            <input type="date" id="dateTo" class="sol-filter-input">
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="regionFilter">
+                    <div class="sol-filter-group">
+                        <label class="sol-filter-label">
                             <i class="fas fa-globe-europe"></i> Regione
                         </label>
-                        <select id="regionFilter" class="filter-select">
+                        <select id="regionFilter" class="sol-filter-select">
                             <option value="">Tutte le regioni</option>
                             <option value="nord">Nord Italia</option>
                             <option value="centro">Centro Italia</option>
@@ -1115,29 +546,29 @@
                 </div>
             </div>
             
-            <div class="filters-actions">
-                <button class="btn btn-secondary" id="applyFilters">
-                    <i class="fas fa-check"></i>
-                    Applica Filtri
-                </button>
-                <button class="btn btn-secondary" id="resetFilters">
+            <div style="display: flex; gap: var(--sol-space-md); justify-content: flex-end; margin-top: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="resetFilters">
                     <i class="fas fa-times"></i>
                     Resetta Filtri
+                </button>
+                <button class="sol-btn sol-btn-primary" id="applyFilters">
+                    <i class="fas fa-check"></i>
+                    Applica Filtri
                 </button>
             </div>
         </div>
 
         <!-- Table -->
-        <div class="table-container">
-            <div class="table-header">
-                <h3 class="table-title">Lista Spedizioni</h3>
-                <div class="table-info">
-                    <span>0 risultati trovati</span>
+        <div class="sol-table-wrapper">
+            <div class="sol-table-header">
+                <h3 class="sol-table-title">Lista Spedizioni</h3>
+                <div class="sol-table-info">
+                    <span id="resultsCount">0 risultati trovati</span>
                 </div>
             </div>
             
-            <div class="table-wrapper">
-                <table class="table">
+            <div class="sol-table-container">
+                <table class="sol-table">
                     <thead>
                         <tr>
                             <th>TRACKING</th>
@@ -1152,169 +583,77 @@
                         </tr>
                     </thead>
                     <tbody id="shipmentsTableBody">
-                        <!-- Table will be populated here -->
+                        <!-- Dynamic content -->
                     </tbody>
                 </table>
                 
                 <!-- Empty State -->
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <i class="fas fa-box-open empty-icon"></i>
-                    <h3>Nessuna spedizione trovata</h3>
-                    <p style="color: var(--sol-text-secondary); margin-bottom: 2rem;">
-                        Non ci sono spedizioni che corrispondono ai filtri selezionati.
-                    </p>
-                    <button class="btn btn-primary" onclick="document.getElementById('newShipmentBtn').click()">
+                <div id="emptyState" class="sol-empty-state" style="display: none;">
+                    <i class="fas fa-box-open sol-empty-icon"></i>
+                    <h3 class="sol-empty-title">Nessuna spedizione trovata</h3>
+                    <p class="sol-empty-text">Non ci sono spedizioni che corrispondono ai filtri selezionati.</p>
+                    <button class="sol-btn sol-btn-primary" onclick="document.getElementById('newShipmentBtn').click()">
                         <i class="fas fa-plus"></i>
                         Crea la tua prima spedizione
                     </button>
                 </div>
-                
-                <!-- Loading State -->
-                <div id="loadingState" class="loading" style="display: none;">
-                    <div class="spinner"></div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="sol-pagination" id="pagination">
+                <div class="sol-pagination-info">
+                    Mostrando <span id="showingFrom">0</span>-<span id="showingTo">0</span> di <span id="totalRows">0</span> righe
+                </div>
+                <div class="sol-pagination-controls">
+                    <button class="sol-pagination-btn" id="prevPage" onclick="changePage(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span style="margin: 0 var(--sol-space-md); color: var(--sol-text-secondary);">
+                        Pagina <span id="currentPage">1</span>
+                    </span>
+                    <button class="sol-pagination-btn" id="nextPage" onclick="changePage(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </main>
 
     <!-- Backdrop -->
-    <div class="backdrop" id="backdrop"></div>
+    <div class="sol-backdrop" id="backdrop"></div>
 
-    <!-- Auth Script - MUST be loaded before main script -->
-    <script src="/auth.js"></script>
-    
-    <!-- Main Script -->
     <script>
-        // Fallback checkAuth if auth.js fails to load
-        window.checkAuth = window.checkAuth || async function() {
-            console.log('Using fallback checkAuth...');
-            const token = localStorage.getItem('supabase.auth.token');
-            console.log('Token exists:', !!token);
-            
-            if (!token) return false;
-            
-            try {
-                const tokenData = JSON.parse(atob(token.split('.')[1]));
-                const expirationTime = tokenData.exp * 1000;
-                const isValid = Date.now() < expirationTime;
-                console.log('Token valid:', isValid, 'Expires:', new Date(expirationTime));
-                return isValid;
-            } catch (error) {
-                console.error('Error checking auth:', error);
-                return false;
-            }
-        };
-        
-        // Debug: Check current page
-        console.log('Current page:', window.location.pathname);
-        console.log('Current URL:', window.location.href);
-
         // Global variables
         let shipments = [];
         let filteredShipments = [];
+        let currentPage = 1;
+        const rowsPerPage = 20;
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('DOM loaded, initializing shipments page...');
-            
-            // Wait a bit to ensure all scripts are loaded
-            setTimeout(async () => {
-                try {
-                    // Check authentication
-                    const isAuthenticated = await checkAuth();
-                    console.log('Authentication check:', isAuthenticated);
-                    
-                    // TEMPORARY: Skip redirect for testing
-                    if (!isAuthenticated) {
-                        console.log('Not authenticated, but continuing anyway for testing...');
-                        // window.location.href = '/login.html';
-                        // return;
-                    }
-
-                    // Update user info
-                    updateUserInfo();
-
-                    // Setup event listeners
-                    setupEventListeners();
-
-                    // Setup file upload
-                    setupFileUpload();
-
-                    // Load initial data
-                    loadDemoData();
-                    
-                    console.log('Initialization complete');
-                } catch (error) {
-                    console.error('Initialization error:', error);
-                    // Continue anyway with demo data
-                    updateUserInfo();
-                    setupEventListeners();
-                    setupFileUpload();
-                    loadDemoData();
-                }
-            }, 100);
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadDemoData();
+            updateUserInfo();
         });
-
-        // Update user info
-        function updateUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const userName = document.getElementById('userName');
-            const userInitial = document.getElementById('userInitial');
-            
-            if (user.email) {
-                userName.textContent = user.email.split('@')[0];
-                userInitial.textContent = user.email[0].toUpperCase();
-            }
-        }
 
         // Setup event listeners
         function setupEventListeners() {
-            console.log('Setting up event listeners...');
-            
             // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
-            const mainContent = document.getElementById('mainContent');
-            
-            if (!menuToggle || !sidebar || !backdrop || !mainContent) {
-                console.error('Missing required elements:', {
-                    menuToggle: !!menuToggle,
-                    sidebar: !!sidebar,
-                    backdrop: !!backdrop,
-                    mainContent: !!mainContent
-                });
-                return;
-            }
             
             menuToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Menu toggle clicked');
-                
-                const isActive = sidebar.classList.contains('active');
-                console.log('Sidebar active:', isActive);
-                
-                if (isActive) {
-                    // Close menu
-                    sidebar.classList.remove('active');
-                    backdrop.classList.remove('active');
-                    mainContent.classList.remove('sidebar-open');
-                    document.body.style.overflow = '';
-                } else {
-                    // Open menu
-                    sidebar.classList.add('active');
-                    backdrop.classList.add('active');
-                    mainContent.classList.add('sidebar-open');
-                    document.body.style.overflow = 'hidden';
-                }
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
             });
 
             backdrop.addEventListener('click', function() {
-                console.log('Backdrop clicked');
                 sidebar.classList.remove('active');
                 backdrop.classList.remove('active');
-                mainContent.classList.remove('sidebar-open');
                 document.body.style.overflow = '';
             });
 
@@ -1322,28 +661,14 @@
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
             
-            if (!userMenuBtn || !userDropdown) {
-                console.error('Missing user menu elements');
-                return;
-            }
-            
             userMenuBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('User menu clicked');
-                userDropdown.classList.toggle('active');
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
             });
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-                    userDropdown.classList.remove('active');
-                }
-            });
-
-            // Prevent clicks inside dropdown from closing it
-            userDropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
+            document.addEventListener('click', function() {
+                userDropdown.style.display = 'none';
             });
 
             // Logout
@@ -1352,6 +677,36 @@
                 localStorage.removeItem('supabase.auth.token');
                 localStorage.removeItem('user');
                 window.location.href = '/login.html';
+            });
+
+            // File upload
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.transform = 'scale(1.02)';
+                uploadArea.style.borderColor = 'rgba(0, 122, 255, 0.5)';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.transform = 'scale(1)';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.transform = 'scale(1)';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
             });
 
             // Filters
@@ -1379,137 +734,25 @@
             document.getElementById('dateTo').addEventListener('change', applyFilters);
             document.getElementById('regionFilter').addEventListener('change', applyFilters);
             
-            // Apply filters button
+            // Buttons
             document.getElementById('applyFilters').addEventListener('click', applyFilters);
-            
-            // Reset filters
-            document.getElementById('resetFilters').addEventListener('click', function() {
-                // Reset basic filters
-                document.getElementById('searchFilter').value = '';
-                document.getElementById('statusFilter').value = '';
-                document.getElementById('carrierFilter').value = '';
-                document.getElementById('dateFilter').value = '';
-                
-                // Reset advanced filters
-                document.getElementById('senderFilter').value = '';
-                document.getElementById('recipientFilter').value = '';
-                document.getElementById('cityFilter').value = '';
-                document.getElementById('valueMin').value = '';
-                document.getElementById('valueMax').value = '';
-                document.getElementById('dateFrom').value = '';
-                document.getElementById('dateTo').value = '';
-                document.getElementById('regionFilter').value = '';
-                
-                applyFilters();
-            });
-
-            // New shipment
-            document.getElementById('newShipmentBtn').addEventListener('click', function() {
-                showNotification('Info', 'Funzionalità di creazione nuova spedizione in arrivo!', 'info');
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            document.getElementById('newShipmentBtn').addEventListener('click', () => {
+                showNotification('Funzionalità in arrivo!', 'info');
             });
         }
 
-        // Setup file upload
-        function setupFileUpload() {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-
-            // Drag and drop
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = Array.from(e.dataTransfer.files);
-                handleFileUpload(files);
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                handleFileUpload(files);
-            });
-        }
-
-        // Handle file upload
-        function handleFileUpload(files) {
-            files.forEach(file => {
-                const reader = new FileReader();
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-
-                reader.onload = (e) => {
-                    if (fileExtension === 'csv') {
-                        processCSV(e.target.result, file.name);
-                    } else if (['xlsx', 'xls'].includes(fileExtension)) {
-                        processExcel(e.target.result, file.name);
-                    }
-                };
-
-                if (fileExtension === 'csv') {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsArrayBuffer(file);
-                }
-            });
-        }
-
-        // Process CSV
-        function processCSV(csvData, filename) {
-            Papa.parse(csvData, {
-                header: true,
-                dynamicTyping: true,
-                complete: (results) => {
-                    const newShipments = results.data.map(row => ({
-                        tracking: row.tracking || `SP-${Date.now()}`,
-                        date: row.date || new Date().toISOString().split('T')[0],
-                        sender: row.sender || 'N/A',
-                        recipient: row.recipient || 'N/A',
-                        city: row.city || 'N/A',
-                        carrier: row.carrier || 'Unknown',
-                        status: row.status || 'pending',
-                        value: parseFloat(row.value || 0)
-                    }));
-                    shipments = [...shipments, ...newShipments];
-                    applyFilters();
-                    showNotification('Successo', `File CSV caricato: ${filename}`, 'success');
-                }
-            });
-        }
-
-        // Process Excel
-        function processExcel(arrayBuffer, filename) {
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-            const newShipments = jsonData.map(row => ({
-                tracking: row.tracking || `SP-${Date.now()}`,
-                date: row.date || new Date().toISOString().split('T')[0],
-                sender: row.sender || 'N/A',
-                recipient: row.recipient || 'N/A',
-                city: row.city || 'N/A',
-                carrier: row.carrier || 'Unknown',
-                status: row.status || 'pending',
-                value: parseFloat(row.value || 0)
-            }));
-            
-            shipments = [...shipments, ...newShipments];
-            applyFilters();
-            showNotification('Successo', `File Excel caricato: ${filename}`, 'success');
+        // Update user info
+        function updateUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.email) {
+                document.getElementById('userName').textContent = user.email.split('@')[0];
+                document.getElementById('userInitial').textContent = user.email[0].toUpperCase();
+            }
         }
 
         // Load demo data
         function loadDemoData() {
-            console.log('Loading demo data...');
             const statuses = ['pending', 'transit', 'delivered', 'delayed'];
             const carriers = ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'];
             const cities = ['Milano', 'Roma', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze'];
@@ -1531,13 +774,11 @@
 
         // Apply filters
         function applyFilters() {
-            // Basic filters
+            // Get filter values
             const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const carrierFilter = document.getElementById('carrierFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
-            
-            // Advanced filters
             const senderFilter = document.getElementById('senderFilter').value.toLowerCase();
             const recipientFilter = document.getElementById('recipientFilter').value.toLowerCase();
             const cityFilter = document.getElementById('cityFilter').value.toLowerCase();
@@ -1548,64 +789,37 @@
             const regionFilter = document.getElementById('regionFilter').value;
             
             filteredShipments = shipments.filter(shipment => {
-                // Basic search
+                // Apply all filters
                 const matchesSearch = !searchTerm || 
                     shipment.tracking.toLowerCase().includes(searchTerm) ||
                     shipment.recipient.toLowerCase().includes(searchTerm) ||
                     shipment.sender.toLowerCase().includes(searchTerm) ||
                     shipment.city.toLowerCase().includes(searchTerm);
                 
-                // Status filter
                 const matchesStatus = !statusFilter || shipment.status === statusFilter;
-                
-                // Carrier filter
                 const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
-                
-                // Date filter
                 const matchesDate = !dateFilter || shipment.date === dateFilter;
-                
-                // Advanced filters
                 const matchesSender = !senderFilter || shipment.sender.toLowerCase().includes(senderFilter);
                 const matchesRecipient = !recipientFilter || shipment.recipient.toLowerCase().includes(recipientFilter);
                 const matchesCity = !cityFilter || shipment.city.toLowerCase().includes(cityFilter);
                 const matchesValue = shipment.value >= valueMin && shipment.value <= valueMax;
                 
-                // Date range filter
                 let matchesDateRange = true;
                 if (dateFrom || dateTo) {
                     const shipmentDate = new Date(shipment.date);
-                    if (dateFrom) {
-                        const fromDate = new Date(dateFrom);
-                        matchesDateRange = matchesDateRange && shipmentDate >= fromDate;
-                    }
-                    if (dateTo) {
-                        const toDate = new Date(dateTo);
-                        matchesDateRange = matchesDateRange && shipmentDate <= toDate;
-                    }
+                    if (dateFrom) matchesDateRange = matchesDateRange && shipmentDate >= new Date(dateFrom);
+                    if (dateTo) matchesDateRange = matchesDateRange && shipmentDate <= new Date(dateTo);
                 }
                 
-                // Region filter (simplified mapping)
                 let matchesRegion = !regionFilter;
                 if (regionFilter) {
-                    const northCities = ['Milano', 'Torino', 'Genova', 'Venezia', 'Bologna'];
-                    const centerCities = ['Roma', 'Firenze', 'Perugia', 'Ancona'];
-                    const southCities = ['Napoli', 'Bari', 'Reggio Calabria'];
-                    const islandCities = ['Palermo', 'Catania', 'Cagliari'];
-                    
-                    switch(regionFilter) {
-                        case 'nord':
-                            matchesRegion = northCities.includes(shipment.city);
-                            break;
-                        case 'centro':
-                            matchesRegion = centerCities.includes(shipment.city);
-                            break;
-                        case 'sud':
-                            matchesRegion = southCities.includes(shipment.city);
-                            break;
-                        case 'isole':
-                            matchesRegion = islandCities.includes(shipment.city);
-                            break;
-                    }
+                    const regionMap = {
+                        nord: ['Milano', 'Torino', 'Genova', 'Venezia', 'Bologna'],
+                        centro: ['Roma', 'Firenze', 'Perugia', 'Ancona'],
+                        sud: ['Napoli', 'Bari', 'Reggio Calabria'],
+                        isole: ['Palermo', 'Catania', 'Cagliari']
+                    };
+                    matchesRegion = regionMap[regionFilter]?.includes(shipment.city) || false;
                 }
                 
                 return matchesSearch && matchesStatus && matchesCarrier && matchesDate && 
@@ -1615,22 +829,116 @@
             
             updateStats();
             renderTable();
-            
-            // Update filter count badge
-            const activeFilters = [
-                searchTerm, statusFilter, carrierFilter, dateFilter,
-                senderFilter, recipientFilter, cityFilter,
-                valueMin > 0 ? 'valueMin' : '',
-                valueMax < Infinity ? 'valueMax' : '',
-                dateFrom, dateTo, regionFilter
-            ].filter(f => f).length;
-            
-            if (activeFilters > 0) {
-                showNotification('Filtri Applicati', `${activeFilters} filtri attivi, ${filteredShipments.length} risultati trovati`, 'info');
-            }
         }
-        
-        // Debounce function for input filters
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('carrierFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('senderFilter').value = '';
+            document.getElementById('recipientFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('valueMin').value = '';
+            document.getElementById('valueMax').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('regionFilter').value = '';
+            
+            applyFilters();
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('totalShipments').textContent = filteredShipments.length;
+            document.getElementById('inTransit').textContent = 
+                filteredShipments.filter(s => s.status === 'transit').length;
+            document.getElementById('deliveredToday').textContent = 
+                filteredShipments.filter(s => 
+                    s.status === 'delivered' && 
+                    s.date === new Date().toISOString().split('T')[0]
+                ).length;
+            document.getElementById('delayedShipments').textContent = 
+                filteredShipments.filter(s => s.status === 'delayed').length;
+            
+            document.getElementById('resultsCount').textContent = `${filteredShipments.length} risultati trovati`;
+        }
+
+        // Render table
+        function renderTable() {
+            const tableBody = document.getElementById('shipmentsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const pagination = document.getElementById('pagination');
+            
+            if (filteredShipments.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            pagination.style.display = 'flex';
+            
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredShipments.length);
+            const pageShipments = filteredShipments.slice(startIndex, endIndex);
+            
+            tableBody.innerHTML = pageShipments.map(shipment => `
+                <tr>
+                    <td><strong>${shipment.tracking}</strong></td>
+                    <td>${formatDate(shipment.date)}</td>
+                    <td>${shipment.sender}</td>
+                    <td>${shipment.recipient}</td>
+                    <td>${shipment.city}</td>
+                    <td>${shipment.carrier}</td>
+                    <td>${getStatusBadge(shipment.status)}</td>
+                    <td>€${shipment.value.toLocaleString('it-IT')}</td>
+                    <td>
+                        <div style="display: flex; gap: var(--sol-space-xs);">
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" title="Visualizza">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" title="Modifica">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" title="Elimina">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update pagination
+            document.getElementById('showingFrom').textContent = startIndex + 1;
+            document.getElementById('showingTo').textContent = endIndex;
+            document.getElementById('totalRows').textContent = filteredShipments.length;
+            document.getElementById('currentPage').textContent = currentPage;
+            
+            // Update pagination buttons
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = endIndex >= filteredShipments.length;
+        }
+
+        // Helper functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT');
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                pending: { class: 'info', text: 'IN ATTESA' },
+                transit: { class: 'warning', text: 'IN TRANSITO' },
+                delivered: { class: 'success', text: 'CONSEGNATO' },
+                delayed: { class: 'error', text: 'IN RITARDO' }
+            };
+            const { class: statusClass, text } = statusMap[status] || { class: 'info', text: status };
+            return `<span class="sol-badge sol-badge-${statusClass}">${text}</span>`;
+        }
+
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -1643,99 +951,85 @@
             };
         }
 
-        // Update statistics
-        function updateStats() {
-            document.getElementById('totalShipments').textContent = filteredShipments.length;
-            document.getElementById('inTransit').textContent = 
-                filteredShipments.filter(s => s.status === 'transit').length;
-            document.getElementById('deliveredToday').textContent = 
-                filteredShipments.filter(s => 
-                    s.status === 'delivered' && 
-                    s.date === new Date().toISOString().split('T')[0]
-                ).length;
-            document.getElementById('delayedShipments').textContent = 
-                filteredShipments.filter(s => s.status === 'delayed').length;
-        }
-
-        // Render table
-        function renderTable() {
-            const tableBody = document.getElementById('shipmentsTableBody');
-            const emptyState = document.getElementById('emptyState');
+        function changePage(direction) {
+            const maxPage = Math.ceil(filteredShipments.length / rowsPerPage);
+            const newPage = currentPage + direction;
             
-            // Update result count
-            document.querySelector('.table-info span').textContent = 
-                `${filteredShipments.length} risultati trovati`;
-            
-            if (filteredShipments.length === 0) {
-                tableBody.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
+            if (newPage >= 1 && newPage <= maxPage) {
+                currentPage = newPage;
+                renderTable();
             }
-            
-            emptyState.style.display = 'none';
-            
-            tableBody.innerHTML = filteredShipments.map(shipment => `
-                <tr>
-                    <td><strong>${shipment.tracking}</strong></td>
-                    <td>${formatDate(shipment.date)}</td>
-                    <td>${shipment.sender}</td>
-                    <td>${shipment.recipient}</td>
-                    <td>${shipment.city}</td>
-                    <td>${shipment.carrier}</td>
-                    <td>${getStatusBadge(shipment.status)}</td>
-                    <td>€${shipment.value.toFixed(2)}</td>
-                    <td>
-                        <button class="action-btn" title="Visualizza">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" title="Modifica">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn" title="Elimina">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
-        // Format date
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('it-IT');
+        // File handling
+        function handleFileUpload(files) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                reader.onload = (e) => {
+                    if (fileExtension === 'csv') {
+                        processCSV(e.target.result, file.name);
+                    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                        processExcel(e.target.result, file.name);
+                    }
+                };
+
+                if (fileExtension === 'csv') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
         }
 
-        // Get status badge
-        function getStatusBadge(status) {
-            const badges = {
-                pending: '<span class="status-badge pending"><i class="fas fa-clock"></i> In Attesa</span>',
-                transit: '<span class="status-badge transit"><i class="fas fa-truck"></i> In Transito</span>',
-                delivered: '<span class="status-badge delivered"><i class="fas fa-check"></i> Consegnato</span>',
-                delayed: '<span class="status-badge delayed"><i class="fas fa-exclamation"></i> In Ritardo</span>'
-            };
-            return badges[status] || status;
+        function processCSV(csvData, filename) {
+            Papa.parse(csvData, {
+                header: true,
+                dynamicTyping: true,
+                complete: (results) => {
+                    const newShipments = results.data.map(row => ({
+                        tracking: row.tracking || `SP-${Date.now()}`,
+                        date: row.date || new Date().toISOString().split('T')[0],
+                        sender: row.sender || 'N/A',
+                        recipient: row.recipient || 'N/A',
+                        city: row.city || 'N/A',
+                        carrier: row.carrier || 'Unknown',
+                        status: row.status || 'pending',
+                        value: parseFloat(row.value || 0)
+                    }));
+                    shipments = [...shipments, ...newShipments];
+                    applyFilters();
+                    showNotification(`File CSV caricato: ${filename}`, 'success');
+                }
+            });
         }
 
-        // Show notification
-        function showNotification(title, message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong>${title}</strong>
-                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer;">×</button>
-                </div>
-                <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">${message}</div>
-            `;
+        function processExcel(arrayBuffer, filename) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            const newShipments = jsonData.map(row => ({
+                tracking: row.tracking || `SP-${Date.now()}`,
+                date: row.date || new Date().toISOString().split('T')[0],
+                sender: row.sender || 'N/A',
+                recipient: row.recipient || 'N/A',
+                city: row.city || 'N/A',
+                carrier: row.carrier || 'Unknown',
+                status: row.status || 'pending',
+                value: parseFloat(row.value || 0)
+            }));
             
-            document.body.appendChild(notification);
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => notification.remove(), 5000);
+            shipments = [...shipments, ...newShipments];
+            applyFilters();
+            showNotification(`File Excel caricato: ${filename}`, 'success');
         }
 
         // Export functions
         function exportToPDF() {
-            showNotification('Export PDF', 'Generazione PDF in corso...', 'info');
+            showNotification('Generazione PDF in corso...', 'info');
             
             try {
                 const { jsPDF } = window.jspdf;
@@ -1759,7 +1053,7 @@
                 doc.text('Corriere', 150, yPos);
                 doc.text('Stato', 180, yPos);
                 
-                // Table data
+                // Table data (max 50 rows)
                 yPos += 10;
                 filteredShipments.slice(0, 50).forEach(shipment => {
                     doc.text(shipment.tracking, 20, yPos);
@@ -1778,15 +1072,15 @@
                 });
                 
                 doc.save(`spedizioni-${new Date().toISOString().split('T')[0]}.pdf`);
-                showNotification('Successo', 'PDF generato con successo', 'success');
+                showNotification('PDF generato con successo', 'success');
             } catch (error) {
                 console.error('PDF export error:', error);
-                showNotification('Errore', 'Errore nella generazione del PDF', 'error');
+                showNotification('Errore nella generazione del PDF', 'error');
             }
         }
 
         function exportToExcel() {
-            showNotification('Export Excel', 'Generazione Excel in corso...', 'info');
+            showNotification('Generazione Excel in corso...', 'info');
             
             try {
                 const wb = XLSX.utils.book_new();
@@ -1841,31 +1135,38 @@
                 
                 // Save file
                 XLSX.writeFile(wb, `spedizioni-${new Date().toISOString().split('T')[0]}.xlsx`);
-                showNotification('Successo', 'File Excel generato con successo', 'success');
+                showNotification('File Excel generato con successo', 'success');
             } catch (error) {
                 console.error('Excel export error:', error);
-                showNotification('Errore', 'Errore nella generazione del file Excel', 'error');
+                showNotification('Errore nella generazione del file Excel', 'error');
             }
         }
 
-        // Action button styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .action-btn {
-                background: none;
-                border: none;
-                color: var(--sol-text-secondary);
-                padding: 0.5rem;
-                border-radius: 0.375rem;
-                cursor: pointer;
-                transition: var(--sol-transition);
-            }
-            .action-btn:hover {
-                background: rgba(255, 255, 255, 0.1);
-                color: var(--sol-text-primary);
-            }
-        `;
-        document.head.appendChild(style);
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--sol-glass-heavy);
+                backdrop-filter: var(--sol-blur-xl);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: var(--sol-radius-lg);
+                padding: var(--sol-space-md) var(--sol-space-lg);
+                box-shadow: var(--sol-shadow-lg);
+                z-index: 3000;
+                animation: sol-fade-in 0.3s ease-out;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" style="color: ${type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF'};"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
     </script>
 </body>
 </html>
