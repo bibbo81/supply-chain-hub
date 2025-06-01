@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Hub - Importa Dati</title>
+    
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="/solarium.css">
+    
+    <!-- Papa Parse for CSV processing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- SheetJS for Excel processing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Import Specific Styles -->
+    <style>
+        /* Upload Area */
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-3xl);
+            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--accent-color);
+            background: rgba(0, 122, 255, 0.05);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .upload-area.processing {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .upload-area:hover .upload-icon,
+        .upload-area.dragover .upload-icon {
+            color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .upload-formats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+
+        .format-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: var(--spacing-xl);
+        }
+
+        .file-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all var(--transition-normal);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--glass-bg);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .file-icon.csv {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .file-icon.excel {
+            background: var(--info-light);
+            color: var(--info-color);
+        }
+
+        .file-details h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .file-meta {
+            display: flex;
+            gap: var(--spacing-lg);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--glass-bg);
+            border-radius: var(--radius-sm);
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: var(--radius-sm);
+            transition: width var(--transition-normal);
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Preview Table */
+        .preview-section {
+            margin-top: var(--spacing-lg);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .preview-table {
+            background: var(--glass-bg);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .preview-scroll {
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        /* Mapping Section */
+        .mapping-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .mapping-arrow {
+            color: var(--text-tertiary);
+        }
+
+        /* Import Summary */
+        .summary-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            text-align: center;
+            margin-top: var(--spacing-xl);
+        }
+
+        .summary-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .summary-icon.success {
+            color: var(--success-color);
+        }
+
+        .summary-icon.error {
+            color: var(--error-color);
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* History Section */
+        .history-section {
+            margin-top: var(--spacing-2xl);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: var(--glass-bg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .history-item:hover {
+            background: var(--glass-hover);
+            transform: translateX(4px);
+        }
+
+        .history-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Templates */
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .template-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .template-card:hover {
+            background: var(--glass-hover);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .template-icon {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .upload-area {
+                padding: var(--spacing-xl);
+            }
+
+            .upload-icon {
+                font-size: 3rem;
+            }
+
+            .file-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-md);
+            }
+
+            .summary-stats {
+                flex-direction: column;
+                gap: var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-brand">
+            <button class="btn btn-ghost" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-center gap-2">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #007aff, #5ac8fa); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-truck text-white"></i>
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 700;">Supply Chain Hub</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: -4px;">Enterprise SaaS Platform</div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="nav-menu">
+            <!-- Quick Actions -->
+            <button class="btn btn-ghost" title="Notifiche">
+                <i class="fas fa-bell"></i>
+                <span class="badge badge-danger" style="position: absolute; top: 8px; right: 8px; font-size: 0.6rem;">3</span>
+            </button>
+            
+            <button class="btn btn-ghost" title="Cerca">
+                <i class="fas fa-search"></i>
+            </button>
+            
+            <!-- User Menu -->
+            <div class="dropdown">
+                <button class="btn btn-ghost d-flex align-center gap-2" id="userMenuToggle">
+                    <div style="width: 32px; height: 32px; background: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user text-white" style="font-size: 0.8rem;"></i>
+                    </div>
+                    <span class="hide-mobile" id="userEmail">user@example.com</span>
+                    <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <!-- Main Navigation -->
+            <div class="mb-3">
+                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
+                    PRINCIPALE
+                </div>
+                
+                <a href="/dashboard.html" class="sidebar-item" data-page="dashboard">
+                    <i class="fas fa-chart-line" style="width: 20px;"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="/shipments.html" class="sidebar-item" data-page="shipments">
+                    <i class="fas fa-box" style="width: 20px;"></i>
+                    <span>Spedizioni</span>
+                </a>
+                
+                <a href="/carriers.html" class="sidebar-item" data-page="carriers">
+                    <i class="fas fa-truck" style="width: 20px;"></i>
+                    <span>Corrieri</span>
+                </a>
+                
+                <a href="/tracking.html" class="sidebar-item" data-page="tracking">
+                    <i class="fas fa-map-marker-alt" style="width: 20px;"></i>
+                    <span>Tracking</span>
+                </a>
+            </div>
+            
+            <!-- Tools -->
+            <div class="mb-3">
+                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
+                    STRUMENTI
+                </div>
+                
+                <a href="/import.html" class="sidebar-item active" data-page="import">
+                    <i class="fas fa-upload" style="width: 20px;"></i>
+                    <span>Importa Dati</span>
+                </a>
+                
+                <a href="/reports.html" class="sidebar-item" data-page="reports">
+                    <i class="fas fa-file-chart-line" style="width: 20px;"></i>
+                    <span>Report</span>
+                </a>
+                
+                <a href="/costs.html" class="sidebar-item" data-page="costs">
+                    <i class="fas fa-euro-sign" style="width: 20px;"></i>
+                    <span>Analisi Costi</span>
+                </a>
+            </div>
+            
+            <!-- Settings -->
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">
+                    CONFIGURAZIONE
+                </div>
+                
+                <a href="/settings.html" class="sidebar-item" data-page="settings">
+                    <i class="fas fa-cog" style="width: 20px;"></i>
+                    <span>Impostazioni</span>
+                </a>
+                
+                <a href="/team.html" class="sidebar-item" data-page="team">
+                    <i class="fas fa-users" style="width: 20px;"></i>
+                    <span>Team</span>
+                </a>
+                
+                <a href="/billing.html" class="sidebar-item" data-page="billing">
+                    <i class="fas fa-credit-card" style="width: 20px;"></i>
+                    <span>Fatturazione</span>
+                </a>
+            </div>
+            
+            <!-- Logout -->
+            <div style="margin-top: auto; padding-top: var(--spacing-xl); border-top: 1px solid var(--border-color);">
+                <button class="sidebar-item text-danger" onclick="logout()" style="width: 100%; border: none; background: none; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt" style="width: 20px;"></i>
+                    <span>Esci</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Importa Dati</h1>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-secondary" onclick="showTemplates()">
+                        <i class="fas fa-file-download"></i>
+                        Template
+                    </button>
+                    <button class="btn btn-secondary" onclick="showHistory()">
+                        <i class="fas fa-history"></i>
+                        Cronologia
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload Container -->
+            <div class="upload-container">
+                <!-- Upload Area -->
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">Trascina i file qui o clicca per selezionare</div>
+                    <div class="upload-hint">Massimo 10 file alla volta, fino a 50MB ciascuno</div>
+                    
+                    <div class="upload-formats">
+                        <div class="format-badge">
+                            <i class="fas fa-file-csv"></i>
+                            <span>CSV</span>
+                        </div>
+                        <div class="format-badge">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Excel (XLSX/XLS)</span>
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple style="display: none;">
+
+                <!-- File List -->
+                <div class="file-list" id="fileList"></div>
+
+                <!-- Import Summary -->
+                <div class="summary-card" id="summaryCard" style="display: none;">
+                    <div class="summary-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Import Completato!</h3>
+                    <p class="text-secondary">I dati sono stati importati con successo nel sistema</p>
+                    
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <div class="summary-value" id="totalImported">0</div>
+                            <div class="summary-label">Record Importati</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-value" id="totalSkipped">0</div>
+                            <div class="summary-label">Record Saltati</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-value" id="totalErrors">0</div>
+                            <div class="summary-label">Errori</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="window.location.href='/shipments.html'">
+                            <i class="fas fa-box"></i>
+                            Vai alle Spedizioni
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetImport()">
+                            <i class="fas fa-redo"></i>
+                            Nuovo Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Section (Hidden by default) -->
+            <div class="history-section" id="templatesSection" style="display: none;">
+                <h3 class="mb-3">Template Disponibili</h3>
+                <div class="templates-grid">
+                    <div class="template-card" onclick="downloadTemplate('shipments')">
+                        <div class="template-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h4>Spedizioni</h4>
+                        <p class="text-secondary">Template per import spedizioni</p>
+                    </div>
+                    <div class="template-card" onclick="downloadTemplate('carriers')">
+                        <div class="template-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h4>Corrieri</h4>
+                        <p class="text-secondary">Template per import corrieri</p>
+                    </div>
+                    <div class="template-card" onclick="downloadTemplate('costs')">
+                        <div class="template-icon">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <h4>Costi</h4>
+                        <p class="text-secondary">Template per import costi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section (Hidden by default) -->
+            <div class="history-section" id="historySection" style="display: none;">
+                <h3 class="mb-3">Cronologia Import</h3>
+                <div id="historyList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="modal-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Auth Check -->
+    <script src="/auth.js"></script>
+    
+    <!-- Import Scripts -->
+    <script>
+        // Global state
+        let importState = {
+            files: [],
+            currentFile: null,
+            processedData: [],
+            importHistory: []
+        };
+
+        // Initialize
+        function initImport() {
+            setupFileUpload();
+            loadImportHistory();
+        }
+
+        // Setup file upload handlers
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            // File input handler
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
+            });
+        }
+
+        // Handle file upload
+        function handleFileUpload(files) {
+            if (!files.length) return;
+
+            // Filter valid files
+            const validFiles = files.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return ['csv', 'xlsx', 'xls'].includes(ext);
+            });
+
+            if (validFiles.length !== files.length) {
+                showNotification('Avviso', 'Alcuni file non sono nel formato supportato', 'warning');
+            }
+
+            if (validFiles.length === 0) return;
+
+            // Hide summary if visible
+            document.getElementById('summaryCard').style.display = 'none';
+
+            // Process each file
+            validFiles.forEach(file => {
+                processFile(file);
+            });
+        }
+
+        // Process single file
+        function processFile(file) {
+            const fileId = Date.now() + Math.random();
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            // Add to state
+            const fileData = {
+                id: fileId,
+                name: file.name,
+                size: file.size,
+                type: fileExtension,
+                status: 'processing',
+                progress: 0,
+                data: null,
+                error: null
+            };
+
+            importState.files.push(fileData);
+            renderFileItem(fileData);
+
+            // Read and process file
+            const reader = new FileReader();
+
+            reader.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const progress = (e.loaded / e.total) * 50; // 50% for reading
+                    updateFileProgress(fileId, progress);
+                }
+            };
+
+            reader.onload = (e) => {
+                try {
+                    if (fileExtension === 'csv') {
+                        processCSV(e.target.result, fileData);
+                    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                        processExcel(e.target.result, fileData);
+                    }
+                } catch (error) {
+                    handleFileError(fileData, error);
+                }
+            };
+
+            reader.onerror = () => {
+                handleFileError(fileData, new Error('Errore nella lettura del file'));
+            };
+
+            if (fileExtension === 'csv') {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // Process CSV file
+        function processCSV(csvData, fileData) {
+            try {
+                updateFileProgress(fileData.id, 60, 'Parsing CSV...');
+
+                Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    delimitersToGuess: [',', '\t', '|', ';'],
+                    complete: (results) => {
+                        if (results.errors.length > 0) {
+                            console.warn('CSV parsing warnings:', results.errors);
+                        }
+
+                        updateFileProgress(fileData.id, 80, 'Elaborazione dati...');
+
+                        // Clean data
+                        const cleanedData = results.data.map(row => {
+                            const cleanedRow = {};
+                            for (const [key, value] of Object.entries(row)) {
+                                const cleanKey = key.trim().toLowerCase().replace(/\s+/g, '_');
+                                cleanedRow[cleanKey] = value;
+                            }
+                            return cleanedRow;
+                        });
+
+                        fileData.data = cleanedData;
+                        fileData.status = 'ready';
+                        updateFileProgress(fileData.id, 100, 'Pronto per import');
+                        
+                        // Show preview
+                        showFilePreview(fileData);
+                    },
+                    error: (error) => {
+                        handleFileError(fileData, error);
+                    }
+                });
+            } catch (error) {
+                handleFileError(fileData, error);
+            }
+        }
+
+        // Process Excel file
+        function processExcel(arrayBuffer, fileData) {
+            try {
+                updateFileProgress(fileData.id, 60, 'Parsing Excel...');
+
+                const workbook = XLSX.read(arrayBuffer, {
+                    cellStyles: true,
+                    cellFormulas: true,
+                    cellDates: true,
+                    cellNF: true,
+                    sheetStubs: true
+                });
+
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                    header: 1,
+                    defval: '',
+                    blankrows: false
+                });
+
+                updateFileProgress(fileData.id, 80, 'Elaborazione dati...');
+
+                if (jsonData.length === 0) {
+                    throw new Error('File Excel vuoto');
+                }
+
+                // Convert to object format
+                const headers = jsonData[0].map(h => String(h).trim().toLowerCase().replace(/\s+/g, '_'));
+                const processedData = jsonData.slice(1).map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index] || '';
+                    });
+                    return obj;
+                });
+
+                fileData.data = processedData;
+                fileData.status = 'ready';
+                updateFileProgress(fileData.id, 100, 'Pronto per import');
+                
+                // Show preview
+                showFilePreview(fileData);
+            } catch (error) {
+                handleFileError(fileData, error);
+            }
+        }
+
+        // Render file item
+        function renderFileItem(fileData) {
+            const fileList = document.getElementById('fileList');
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.id = `file-${fileData.id}`;
+            fileItem.innerHTML = `
+                <div class="file-header">
+                    <div class="file-info">
+                        <div class="file-icon ${fileData.type}">
+                            <i class="fas fa-file-${fileData.type === 'csv' ? 'csv' : 'excel'}"></i>
+                        </div>
+                        <div class="file-details">
+                            <h4>${fileData.name}</h4>
+                            <div class="file-meta">
+                                <span>${formatFileSize(fileData.size)}</span>
+                                <span id="file-status-${fileData.id}">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="removeFile(${fileData.id})" title="Rimuovi">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-${fileData.id}" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text-${fileData.id}">0%</div>
+                <div class="preview-section" id="preview-${fileData.id}" style="display: none;"></div>
+            `;
+            
+            fileList.appendChild(fileItem);
+        }
+
+        // Update file progress
+        function updateFileProgress(fileId, progress, status) {
+            const progressBar = document.getElementById(`progress-${fileId}`);
+            const progressText = document.getElementById(`progress-text-${fileId}`);
+            const statusText = document.getElementById(`file-status-${fileId}`);
+            
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressText) progressText.textContent = `${Math.round(progress)}%`;
+            if (statusText && status) statusText.textContent = status;
+        }
+
+        // Show file preview
+        function showFilePreview(fileData) {
+            const previewSection = document.getElementById(`preview-${fileData.id}`);
+            if (!previewSection || !fileData.data || fileData.data.length === 0) return;
+
+            const headers = Object.keys(fileData.data[0]);
+            const previewRows = fileData.data.slice(0, 5);
+
+            let previewHTML = `
+                <div class="preview-header">
+                    <h5>Anteprima Dati (${fileData.data.length} righe totali)</h5>
+                    <button class="btn btn-primary btn-sm" onclick="importFile(${fileData.id})">
+                        <i class="fas fa-upload"></i>
+                        Importa Dati
+                    </button>
+                </div>
+                <div class="preview-table">
+                    <div class="preview-scroll">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    ${headers.map(h => `<th>${h}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${previewRows.map(row => `
+                                    <tr>
+                                        ${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ${previewRows.length < fileData.data.length ? 
+                    `<p class="text-center text-secondary mt-2">... e altre ${fileData.data.length - 5} righe</p>` : 
+                    ''
+                }
+            `;
+
+            previewSection.innerHTML = previewHTML;
+            previewSection.style.display = 'block';
+        }
+
+        // Import file data
+        async function importFile(fileId) {
+            const fileData = importState.files.find(f => f.id === fileId);
+            if (!fileData || !fileData.data) return;
+
+            try {
+                showNotification('Import', 'Import in corso...', 'info');
+                updateFileProgress(fileId, 50, 'Invio dati al server...');
+
+                // Detect data type
+                const dataType = detectDataType(fileData.data[0]);
+                
+                // Call appropriate API
+                let endpoint = '/.netlify/functions/import-shipments'; // Default
+                if (dataType === 'carriers') {
+                    endpoint = '/.netlify/functions/import-carriers';
+                } else if (dataType === 'costs') {
+                    endpoint = '/.netlify/functions/import-costs';
+                }
+
+                const response = await authenticatedFetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: fileData.data,
+                        filename: fileData.name
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Import fallito');
+                }
+
+                const result = await response.json();
+                
+                updateFileProgress(fileId, 100, 'Import completato!');
+                fileData.status = 'completed';
+
+                // Update summary
+                showImportSummary(result);
+
+                // Add to history
+                addToHistory(fileData, result);
+
+            } catch (error) {
+                console.error('Import error:', error);
+                handleFileError(fileData, error);
+                showNotification('Errore', 'Errore durante l\'import', 'error');
+            }
+        }
+
+        // Detect data type from headers
+        function detectDataType(sampleRow) {
+            const keys = Object.keys(sampleRow);
+            
+            // Check for shipment patterns
+            const shipmentKeys = ['tracking', 'tracking_number', 'destination', 'recipient', 'carrier'];
+            if (shipmentKeys.some(key => keys.some(k => k.includes(key)))) {
+                return 'shipments';
+            }
+            
+            // Check for carrier patterns
+            const carrierKeys = ['carrier_name', 'carrier_code', 'service_type'];
+            if (carrierKeys.some(key => keys.some(k => k.includes(key)))) {
+                return 'carriers';
+            }
+            
+            // Check for cost patterns
+            const costKeys = ['cost', 'amount', 'invoice', 'charge'];
+            if (costKeys.some(key => keys.some(k => k.includes(key)))) {
+                return 'costs';
+            }
+            
+            return 'shipments'; // Default
+        }
+
+        // Show import summary
+        function showImportSummary(result) {
+            const summaryCard = document.getElementById('summaryCard');
+            document.getElementById('totalImported').textContent = result.imported || 0;
+            document.getElementById('totalSkipped').textContent = result.skipped || 0;
+            document.getElementById('totalErrors').textContent = result.errors || 0;
+            
+            summaryCard.style.display = 'block';
+            
+            // Scroll to summary
+            summaryCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Handle file error
+        function handleFileError(fileData, error) {
+            fileData.status = 'error';
+            fileData.error = error.message;
+            updateFileProgress(fileData.id, 100, `Errore: ${error.message}`);
+            
+            const fileItem = document.getElementById(`file-${fileData.id}`);
+            if (fileItem) {
+                fileItem.classList.add('error');
+            }
+        }
+
+        // Remove file
+        function removeFile(fileId) {
+            importState.files = importState.files.filter(f => f.id !== fileId);
+            const fileItem = document.getElementById(`file-${fileId}`);
+            if (fileItem) {
+                fileItem.remove();
+            }
+        }
+
+        // Reset import
+        function resetImport() {
+            importState.files = [];
+            document.getElementById('fileList').innerHTML = '';
+            document.getElementById('summaryCard').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+        // Show templates
+        function showTemplates() {
+            document.getElementById('templatesSection').style.display = 'block';
+            document.getElementById('historySection').style.display = 'none';
+            
+            // Scroll to templates
+            document.getElementById('templatesSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Download template
+        function downloadTemplate(type) {
+            // Create template data
+            let templateData = [];
+            let filename = '';
+            
+            switch(type) {
+                case 'shipments':
+                    filename = 'template_spedizioni.csv';
+                    templateData = [
+                        {
+                            tracking_number: 'SP-2025-001',
+                            sender_name: 'Nome Mittente',
+                            sender_address: 'Via Example 1',
+                            sender_city: 'Milano',
+                            sender_zip: '20100',
+                            recipient_name: 'Nome Destinatario',
+                            destination_address: 'Via Test 2',
+                            destination_city: 'Roma',
+                            destination_zip: '00100',
+                            carrier_name: 'DHL',
+                            value: '150.00',
+                            weight: '2.5',
+                            status: 'pending'
+                        }
+                    ];
+                    break;
+                    
+                case 'carriers':
+                    filename = 'template_corrieri.csv';
+                    templateData = [
+                        {
+                            carrier_name: 'DHL Express',
+                            carrier_code: 'DHL',
+                            contact_email: 'info@dhl.it',
+                            contact_phone: '+39 02 12345678',
+                            base_rate: '10.00',
+                            rate_per_kg: '2.50'
+                        }
+                    ];
+                    break;
+                    
+                case 'costs':
+                    filename = 'template_costi.csv';
+                    templateData = [
+                        {
+                            tracking_number: 'SP-2025-001',
+                            carrier_name: 'DHL',
+                            cost_type: 'shipping',
+                            amount: '25.50',
+                            currency: 'EUR',
+                            invoice_number: 'INV-2025-001',
+                            date: '2025-06-01'
+                        }
+                    ];
+                    break;
+            }
+            
+            // Convert to CSV
+            const csv = Papa.unparse(templateData);
+            
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            
+            showNotification('Template', `Template ${type} scaricato`, 'success');
+        }
+
+        // Show history
+        function showHistory() {
+            document.getElementById('historySection').style.display = 'block';
+            document.getElementById('templatesSection').style.display = 'none';
+            renderHistory();
+            
+            // Scroll to history
+            document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load import history
+        function loadImportHistory() {
+            // Load from localStorage (in production, this would come from API)
+            const history = localStorage.getItem('import_history');
+            if (history) {
+                importState.importHistory = JSON.parse(history);
+            }
+        }
+
+        // Add to history
+        function addToHistory(fileData, result) {
+            const historyItem = {
+                id: Date.now(),
+                filename: fileData.name,
+                date: new Date().toISOString(),
+                type: detectDataType(fileData.data[0]),
+                records: fileData.data.length,
+                imported: result.imported || 0,
+                errors: result.errors || 0
+            };
+            
+            importState.importHistory.unshift(historyItem);
+            
+            // Keep only last 20 items
+            if (importState.importHistory.length > 20) {
+                importState.importHistory = importState.importHistory.slice(0, 20);
+            }
+            
+            // Save to localStorage (in production, save to API)
+            localStorage.setItem('import_history', JSON.stringify(importState.importHistory));
+        }
+
+        // Render history
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (importState.importHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center text-secondary p-3">
+                        <i class="fas fa-history" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>Nessun import precedente</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = importState.importHistory.map(item => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="file-icon ${item.type === 'shipments' ? 'csv' : 'excel'}">
+                            <i class="fas fa-file-${item.type === 'shipments' ? 'csv' : 'excel'}"></i>
+                        </div>
+                        <div>
+                            <div>${item.filename}</div>
+                            <div class="history-date">${formatDateTime(item.date)}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-center gap-3">
+                        <div class="text-success">
+                            <i class="fas fa-check"></i>
+                            ${item.imported} importati
+                        </div>
+                        ${item.errors > 0 ? `
+                            <div class="text-danger">
+                                <i class="fas fa-times"></i>
+                                ${item.errors} errori
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Utility functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('it-IT');
+        }
+
+        // Base Template Scripts
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+            sidebarBackdrop.classList.toggle('show');
+        });
+
+        sidebarBackdrop.addEventListener('click', () => {
+            sidebar.classList.remove('show');
+            sidebarBackdrop.classList.remove('show');
+        });
+
+        // Update user email from auth
+        window.addEventListener('authReady', (event) => {
+            const userEmail = event.detail?.user?.email;
+            if (userEmail) {
+                document.getElementById('userEmail').textContent = userEmail;
+            }
+        });
+
+        // Notification System
+        function showNotification(title, message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title">${title}</div>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Authenticated fetch wrapper
+        async function authenticatedFetch(url, options = {}) {
+            const token = await window.supabase?.auth.getSession();
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token?.data?.session?.access_token || ''}`
+            };
+            
+            return fetch(url, { ...options, headers });
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Errore', 'Errore durante il logout', 'error');
+            }
+        }
+
+        // Handle window resize
+        function handleResize() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initImport();
+        });
+    </script>
+</body>
+</html>
