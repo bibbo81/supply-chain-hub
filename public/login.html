@@ -5,128 +5,250 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Login</title>
     
-    <!-- Solarium Design System -->
-    <link rel="stylesheet" href="/solarium.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007aff'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="solarium.css">
+    
+    <!-- Auth System -->
+    <script src="auth.js"></script>
+    
     <!-- Page Specific Styles -->
     <style>
-        /* Login Page Specific Styles */
+        /* Login Page Layout */
         body {
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: var(--primary-bg);
-            padding: var(--spacing-lg);
+            padding: var(--sol-space-lg);
         }
 
         .login-container {
             width: 100%;
-            max-width: 420px;
-            animation: fadeIn 0.6s ease-out;
+            max-width: 440px;
+            animation: sol-fade-in 0.6s ease-out;
         }
 
+        /* Logo Section */
         .login-logo {
             text-align: center;
-            margin-bottom: var(--spacing-2xl);
+            margin-bottom: var(--sol-space-2xl);
         }
 
-        .logo-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--accent-color), var(--info-color));
-            border-radius: var(--radius-xl);
+        .logo-icon-large {
+            width: 88px;
+            height: 88px;
+            background: var(--sol-gradient-primary);
+            border-radius: var(--sol-radius-xl);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 2.5rem;
             color: white;
-            margin-bottom: var(--spacing-lg);
-            box-shadow: var(--shadow-lg);
+            margin-bottom: var(--sol-space-lg);
+            box-shadow: var(--sol-shadow-lg);
+            position: relative;
+            overflow: hidden;
         }
 
-        .logo-title {
-            font-size: 2rem;
+        .logo-icon-large::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: shine 3s ease-in-out infinite;
+        }
+
+        .logo-title-large {
+            font-size: 2.25rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            background: linear-gradient(135deg, var(--sol-text-primary) 0%, var(--sol-text-secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: var(--spacing-sm);
+            margin-bottom: var(--sol-space-sm);
         }
 
         .logo-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            color: var(--sol-text-secondary);
+            font-size: 1rem;
         }
 
+        /* Login Card */
         .login-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
-            box-shadow: var(--shadow-xl);
+            background: var(--sol-glass-heavy);
+            backdrop-filter: var(--sol-blur-xl);
+            -webkit-backdrop-filter: var(--sol-blur-xl);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-2xl);
+            padding: var(--sol-space-2xl);
+            box-shadow: var(--sol-shadow-lg);
         }
 
+        /* Tab Navigation */
         .tab-container {
             display: flex;
-            gap: var(--spacing-xs);
-            margin-bottom: var(--spacing-xl);
-            background: rgba(255, 255, 255, 0.03);
-            padding: var(--spacing-xs);
-            border-radius: var(--radius-md);
+            gap: var(--sol-space-xs);
+            margin-bottom: var(--sol-space-xl);
+            background: var(--sol-glass-light);
+            padding: var(--sol-space-xs);
+            border-radius: var(--sol-radius-full);
         }
 
         .tab-button {
             flex: 1;
-            padding: var(--spacing-sm) var(--spacing-lg);
+            padding: var(--sol-space-sm) var(--sol-space-lg);
             border: none;
             background: transparent;
-            color: var(--text-secondary);
+            color: var(--sol-text-secondary);
             font-weight: 600;
             font-size: 0.9rem;
-            border-radius: var(--radius-sm);
+            border-radius: var(--sol-radius-full);
             cursor: pointer;
-            transition: all var(--transition-fast);
+            transition: var(--sol-transition-spring);
         }
 
         .tab-button.active {
-            background: var(--accent-color);
+            background: var(--sol-gradient-primary);
             color: white;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
         }
 
         .tab-content {
             display: none;
-            animation: fadeIn 0.3s ease-out;
+            animation: sol-fade-in 0.3s ease-out;
         }
 
         .tab-content.active {
             display: block;
         }
 
-        .form-footer {
-            margin-top: var(--spacing-xl);
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
+        /* Form Styles */
+        .form-group {
+            margin-bottom: var(--sol-space-lg);
         }
 
-        .form-footer a {
-            color: var(--accent-color);
+        .form-label {
+            display: block;
+            margin-bottom: var(--sol-space-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--sol-text-secondary);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: var(--sol-space-md);
+            color: var(--sol-text-tertiary);
+            font-size: 1rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--sol-space-md) var(--sol-space-md) var(--sol-space-md) var(--sol-space-3xl);
+            background: var(--sol-glass-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            color: var(--sol-text-primary);
+            font-size: 0.95rem;
+            transition: var(--sol-transition-base);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            background: var(--sol-glass-medium);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--sol-text-quaternary);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-sm);
+            margin-bottom: var(--sol-space-lg);
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            accent-color: #007AFF;
+            cursor: pointer;
+        }
+
+        .form-check label {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            cursor: pointer;
+        }
+
+        .form-check a {
+            color: var(--sol-text-primary);
+            text-decoration: none;
             font-weight: 500;
         }
 
+        .form-check a:hover {
+            color: #007AFF;
+        }
+
+        /* Buttons */
+        .btn-login {
+            width: 100%;
+            padding: var(--sol-space-md) var(--sol-space-xl);
+            background: var(--sol-gradient-primary);
+            color: white;
+            border: none;
+            border-radius: var(--sol-radius-full);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--sol-transition-spring);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--sol-space-sm);
+            box-shadow: 
+                0 4px 12px rgba(0, 122, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 8px 24px rgba(0, 122, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Social Login */
         .social-divider {
             display: flex;
             align-items: center;
-            gap: var(--spacing-md);
-            margin: var(--spacing-xl) 0;
+            gap: var(--sol-space-md);
+            margin: var(--sol-space-xl) 0;
         }
 
         .social-divider::before,
@@ -134,97 +256,110 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: var(--border-color);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .social-divider span {
-            color: var(--text-tertiary);
+            color: var(--sol-text-tertiary);
             font-size: 0.85rem;
         }
 
         .social-buttons {
             display: flex;
-            gap: var(--spacing-md);
+            gap: var(--sol-space-md);
         }
 
         .social-button {
             flex: 1;
-            padding: var(--spacing-sm);
-            border: 1px solid var(--border-color);
-            background: var(--glass-bg);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
+            padding: var(--sol-space-sm) var(--sol-space-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-md);
+            border-radius: var(--sol-radius-md);
+            color: var(--sol-text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--spacing-sm);
+            gap: var(--sol-space-sm);
             cursor: pointer;
-            transition: all var(--transition-fast);
+            transition: var(--sol-transition-base);
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
         .social-button:hover {
-            background: var(--glass-hover);
-            border-color: var(--border-hover);
+            background: var(--sol-glass-medium);
             transform: translateY(-1px);
         }
 
-        .error-message {
-            background: var(--error-light);
-            color: var(--error-color);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-sm);
-            margin-bottom: var(--spacing-md);
-            font-size: 0.85rem;
+        /* Messages */
+        .message {
+            padding: var(--sol-space-md);
+            border-radius: var(--sol-radius-md);
+            margin-bottom: var(--sol-space-lg);
+            font-size: 0.875rem;
             display: none;
+            animation: sol-fade-in 0.3s ease-out;
         }
 
-        .error-message.show {
+        .message.show {
             display: block;
-            animation: fadeIn 0.3s ease-out;
         }
 
-        .success-message {
-            background: var(--success-light);
-            color: var(--success-color);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-sm);
-            margin-bottom: var(--spacing-md);
-            font-size: 0.85rem;
-            display: none;
+        .message.error {
+            background: rgba(255, 59, 48, 0.15);
+            color: #FF3B30;
+            border: 1px solid rgba(255, 59, 48, 0.3);
         }
 
-        .success-message.show {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
+        .message.success {
+            background: rgba(52, 199, 89, 0.15);
+            color: #34C759;
+            border: 1px solid rgba(52, 199, 89, 0.3);
         }
 
-        .input-icon {
-            color: var(--text-tertiary);
-        }
-
-        /* Password visibility toggle */
+        /* Password Toggle */
         .password-toggle {
             position: absolute;
-            right: var(--spacing-md);
+            right: var(--sol-space-md);
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: var(--text-tertiary);
+            color: var(--sol-text-tertiary);
             cursor: pointer;
-            padding: var(--spacing-xs);
+            padding: var(--sol-space-xs);
+            transition: var(--sol-transition-fast);
         }
 
         .password-toggle:hover {
-            color: var(--text-secondary);
+            color: var(--sol-text-secondary);
         }
 
-        /* Loading overlay */
+        /* Form Footer */
+        .form-footer {
+            margin-top: var(--sol-space-xl);
+            text-align: center;
+            color: var(--sol-text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .form-footer a {
+            color: #007AFF;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading State */
         .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -236,38 +371,22 @@
         }
 
         .loading-content {
-            background: var(--card-bg);
-            padding: var(--spacing-xl);
-            border-radius: var(--radius-lg);
+            background: var(--sol-glass-heavy);
+            backdrop-filter: var(--sol-blur-xl);
+            padding: var(--sol-space-2xl);
+            border-radius: var(--sol-radius-xl);
             text-align: center;
-            box-shadow: var(--shadow-xl);
+            box-shadow: var(--sol-shadow-lg);
         }
 
-        /* Animated background */
-        .bg-animation {
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            top: -50%;
-            left: -50%;
-            background: radial-gradient(circle at 20% 50%, var(--accent-light) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, var(--info-light) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, var(--success-light) 0%, transparent 50%);
-            opacity: 0.3;
-            animation: bgRotate 30s linear infinite;
-        }
-
-        @keyframes bgRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .spinner-login {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #007AFF;
+            border-radius: 50%;
+            margin: 0 auto var(--sol-space-lg);
+            animation: spin 1s linear infinite;
         }
 
         /* Responsive */
@@ -277,33 +396,30 @@
             }
             
             .login-card {
-                padding: var(--spacing-lg);
+                padding: var(--sol-space-lg);
             }
             
-            .logo-icon {
-                width: 60px;
-                height: 60px;
+            .logo-icon-large {
+                width: 72px;
+                height: 72px;
                 font-size: 2rem;
             }
             
-            .logo-title {
-                font-size: 1.5rem;
+            .logo-title-large {
+                font-size: 1.75rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="bg-animation"></div>
-
     <!-- Login Container -->
     <div class="login-container">
         <!-- Logo -->
         <div class="login-logo">
-            <div class="logo-icon">
+            <div class="logo-icon-large">
                 <i class="fas fa-truck"></i>
             </div>
-            <h1 class="logo-title">Supply Chain Hub</h1>
+            <h1 class="logo-title-large">Supply Chain Hub</h1>
             <p class="logo-subtitle">Enterprise Logistics Platform</p>
         </div>
 
@@ -315,9 +431,9 @@
                 <button class="tab-button" data-tab="register">Registrati</button>
             </div>
 
-            <!-- Error/Success Messages -->
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
+            <!-- Messages -->
+            <div id="errorMessage" class="message error"></div>
+            <div id="successMessage" class="message success"></div>
 
             <!-- Login Tab -->
             <div id="loginTab" class="tab-content active">
@@ -332,6 +448,7 @@
                                 class="form-control" 
                                 placeholder="nome@azienda.com" 
                                 required
+                                autocomplete="email"
                             >
                         </div>
                     </div>
@@ -346,6 +463,7 @@
                                 class="form-control" 
                                 placeholder="••••••••" 
                                 required
+                                autocomplete="current-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
                                 <i class="fas fa-eye"></i>
@@ -353,12 +471,12 @@
                         </div>
                     </div>
 
-                    <div class="form-check mb-3">
+                    <div class="form-check">
                         <input type="checkbox" id="rememberMe" class="form-check-input">
-                        <label for="rememberMe">Ricordami</label>
+                        <label for="rememberMe">Ricordami su questo dispositivo</label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <button type="submit" class="btn-login">
                         <i class="fas fa-sign-in-alt"></i>
                         Accedi
                     </button>
@@ -382,6 +500,7 @@
                                 class="form-control" 
                                 placeholder="Mario Rossi" 
                                 required
+                                autocomplete="name"
                             >
                         </div>
                     </div>
@@ -394,8 +513,9 @@
                                 type="text" 
                                 id="registerCompany" 
                                 class="form-control" 
-                                placeholder="Nome Azienda" 
+                                placeholder="Nome Azienda SpA" 
                                 required
+                                autocomplete="organization"
                             >
                         </div>
                     </div>
@@ -410,6 +530,7 @@
                                 class="form-control" 
                                 placeholder="nome@azienda.com" 
                                 required
+                                autocomplete="email"
                             >
                         </div>
                     </div>
@@ -425,6 +546,7 @@
                                 placeholder="Minimo 8 caratteri" 
                                 required
                                 minlength="8"
+                                autocomplete="new-password"
                             >
                             <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
                                 <i class="fas fa-eye"></i>
@@ -432,7 +554,7 @@
                         </div>
                     </div>
 
-                    <div class="form-check mb-3">
+                    <div class="form-check">
                         <input type="checkbox" id="acceptTerms" class="form-check-input" required>
                         <label for="acceptTerms">
                             Accetto i <a href="#" target="_blank">Termini di Servizio</a> e la 
@@ -440,18 +562,18 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <button type="submit" class="btn-login">
                         <i class="fas fa-user-plus"></i>
                         Crea Account
                     </button>
                 </form>
 
                 <div class="form-footer">
-                    Già registrato? <a href="#" class="login-link">Accedi</a>
+                    Già registrato? <a href="#" onclick="switchTab('login'); return false;">Accedi</a>
                 </div>
             </div>
 
-            <!-- Social Login (optional) -->
+            <!-- Social Login -->
             <div class="social-divider">
                 <span>oppure continua con</span>
             </div>
@@ -472,8 +594,8 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
-            <div class="spinner spinner-lg mb-3"></div>
-            <p id="loadingText">Caricamento...</p>
+            <div class="spinner-login"></div>
+            <p id="loadingText" style="color: var(--sol-text-primary);">Caricamento...</p>
         </div>
     </div>
 
@@ -499,31 +621,19 @@
                 supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
                 window.supabase = supabase;
                 
-                // Check if already logged in
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    window.location.href = '/';
+                // IMPORTANTE: NON fare auto-redirect qui!
+                // Usa auth.js per gestire i redirect
+                if (window.auth && window.auth.redirectIfAuthenticated) {
+                    await window.auth.redirectIfAuthenticated();
                 }
+                
             } catch (error) {
                 console.error('Initialization error:', error);
                 showError('Errore di inizializzazione. Ricarica la pagina.');
             }
         }
 
-        // Tab switching with event delegation
-        document.querySelector('.tab-container').addEventListener('click', (e) => {
-            if (e.target.classList.contains('tab-button')) {
-                const tab = e.target.dataset.tab;
-                switchTab(tab);
-            }
-        });
-
-        // Link to login tab
-        document.querySelector('.login-link')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchTab('login');
-        });
-
+        // Tab switching
         function switchTab(tab) {
             // Update buttons
             document.querySelectorAll('.tab-button').forEach(btn => {
@@ -542,6 +652,17 @@
             // Clear messages
             hideMessages();
         }
+
+        // Make switchTab global
+        window.switchTab = switchTab;
+
+        // Tab button clicks
+        document.querySelector('.tab-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-button')) {
+                const tab = e.target.dataset.tab;
+                switchTab(tab);
+            }
+        });
 
         // Password visibility toggle
         window.togglePassword = function(inputId) {
@@ -598,6 +719,7 @@
 
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
 
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -607,13 +729,29 @@
 
                 if (error) throw error;
 
+                // Store remember me preference
+                if (rememberMe) {
+                    localStorage.setItem('rememberEmail', email);
+                } else {
+                    localStorage.removeItem('rememberEmail');
+                }
+
                 // Success - redirect to dashboard
                 window.location.href = '/';
 
             } catch (error) {
                 hideLoading();
                 console.error('Login error:', error);
-                showError(error.message || 'Errore durante l\'accesso');
+                
+                // User-friendly error messages
+                let errorMessage = 'Errore durante l\'accesso';
+                if (error.message.includes('Invalid login credentials')) {
+                    errorMessage = 'Email o password non corretti';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMessage = 'Email non confermata. Controlla la tua casella di posta';
+                }
+                
+                showError(errorMessage);
             }
         });
 
@@ -667,15 +805,24 @@
             }
         });
 
-        // Social login
+        // Social login placeholders
         window.socialLogin = async function(provider) {
-            showError('Login social non ancora disponibile');
+            showError(`Login con ${provider} non ancora disponibile`);
         }
 
-        // Forgot password
+        // Forgot password placeholder
         window.showForgotPassword = function() {
             showError('Recupero password non ancora disponibile');
         }
+
+        // Load remembered email
+        document.addEventListener('DOMContentLoaded', () => {
+            const rememberedEmail = localStorage.getItem('rememberEmail');
+            if (rememberedEmail) {
+                document.getElementById('loginEmail').value = rememberedEmail;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
 
         // Initialize on load
         init();
