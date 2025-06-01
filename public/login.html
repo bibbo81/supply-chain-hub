@@ -502,7 +502,7 @@
                 // Check if already logged in
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                    window.location.href = '/dashboard.html';
+                    window.location.href = '/';
                 }
             } catch (error) {
                 console.error('Initialization error:', error);
@@ -608,7 +608,7 @@
                 if (error) throw error;
 
                 // Success - redirect to dashboard
-                window.location.href = '/dashboard.html';
+                window.location.href = '/';
 
             } catch (error) {
                 hideLoading();
