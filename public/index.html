@@ -10,6 +10,29 @@
     
     <!-- CSS Fallback per visibilità -->
     <style>
+        /* FIX: Mobile menu e pointer events */
+@media (max-width: 768px) {
+    .sidebar:not(.show) {
+        transform: translateX(-100%)!important;
+    }
+}
+
+.sidebar-item, button, .btn, a {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+.modal-backdrop.show {
+    display: block;
+}
         /* Ensure basic visibility */
         body {
             background: #0a0a0b;
@@ -655,6 +678,56 @@
                 theme: 'dark'
             }
         };
+
+// FIX: Menu Sidebar e Navigation
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop') || createBackdrop();
+    
+    function createBackdrop() {
+        const backdrop = document.createElement('div');
+        backdrop.id = 'sidebarBackdrop';
+        backdrop.className = 'modal-backdrop';
+        document.body.appendChild(backdrop);
+        return backdrop;
+    }
+    
+    // Chiudi menu su mobile all'avvio
+    if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove('show');
+    }
+    
+    // Menu toggle con fix
+    if (menuToggle && sidebar) {
+        menuToggle.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            sidebar.classList.toggle('show');
+            sidebarBackdrop.classList.toggle('show');
+        };
+    }
+    
+    // Backdrop click
+    sidebarBackdrop.onclick = function() {
+        sidebar.classList.remove('show');
+        sidebarBackdrop.classList.remove('show');
+    };
+    
+    // Fix tutti i link
+    document.querySelectorAll('a, .sidebar-item').forEach(link => {
+        link.style.cursor = 'pointer';
+        link.style.pointerEvents = 'auto';
+    });
+});
+
+// FIX: Inizializzazione Supabase
+window.supabasePromise = (async () => {
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const supabaseUrl = 'https://pthfzagtfitguoqpovdd.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0aGZ6YWd0Zml0Z3VvcXBvdmRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjI5NTI3NTYsImV4cCI6MjAzODUyODc1Nn0.nEUhPf_P6ecxFa8pBZahWdhR_BFKB7P3QYkKUfCL_o4';
+    return { supabase: createClient(supabaseUrl, supabaseAnonKey) };
+})();
 
         // Initialize Dashboard
         async function initDashboard() {
