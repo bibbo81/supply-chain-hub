@@ -21,31 +21,19 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
 
-# Redirects
-[[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
-
 # API proxy (optional - for hiding API endpoints)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Remove these redirects - they're causing issues
-# [[redirects]]
-#   from = "/dashboard"
-#   to = "/dashboard.html"
-#   status = 200
-
-# [[redirects]]
-#   from = "/login"
-#   to = "/login.html"
-#   status = 200
-
-# SPA fallback - only for true 404s
+# Specific page redirects
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 404
+  from = "/dashboard"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/dashboard.html"
+  to = "/"
+  status = 301
