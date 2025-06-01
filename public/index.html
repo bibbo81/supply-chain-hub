@@ -1,4 +1,24 @@
-<!DOCTYPE html>
+/* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -698,26 +718,255 @@
             visibility: visible;
         }
         
-        /* Loading States */
-        .loading {
-            display: flex;
-            justify-content: center;
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
             align-items: center;
-            padding: var(--spacing-xl);
+            justify-content: center;
+            padding: var(--spacing-lg);
         }
-        
-        .spinner {
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .modal-close {
+            background: var(--glass-bg);
+            border: none;
+            color: var(--text-secondary);
             width: 32px;
             height: 32px;
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--accent-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-fast);
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+        }
+
+        /* File Info */
+        .file-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-color);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .file-details h3 {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .file-details p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Data Preview */
+        .data-preview {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .preview-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .preview-count {
+            background: var(--glass-bg);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .preview-table {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .preview-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: var(--spacing-sm) var(--spacing-md);
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .preview-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Import Options */
+        .import-options {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .option-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-sm);
+            display: block;
+        }
+
+        .option-checkbox {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .option-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+        }
+
+        .option-checkbox label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Import Status */
+        .import-status {
+            display: none;
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .import-status.active {
+            display: block;
+        }
+
+        .import-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: var(--spacing-md) 0;
+        }
+
+        .import-progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .import-status-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
         
         /* Responsive Design */
@@ -1045,6 +1294,90 @@
     <!-- Backdrop -->
     <div class="backdrop" id="backdrop"></div>
 
+    <!-- Import Preview Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-file-import"></i>
+                    Anteprima Import Dati
+                </h2>
+                <button class="modal-close" onclick="closeImportModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- File Info -->
+                <div class="file-info">
+                    <div class="file-icon">
+                        <i class="fas fa-file-excel" id="fileTypeIcon"></i>
+                    </div>
+                    <div class="file-details">
+                        <h3 id="fileName">Nome File</h3>
+                        <p><span id="fileSize">0 KB</span> • <span id="fileRows">0 righe</span> • <span id="fileColumns">0 colonne</span></p>
+                    </div>
+                </div>
+
+                <!-- Data Preview -->
+                <div class="data-preview">
+                    <div class="preview-header">
+                        <h3 class="preview-title">Anteprima Dati</h3>
+                        <span class="preview-count">Prime 10 righe</span>
+                    </div>
+                    <div class="preview-table">
+                        <table id="previewTable">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Import Options -->
+                <div class="import-options">
+                    <div class="option-group">
+                        <label class="option-label">Opzioni Import</label>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="skipDuplicates" checked>
+                            <label for="skipDuplicates">Salta record duplicati</label>
+                        </div>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="validateData" checked>
+                            <label for="validateData">Valida dati prima dell'import</label>
+                        </div>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="updateExisting">
+                            <label for="updateExisting">Aggiorna record esistenti</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Import Status -->
+                <div class="import-status" id="importStatus">
+                    <div class="spinner"></div>
+                    <div class="import-progress">
+                        <div class="import-progress-bar" id="importProgress"></div>
+                    </div>
+                    <p class="import-status-text" id="importStatusText">Importazione in corso...</p>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="window.location.href='/import.html'">
+                    <i class="fas fa-cog"></i>
+                    Import Avanzato
+                </button>
+                <button class="btn btn-secondary" onclick="closeImportModal()">
+                    Annulla
+                </button>
+                <button class="btn btn-primary" id="confirmImportBtn" onclick="confirmImport()">
+                    <i class="fas fa-upload"></i>
+                    Importa Dati
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
         // Global Dashboard Data Store
@@ -1371,80 +1704,258 @@
             });
         }
 
+        // Global variables
+        let currentFileData = null;
+        let currentFileName = '';
+
         // File Upload Handler
         function handleFileUpload(files) {
             if (!files.length) return;
 
-            showNotification('Upload in corso', `Elaborazione di ${files.length} file...`, 'info');
+            const file = files[0]; // Process one file at a time for preview
+            currentFileName = file.name;
+            
+            const reader = new FileReader();
+            const fileExtension = file.name.split('.').pop().toLowerCase();
 
-            files.forEach(file => {
-                const reader = new FileReader();
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-
-                reader.onload = (e) => {
-                    try {
-                        if (fileExtension === 'csv') {
-                            processCSV(e.target.result, file.name);
-                        } else if (['xlsx', 'xls'].includes(fileExtension)) {
-                            processExcel(e.target.result, file.name);
-                        }
-                    } catch (error) {
-                        console.error('Error processing file:', error);
-                        showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
+            reader.onload = (e) => {
+                try {
+                    if (fileExtension === 'csv') {
+                        processCSVForPreview(e.target.result, file);
+                    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                        processExcelForPreview(e.target.result, file);
                     }
-                };
-
-                if (fileExtension === 'csv') {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsArrayBuffer(file);
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
                 }
-            });
+            };
+
+            if (fileExtension === 'csv') {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
         }
 
-        // CSV Processing
-        function processCSV(csvData, filename) {
+        // CSV Processing for Preview
+        function processCSVForPreview(csvData, file) {
             Papa.parse(csvData, {
                 header: true,
                 dynamicTyping: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    processRawData(results.data, filename);
-                    showNotification('Successo', `File CSV elaborato: ${filename}`, 'success');
+                    currentFileData = results.data;
+                    showImportModal(file, results.data, 'csv');
                 }
             });
         }
 
-        // Excel Processing
-        function processExcel(arrayBuffer, filename) {
+        // Excel Processing for Preview
+        function processExcelForPreview(arrayBuffer, file) {
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet);
             
-            processRawData(jsonData, filename);
-            showNotification('Successo', `File Excel elaborato: ${filename}`, 'success');
+            currentFileData = jsonData;
+            showImportModal(file, jsonData, 'excel');
         }
 
-        // Process Raw Data
-        function processRawData(data, filename) {
-            // Update shipments data
-            const newShipments = data.map((row, index) => ({
-                trackingId: row.tracking || row['TRACKING ID'] || `IT${1000100 + index}`,
-                destination: row.destination || row['DESTINAZIONE'] || 'N/A',
-                carrier: row.carrier || row['CORRIERE'] || 'Unknown',
-                status: row.status || row['STATO'] || 'pending',
-                value: parseFloat(row.value || row['VALORE'] || 0)
-            }));
+        // Show Import Modal
+        function showImportModal(file, data, type) {
+            const modal = document.getElementById('importModal');
+            const fileIcon = document.getElementById('fileTypeIcon');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const fileRows = document.getElementById('fileRows');
+            const fileColumns = document.getElementById('fileColumns');
+            
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileRows.textContent = `${data.length} righe`;
+            fileColumns.textContent = data.length > 0 ? `${Object.keys(data[0]).length} colonne` : '0 colonne';
+            
+            // Update icon
+            if (type === 'csv') {
+                fileIcon.className = 'fas fa-file-csv';
+            } else {
+                fileIcon.className = 'fas fa-file-excel';
+            }
+            
+            // Show preview table
+            showPreviewTable(data.slice(0, 10)); // Show first 10 rows
+            
+            // Show modal
+            modal.classList.add('active');
+        }
 
-            dashboardData.shipmentsData = [...dashboardData.shipmentsData, ...newShipments];
+        // Show Preview Table
+        function showPreviewTable(data) {
+            const table = document.getElementById('previewTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            
+            // Clear existing content
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center;">Nessun dato trovato</td></tr>';
+                return;
+            }
+            
+            // Create header
+            const headers = Object.keys(data[0]);
+            const headerRow = thead.insertRow();
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            // Create rows
+            data.forEach(row => {
+                const tr = tbody.insertRow();
+                headers.forEach(header => {
+                    const td = tr.insertCell();
+                    td.textContent = row[header] || '';
+                });
+            });
+        }
+
+        // Close Import Modal
+        function closeImportModal() {
+            const modal = document.getElementById('importModal');
+            const importStatus = document.getElementById('importStatus');
+            
+            modal.classList.remove('active');
+            importStatus.classList.remove('active');
+            currentFileData = null;
+            currentFileName = '';
+        }
+
+        // Confirm Import
+        async function confirmImport() {
+            if (!currentFileData || currentFileData.length === 0) {
+                showNotification('Errore', 'Nessun dato da importare', 'error');
+                return;
+            }
+            
+            const importStatus = document.getElementById('importStatus');
+            const importProgress = document.getElementById('importProgress');
+            const importStatusText = document.getElementById('importStatusText');
+            const confirmBtn = document.getElementById('confirmImportBtn');
+            
+            // Show import status
+            importStatus.classList.add('active');
+            confirmBtn.disabled = true;
+            
+            // Get options
+            const skipDuplicates = document.getElementById('skipDuplicates').checked;
+            const validateData = document.getElementById('validateData').checked;
+            const updateExisting = document.getElementById('updateExisting').checked;
+            
+            // Simulate import process
+            let processed = 0;
+            const total = currentFileData.length;
+            
+            for (let i = 0; i < total; i++) {
+                // Process each row
+                await processDataRow(currentFileData[i], {
+                    skipDuplicates,
+                    validateData,
+                    updateExisting
+                });
+                
+                processed++;
+                const progress = (processed / total) * 100;
+                importProgress.style.width = `${progress}%`;
+                importStatusText.textContent = `Importate ${processed} di ${total} righe...`;
+                
+                // Add small delay for UI update
+                if (i % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+            
+            // Import complete
+            importStatusText.textContent = `Import completato! ${processed} righe importate.`;
+            
+            // Update dashboard
+            updateDashboard();
+            
+            // Close modal after delay
+            setTimeout(() => {
+                closeImportModal();
+                showNotification('Successo', `Import completato: ${processed} spedizioni importate`, 'success');
+                confirmBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Process single data row
+        async function processDataRow(row, options) {
+            // Map data to shipment format
+            const shipment = {
+                trackingId: row.tracking || row['TRACKING ID'] || row['N. ODA'] || generateTrackingId(),
+                destination: row.destination || row['DESTINAZIONE'] || row.city || 'N/A',
+                carrier: row.carrier || row['CORRIERE'] || row['SPEDIZIONIERE'] || 'Unknown',
+                status: normalizeStatus(row.status || row['STATO SPEDIZIONE'] || 'pending'),
+                value: parseFloat(row.value || row['VALORE'] || row['COSTO TRASPORTO €'] || 0),
+                // Additional fields for future use
+                orderNumber: row['N. ODA'] || '',
+                articleCode: row['COD. ART.'] || '',
+                supplier: row['FORNITORE'] || '',
+                quantity: parseInt(row['QTY'] || 0),
+                shippingType: row['TIPO DI SPEDIZIONE'] || '',
+                reference: row['RIF SPEDIZIONE'] || '',
+                company: row['COMPAGNIA'] || '',
+                sender: row.sender || row['MITTENTE'] || 'Supply Chain Hub',
+                date: row.date || row['DATA PARTENZA'] || new Date().toISOString().split('T')[0],
+                arrivalDate: row['DATA ARRIVO (EFFETTIVA)'] || '',
+                transitTime: parseInt(row['TRANSIT TIME (Giorni)'] || 0),
+                delay: parseInt(row['RITARDO (Giorni)'] || 0)
+            };
+            
+            // Add to dashboard data
+            dashboardData.shipmentsData.push(shipment);
             
             // Update KPIs
-            dashboardData.kpi.totalShipments += newShipments.length;
-            dashboardData.kpi.totalRevenue += newShipments.reduce((sum, s) => sum + s.value, 0);
+            dashboardData.kpi.totalShipments++;
+            dashboardData.kpi.totalRevenue += shipment.value;
             
-            updateDashboard();
+            // Update carrier stats
+            if (!dashboardData.shipments[shipment.carrier]) {
+                dashboardData.shipments[shipment.carrier] = 0;
+            }
+            dashboardData.shipments[shipment.carrier]++;
         }
+
+        // Generate tracking ID
+        function generateTrackingId() {
+            return `IT${Date.now().toString().slice(-7)}`;
+        }
+
+        // Normalize status
+        function normalizeStatus(status) {
+            const s = status.toLowerCase();
+            if (s.includes('consegnat') || s.includes('delivered')) return 'delivered';
+            if (s.includes('transit')) return 'in-transit';
+            if (s.includes('ritard') || s.includes('delay')) return 'delayed';
+            return 'pending';
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+
 
         // Update Dashboard
         function updateDashboard() {
