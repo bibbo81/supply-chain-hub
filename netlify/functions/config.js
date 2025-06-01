@@ -54,12 +54,13 @@ const handler = async (event, context) => {
     }
 
     // Ritorniamo la configurazione nel formato atteso dal frontend
+    // IMPORTANTE: Usiamo i nomi camelCase che login.html si aspetta!
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        SUPABASE_URL: supabaseUrl,
-        SUPABASE_ANON_KEY: supabaseAnonKey
+        supabaseUrl: supabaseUrl,        // camelCase invece di SUPABASE_URL
+        supabaseAnonKey: supabaseAnonKey  // camelCase invece di SUPABASE_ANON_KEY
       })
     };
 
