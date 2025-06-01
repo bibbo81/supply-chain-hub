@@ -23,7 +23,7 @@
     <!-- jsPDF for PDF export -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
-    <!-- Solarium CSS Variables -->
+    <!-- Solarium CSS -->
     <style>
         :root {
             /* Solarium Colors */
@@ -31,11 +31,10 @@
             --sol-primary-dark: #4338ca;
             --sol-primary-light: #6366f1;
             --sol-secondary: #ec4899;
-            --sol-secondary-dark: #db2777;
-            --sol-secondary-light: #f472b6;
-            --sol-accent: #06b6d4;
-            --sol-accent-dark: #0891b2;
-            --sol-accent-light: #22d3ee;
+            --sol-success: #10b981;
+            --sol-warning: #f59e0b;
+            --sol-error: #ef4444;
+            --sol-info: #3b82f6;
             
             /* Dark Theme */
             --sol-bg-primary: #0f172a;
@@ -48,12 +47,6 @@
             --sol-text-primary: #f1f5f9;
             --sol-text-secondary: #cbd5e1;
             --sol-text-muted: #94a3b8;
-            
-            /* Status Colors */
-            --sol-success: #10b981;
-            --sol-warning: #f59e0b;
-            --sol-error: #ef4444;
-            --sol-info: #3b82f6;
             
             /* Effects */
             --sol-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
@@ -69,7 +62,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--sol-bg-primary);
             color: var(--sol-text-primary);
             line-height: 1.6;
@@ -87,7 +80,7 @@
             background-image: 
                 radial-gradient(circle at 20% 80%, var(--sol-primary) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, var(--sol-secondary) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, var(--sol-accent) 0%, transparent 50%);
+                radial-gradient(circle at 40% 40%, var(--sol-info) 0%, transparent 50%);
             opacity: 0.1;
             z-index: -1;
         }
@@ -379,15 +372,14 @@
             margin-left: 280px;
         }
 
+        /* Page Header */
         .page-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 2rem;
-        }
-
-        .page-header-left {
-            flex: 1;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .page-title {
@@ -403,6 +395,7 @@
         .page-actions {
             display: flex;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -416,6 +409,7 @@
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -482,7 +476,6 @@
             padding: 2rem;
             margin-bottom: 2rem;
             text-align: center;
-            transition: var(--sol-transition);
         }
 
         .upload-area {
@@ -547,35 +540,26 @@
             color: var(--sol-text-secondary);
         }
 
-        .filter-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            color: var(--sol-text-primary);
-            transition: var(--sol-transition);
-        }
-
-        .filter-input:focus {
-            outline: none;
-            border-color: var(--sol-primary);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
+        .filter-input,
         .filter-select {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
             color: var(--sol-text-primary);
-            cursor: pointer;
             transition: var(--sol-transition);
         }
 
+        .filter-input:focus,
         .filter-select:focus {
             outline: none;
             border-color: var(--sol-primary);
             background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-select option {
+            background: var(--sol-bg-secondary);
+            color: var(--sol-text-primary);
         }
 
         /* Table */
@@ -598,14 +582,6 @@
         .table-title {
             font-size: 1.25rem;
             font-weight: 600;
-        }
-
-        .table-info {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            font-size: 0.875rem;
-            color: var(--sol-text-secondary);
         }
 
         .table-wrapper {
@@ -638,13 +614,6 @@
             background: rgba(255, 255, 255, 0.03);
         }
 
-        .table-checkbox {
-            width: 1.25rem;
-            height: 1.25rem;
-            accent-color: var(--sol-primary);
-            cursor: pointer;
-        }
-
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -675,68 +644,16 @@
             color: var(--sol-error);
         }
 
-        .table-actions {
-            display: flex;
-            gap: 0.5rem;
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
         }
 
-        .action-btn {
-            background: none;
-            border: none;
-            color: var(--sol-text-secondary);
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-        }
-
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--sol-text-primary);
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .pagination-info {
-            color: var(--sol-text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .pagination-controls {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .pagination-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--sol-text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-            font-size: 0.875rem;
-        }
-
-        .pagination-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-btn.active {
-            background: var(--sol-primary);
-            color: white;
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--sol-text-muted);
+            margin-bottom: 1rem;
         }
 
         /* Notification */
@@ -772,31 +689,7 @@
             border-left: 4px solid var(--sol-info);
         }
 
-        .notification-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .notification-title {
-            font-weight: 600;
-        }
-
-        .notification-close {
-            background: none;
-            border: none;
-            color: var(--sol-text-secondary);
-            cursor: pointer;
-            font-size: 1.25rem;
-        }
-
-        .notification-message {
-            color: var(--sol-text-secondary);
-            font-size: 0.875rem;
-        }
-
-        /* Loading State */
+        /* Loading */
         .loading {
             display: flex;
             align-items: center;
@@ -837,28 +730,6 @@
             visibility: visible;
         }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-
-        .empty-icon {
-            font-size: 4rem;
-            color: var(--sol-text-muted);
-            margin-bottom: 1rem;
-        }
-
-        .empty-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .empty-text {
-            color: var(--sol-text-secondary);
-            margin-bottom: 2rem;
-        }
-
         /* Responsive */
         @media (max-width: 1024px) {
             .main-content.sidebar-open {
@@ -873,8 +744,9 @@
                 grid-template-columns: 1fr;
             }
 
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .page-header {
+                flex-direction: column;
+                align-items: start;
             }
         }
 
@@ -887,10 +759,13 @@
                 display: none;
             }
 
-            .page-header {
-                flex-direction: column;
-                align-items: start;
-                gap: 1rem;
+            .page-actions {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
             }
         }
     </style>
@@ -1049,7 +924,7 @@
 
         <!-- Upload Section -->
         <div class="upload-section">
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
                 <div class="upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
@@ -1090,7 +965,7 @@
                     <input type="date" id="dateFilter" class="filter-input">
                 </div>
             </div>
-            <div class="filter-actions" style="margin-top: 1rem;">
+            <div style="margin-top: 1rem;">
                 <button class="btn btn-secondary" id="resetFilters">
                     <i class="fas fa-times"></i>
                     Resetta filtri
@@ -1103,14 +978,7 @@
             <div class="table-header">
                 <h3 class="table-title">Lista Spedizioni</h3>
                 <div class="table-info">
-                    <span>Mostra</span>
-                    <select class="filter-select" id="perPage" style="width: auto;">
-                        <option value="10">10</option>
-                        <option value="25" selected>25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <span>righe</span>
+                    <span>0 risultati trovati</span>
                 </div>
             </div>
             
@@ -1118,9 +986,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
-                                <input type="checkbox" class="table-checkbox" id="selectAll">
-                            </th>
                             <th>TRACKING</th>
                             <th>DATA</th>
                             <th>MITTENTE</th>
@@ -1129,19 +994,21 @@
                             <th>CORRIERE</th>
                             <th>STATO</th>
                             <th>VALORE</th>
-                            <th style="width: 100px;">AZIONI</th>
+                            <th>AZIONI</th>
                         </tr>
                     </thead>
                     <tbody id="shipmentsTableBody">
-                        <!-- Shipments will be loaded here -->
+                        <!-- Table will be populated here -->
                     </tbody>
                 </table>
                 
                 <!-- Empty State -->
                 <div id="emptyState" class="empty-state" style="display: none;">
                     <i class="fas fa-box-open empty-icon"></i>
-                    <h3 class="empty-title">Nessuna spedizione trovata</h3>
-                    <p class="empty-text">Non ci sono spedizioni che corrispondono ai filtri selezionati.</p>
+                    <h3>Nessuna spedizione trovata</h3>
+                    <p style="color: var(--sol-text-secondary); margin-bottom: 2rem;">
+                        Non ci sono spedizioni che corrispondono ai filtri selezionati.
+                    </p>
                     <button class="btn btn-primary" onclick="document.getElementById('newShipmentBtn').click()">
                         <i class="fas fa-plus"></i>
                         Crea la tua prima spedizione
@@ -1149,26 +1016,8 @@
                 </div>
                 
                 <!-- Loading State -->
-                <div id="loadingState" class="loading">
+                <div id="loadingState" class="loading" style="display: none;">
                     <div class="spinner"></div>
-                </div>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="pagination">
-                <div class="pagination-info">
-                    Mostrando <span id="showingFrom">0</span>-<span id="showingTo">0</span> di <span id="totalRecords">0</span> risultati
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" id="prevPage" disabled>
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button class="pagination-btn active">1</button>
-                    <button class="pagination-btn">2</button>
-                    <button class="pagination-btn">3</button>
-                    <button class="pagination-btn" id="nextPage">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
                 </div>
             </div>
         </div>
@@ -1177,19 +1026,24 @@
     <!-- Backdrop -->
     <div class="backdrop" id="backdrop"></div>
 
-    <!-- Auth Script -->
-    <script src="/auth.js"></script>
-
-    <!-- Shipments JavaScript -->
+    <!-- Scripts -->
     <script>
+        // Check if auth.js exists, otherwise define checkAuth
+        if (typeof checkAuth === 'undefined') {
+            async function checkAuth() {
+                const token = localStorage.getItem('supabase.auth.token');
+                return !!token;
+            }
+        }
+
         // Global variables
         let shipments = [];
-        let currentPage = 1;
-        let itemsPerPage = 25;
         let filteredShipments = [];
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Initializing shipments page...');
+            
             // Check authentication
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) {
@@ -1200,17 +1054,17 @@
             // Update user info
             updateUserInfo();
 
+            // Setup event listeners
+            setupEventListeners();
+
             // Setup file upload
             setupFileUpload();
 
-            // Load shipments
-            await loadShipments();
-
-            // Setup event listeners
-            setupEventListeners();
+            // Load initial data
+            loadDemoData();
         });
 
-        // Update user info in header
+        // Update user info
         function updateUserInfo() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const userName = document.getElementById('userName');
@@ -1219,430 +1073,6 @@
             if (user.email) {
                 userName.textContent = user.email.split('@')[0];
                 userInitial.textContent = user.email[0].toUpperCase();
-            }
-        }
-
-        // Notification System
-        function showNotification(title, message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="notification-header">
-                    <div class="notification-title">${title}</div>
-                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-                </div>
-                <div class="notification-message">${message}</div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-
-        // File Upload Setup
-        function setupFileUpload() {
-            const uploadArea = document.querySelector('.upload-area');
-            const fileInput = document.getElementById('fileInput');
-
-            // Drag and drop handlers
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = Array.from(e.dataTransfer.files);
-                handleFileUpload(files);
-            });
-
-            // File input handler
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                handleFileUpload(files);
-            });
-        }
-
-        // File Upload Handler
-        function handleFileUpload(files) {
-            if (!files.length) return;
-
-            showNotification('Upload in corso', `Elaborazione di ${files.length} file...`, 'info');
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-
-                reader.onload = (e) => {
-                    try {
-                        if (fileExtension === 'csv') {
-                            processCSV(e.target.result, file.name);
-                        } else if (['xlsx', 'xls'].includes(fileExtension)) {
-                            processExcel(e.target.result, file.name);
-                        }
-                    } catch (error) {
-                        console.error('Error processing file:', error);
-                        showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
-                    }
-                };
-
-                if (fileExtension === 'csv') {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsArrayBuffer(file);
-                }
-            });
-        }
-
-        // CSV Processing
-        function processCSV(csvData, filename) {
-            Papa.parse(csvData, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                complete: (results) => {
-                    const newShipments = results.data.map(row => ({
-                        id: Date.now() + Math.random(),
-                        tracking: row.tracking || row.id || `SP-${Date.now()}`,
-                        date: row.date || new Date().toISOString().split('T')[0],
-                        sender: row.sender || row.mittente || 'N/A',
-                        recipient: row.recipient || row.destinatario || 'N/A',
-                        city: row.city || row.citta || 'N/A',
-                        carrier: row.carrier || row.corriere || 'Unknown',
-                        status: row.status || row.stato || 'pending',
-                        value: parseFloat(row.value || row.valore || 0)
-                    }));
-
-                    shipments = [...shipments, ...newShipments];
-                    filteredShipments = [...shipments];
-                    updateStats();
-                    renderTable();
-                    showNotification('Successo', `File CSV elaborato: ${filename}`, 'success');
-                }
-            });
-        }
-
-        // Excel Processing
-        function processExcel(arrayBuffer, filename) {
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-            const newShipments = jsonData.map(row => ({
-                id: Date.now() + Math.random(),
-                tracking: row.tracking || row.id || `SP-${Date.now()}`,
-                date: row.date || new Date().toISOString().split('T')[0],
-                sender: row.sender || row.mittente || 'N/A',
-                recipient: row.recipient || row.destinatario || 'N/A',
-                city: row.city || row.citta || 'N/A',
-                carrier: row.carrier || row.corriere || 'Unknown',
-                status: row.status || row.stato || 'pending',
-                value: parseFloat(row.value || row.valore || 0)
-            }));
-
-            shipments = [...shipments, ...newShipments];
-            filteredShipments = [...shipments];
-            updateStats();
-            renderTable();
-            showNotification('Successo', `File Excel elaborato: ${filename}`, 'success');
-        }
-
-        // Load shipments from API
-        async function loadShipments() {
-            const loadingState = document.getElementById('loadingState');
-            const emptyState = document.getElementById('emptyState');
-            
-            loadingState.style.display = 'flex';
-            emptyState.style.display = 'none';
-            
-            try {
-                const response = await fetch('/.netlify/functions/shipments');
-                if (!response.ok) throw new Error('Failed to load shipments');
-                
-                const data = await response.json();
-                shipments = data.shipments || [];
-                filteredShipments = [...shipments];
-                
-                updateStats();
-                renderTable();
-                
-            } catch (error) {
-                console.error('Error loading shipments:', error);
-                // Use demo data if API fails
-                shipments = generateDemoShipments();
-                filteredShipments = [...shipments];
-                updateStats();
-                renderTable();
-            } finally {
-                loadingState.style.display = 'none';
-            }
-        }
-
-        // Generate demo shipments
-        function generateDemoShipments() {
-            const statuses = ['pending', 'transit', 'delivered', 'delayed'];
-            const carriers = ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'];
-            const cities = ['Milano', 'Roma', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze'];
-            const names = ['Mario Rossi', 'Luigi Bianchi', 'Anna Verdi', 'Giuseppe Neri', 'Maria Gialli'];
-            
-            return Array.from({ length: 50 }, (_, i) => ({
-                id: i + 1,
-                tracking: `IT${String(1000000 + i).padStart(7, '0')}`,
-                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                sender: names[Math.floor(Math.random() * names.length)],
-                recipient: names[Math.floor(Math.random() * names.length)],
-                city: cities[Math.floor(Math.random() * cities.length)],
-                carrier: carriers[Math.floor(Math.random() * carriers.length)],
-                status: statuses[Math.floor(Math.random() * statuses.length)],
-                value: Math.floor(Math.random() * 1000) + 50
-            }));
-        }
-
-        // Update statistics
-        function updateStats() {
-            const totalShipments = filteredShipments.length;
-            const inTransit = filteredShipments.filter(s => s.status === 'transit').length;
-            const deliveredToday = filteredShipments.filter(s => 
-                s.status === 'delivered' && s.date === new Date().toISOString().split('T')[0]
-            ).length;
-            const delayed = filteredShipments.filter(s => s.status === 'delayed').length;
-            
-            document.getElementById('totalShipments').textContent = totalShipments;
-            document.getElementById('inTransit').textContent = inTransit;
-            document.getElementById('deliveredToday').textContent = deliveredToday;
-            document.getElementById('delayedShipments').textContent = delayed;
-        }
-
-        // Render table
-        function renderTable() {
-            const tableBody = document.getElementById('shipmentsTableBody');
-            const emptyState = document.getElementById('emptyState');
-            
-            if (filteredShipments.length === 0) {
-                tableBody.innerHTML = '';
-                emptyState.style.display = 'block';
-                updatePaginationInfo(0, 0, 0);
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-            
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageShipments = filteredShipments.slice(start, end);
-            
-            tableBody.innerHTML = pageShipments.map(shipment => `
-                <tr>
-                    <td><input type="checkbox" class="table-checkbox" data-id="${shipment.id}"></td>
-                    <td><strong>${shipment.tracking}</strong></td>
-                    <td>${formatDate(shipment.date)}</td>
-                    <td>${shipment.sender}</td>
-                    <td>${shipment.recipient}</td>
-                    <td>${shipment.city}</td>
-                    <td>${shipment.carrier}</td>
-                    <td>${getStatusBadge(shipment.status)}</td>
-                    <td>€${shipment.value.toFixed(2)}</td>
-                    <td>
-                        <div class="table-actions">
-                            <button class="action-btn" title="Visualizza">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="action-btn" title="Modifica">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn" title="Elimina">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-            
-            updatePaginationInfo(start + 1, Math.min(end, filteredShipments.length), filteredShipments.length);
-            updatePaginationButtons();
-        }
-
-        // Format date
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-
-        // Get status badge HTML
-        function getStatusBadge(status) {
-            const badges = {
-                pending: '<span class="status-badge pending"><i class="fas fa-clock"></i> In Attesa</span>',
-                transit: '<span class="status-badge transit"><i class="fas fa-truck"></i> In Transito</span>',
-                delivered: '<span class="status-badge delivered"><i class="fas fa-check"></i> Consegnato</span>',
-                delayed: '<span class="status-badge delayed"><i class="fas fa-exclamation"></i> In Ritardo</span>'
-            };
-            return badges[status] || status;
-        }
-
-        // Update pagination info
-        function updatePaginationInfo(from, to, total) {
-            document.getElementById('showingFrom').textContent = from;
-            document.getElementById('showingTo').textContent = to;
-            document.getElementById('totalRecords').textContent = total;
-        }
-
-        // Update pagination buttons
-        function updatePaginationButtons() {
-            const totalPages = Math.ceil(filteredShipments.length / itemsPerPage);
-            const prevBtn = document.getElementById('prevPage');
-            const nextBtn = document.getElementById('nextPage');
-            
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-        }
-
-        // Apply filters
-        function applyFilters() {
-            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const carrierFilter = document.getElementById('carrierFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-            
-            filteredShipments = shipments.filter(shipment => {
-                const matchesSearch = !searchTerm || 
-                    shipment.tracking.toLowerCase().includes(searchTerm) ||
-                    shipment.recipient.toLowerCase().includes(searchTerm) ||
-                    shipment.city.toLowerCase().includes(searchTerm);
-                
-                const matchesStatus = !statusFilter || shipment.status === statusFilter;
-                const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
-                const matchesDate = !dateFilter || shipment.date === dateFilter;
-                
-                return matchesSearch && matchesStatus && matchesCarrier && matchesDate;
-            });
-            
-            currentPage = 1;
-            updateStats();
-            renderTable();
-        }
-
-        // Export to PDF
-        function exportToPDF() {
-            try {
-                showNotification('Export PDF', 'Generazione report PDF in corso...', 'info');
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                // Header
-                doc.setFontSize(20);
-                doc.text('Supply Chain Hub - Report Spedizioni', 20, 30);
-                
-                doc.setFontSize(12);
-                doc.text(`Data generazione: ${new Date().toLocaleDateString('it-IT')}`, 20, 45);
-
-                // Stats
-                doc.setFontSize(16);
-                doc.text('Statistiche', 20, 65);
-                
-                doc.setFontSize(12);
-                let yPos = 80;
-                doc.text(`Totale Spedizioni: ${filteredShipments.length}`, 20, yPos);
-                yPos += 10;
-                doc.text(`In Transito: ${filteredShipments.filter(s => s.status === 'transit').length}`, 20, yPos);
-                yPos += 10;
-                doc.text(`Consegnate: ${filteredShipments.filter(s => s.status === 'delivered').length}`, 20, yPos);
-                yPos += 10;
-                doc.text(`In Ritardo: ${filteredShipments.filter(s => s.status === 'delayed').length}`, 20, yPos);
-
-                // Table
-                yPos += 30;
-                doc.setFontSize(16);
-                doc.text('Lista Spedizioni', 20, yPos);
-                
-                yPos += 15;
-                doc.setFontSize(10);
-                
-                // Table headers
-                const headers = ['Tracking', 'Data', 'Destinatario', 'Città', 'Corriere', 'Stato'];
-                const columnWidths = [40, 25, 40, 30, 25, 30];
-                let xPos = 20;
-                
-                headers.forEach((header, i) => {
-                    doc.text(header, xPos, yPos);
-                    xPos += columnWidths[i];
-                });
-                
-                // Table data
-                yPos += 10;
-                filteredShipments.slice(0, 20).forEach(shipment => {
-                    xPos = 20;
-                    doc.text(shipment.tracking, xPos, yPos);
-                    xPos += columnWidths[0];
-                    doc.text(formatDate(shipment.date), xPos, yPos);
-                    xPos += columnWidths[1];
-                    doc.text(shipment.recipient.substring(0, 20), xPos, yPos);
-                    xPos += columnWidths[2];
-                    doc.text(shipment.city, xPos, yPos);
-                    xPos += columnWidths[3];
-                    doc.text(shipment.carrier, xPos, yPos);
-                    xPos += columnWidths[4];
-                    doc.text(shipment.status, xPos, yPos);
-                    
-                    yPos += 10;
-                    
-                    if (yPos > 270) {
-                        doc.addPage();
-                        yPos = 30;
-                    }
-                });
-
-                // Save PDF
-                doc.save(`spedizioni-${new Date().toISOString().split('T')[0]}.pdf`);
-                showNotification('Successo', 'Report PDF generato con successo', 'success');
-            } catch (error) {
-                console.error('PDF export error:', error);
-                showNotification('Errore', 'Errore nella generazione del PDF', 'error');
-            }
-        }
-
-        // Export to Excel
-        function exportToExcel() {
-            try {
-                showNotification('Export Excel', 'Generazione file Excel in corso...', 'info');
-
-                const wb = XLSX.utils.book_new();
-
-                // Prepare data
-                const excelData = filteredShipments.map(shipment => ({
-                    'Tracking ID': shipment.tracking,
-                    'Data': shipment.date,
-                    'Mittente': shipment.sender,
-                    'Destinatario': shipment.recipient,
-                    'Città': shipment.city,
-                    'Corriere': shipment.carrier,
-                    'Stato': shipment.status,
-                    'Valore': shipment.value
-                }));
-
-                // Create worksheet
-                const ws = XLSX.utils.json_to_sheet(excelData);
-                
-                // Add worksheet to workbook
-                XLSX.utils.book_append_sheet(wb, ws, 'Spedizioni');
-
-                // Save file
-                XLSX.writeFile(wb, `spedizioni-${new Date().toISOString().split('T')[0]}.xlsx`);
-                showNotification('Successo', 'File Excel generato con successo', 'success');
-            } catch (error) {
-                console.error('Excel export error:', error);
-                showNotification('Errore', 'Errore nella generazione del file Excel', 'error');
             }
         }
 
@@ -1656,6 +1086,7 @@
             
             menuToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
+                console.log('Menu toggle clicked');
                 sidebar.classList.toggle('active');
                 backdrop.classList.toggle('active');
                 mainContent.classList.toggle('sidebar-open');
@@ -1669,12 +1100,13 @@
                 document.body.style.overflow = '';
             });
 
-            // User menu dropdown
+            // User dropdown
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
             
             userMenuBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
+                console.log('User menu clicked');
                 userDropdown.classList.toggle('active');
             });
 
@@ -1705,66 +1137,275 @@
                 applyFilters();
             });
 
-            // Per page
-            document.getElementById('perPage').addEventListener('change', function() {
-                itemsPerPage = parseInt(this.value);
-                currentPage = 1;
-                renderTable();
-            });
-
-            // Pagination
-            document.getElementById('prevPage').addEventListener('click', function() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderTable();
-                }
-            });
-
-            document.getElementById('nextPage').addEventListener('click', function() {
-                const totalPages = Math.ceil(filteredShipments.length / itemsPerPage);
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderTable();
-                }
-            });
-
-            // Select all checkbox
-            document.getElementById('selectAll').addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('#shipmentsTableBody .table-checkbox');
-                checkboxes.forEach(cb => cb.checked = this.checked);
-            });
-
-            // New shipment button
+            // New shipment
             document.getElementById('newShipmentBtn').addEventListener('click', function() {
                 showNotification('Info', 'Funzionalità di creazione nuova spedizione in arrivo!', 'info');
             });
+        }
 
-            // Handle window resize
-            let resizeTimer;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    if (window.innerWidth > 1024) {
-                        sidebar.classList.remove('active');
-                        backdrop.classList.remove('active');
-                        mainContent.classList.remove('sidebar-open');
-                        document.body.style.overflow = '';
-                    }
-                }, 250);
+        // Setup file upload
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
             });
 
-            // Prevent any UI blocking issues
-            setInterval(() => {
-                // Safety check to ensure UI is never blocked
-                if (document.body.style.pointerEvents === 'none') {
-                    document.body.style.pointerEvents = '';
-                }
-                // Ensure body overflow is not hidden when sidebar is closed
-                if (!sidebar.classList.contains('active') && document.body.style.overflow === 'hidden') {
-                    document.body.style.overflow = '';
-                }
-            }, 500);
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
+            });
         }
+
+        // Handle file upload
+        function handleFileUpload(files) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                reader.onload = (e) => {
+                    if (fileExtension === 'csv') {
+                        processCSV(e.target.result, file.name);
+                    } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                        processExcel(e.target.result, file.name);
+                    }
+                };
+
+                if (fileExtension === 'csv') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+        }
+
+        // Process CSV
+        function processCSV(csvData, filename) {
+            Papa.parse(csvData, {
+                header: true,
+                dynamicTyping: true,
+                complete: (results) => {
+                    const newShipments = results.data.map(row => ({
+                        tracking: row.tracking || `SP-${Date.now()}`,
+                        date: row.date || new Date().toISOString().split('T')[0],
+                        sender: row.sender || 'N/A',
+                        recipient: row.recipient || 'N/A',
+                        city: row.city || 'N/A',
+                        carrier: row.carrier || 'Unknown',
+                        status: row.status || 'pending',
+                        value: parseFloat(row.value || 0)
+                    }));
+                    shipments = [...shipments, ...newShipments];
+                    applyFilters();
+                    showNotification('Successo', `File CSV caricato: ${filename}`, 'success');
+                }
+            });
+        }
+
+        // Process Excel
+        function processExcel(arrayBuffer, filename) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            const newShipments = jsonData.map(row => ({
+                tracking: row.tracking || `SP-${Date.now()}`,
+                date: row.date || new Date().toISOString().split('T')[0],
+                sender: row.sender || 'N/A',
+                recipient: row.recipient || 'N/A',
+                city: row.city || 'N/A',
+                carrier: row.carrier || 'Unknown',
+                status: row.status || 'pending',
+                value: parseFloat(row.value || 0)
+            }));
+            
+            shipments = [...shipments, ...newShipments];
+            applyFilters();
+            showNotification('Successo', `File Excel caricato: ${filename}`, 'success');
+        }
+
+        // Load demo data
+        function loadDemoData() {
+            console.log('Loading demo data...');
+            const statuses = ['pending', 'transit', 'delivered', 'delayed'];
+            const carriers = ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'];
+            const cities = ['Milano', 'Roma', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze'];
+            const names = ['Mario Rossi', 'Luigi Bianchi', 'Anna Verdi', 'Giuseppe Neri', 'Maria Gialli'];
+            
+            shipments = Array.from({ length: 20 }, (_, i) => ({
+                tracking: `IT${String(1000000 + i).padStart(7, '0')}`,
+                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                sender: names[Math.floor(Math.random() * names.length)],
+                recipient: names[Math.floor(Math.random() * names.length)],
+                city: cities[Math.floor(Math.random() * cities.length)],
+                carrier: carriers[Math.floor(Math.random() * carriers.length)],
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                value: Math.floor(Math.random() * 1000) + 50
+            }));
+            
+            applyFilters();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const carrierFilter = document.getElementById('carrierFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            filteredShipments = shipments.filter(shipment => {
+                const matchesSearch = !searchTerm || 
+                    shipment.tracking.toLowerCase().includes(searchTerm) ||
+                    shipment.recipient.toLowerCase().includes(searchTerm) ||
+                    shipment.city.toLowerCase().includes(searchTerm);
+                
+                const matchesStatus = !statusFilter || shipment.status === statusFilter;
+                const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
+                const matchesDate = !dateFilter || shipment.date === dateFilter;
+                
+                return matchesSearch && matchesStatus && matchesCarrier && matchesDate;
+            });
+            
+            updateStats();
+            renderTable();
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalShipments').textContent = filteredShipments.length;
+            document.getElementById('inTransit').textContent = 
+                filteredShipments.filter(s => s.status === 'transit').length;
+            document.getElementById('deliveredToday').textContent = 
+                filteredShipments.filter(s => 
+                    s.status === 'delivered' && 
+                    s.date === new Date().toISOString().split('T')[0]
+                ).length;
+            document.getElementById('delayedShipments').textContent = 
+                filteredShipments.filter(s => s.status === 'delayed').length;
+        }
+
+        // Render table
+        function renderTable() {
+            const tableBody = document.getElementById('shipmentsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Update result count
+            document.querySelector('.table-info span').textContent = 
+                `${filteredShipments.length} risultati trovati`;
+            
+            if (filteredShipments.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = filteredShipments.map(shipment => `
+                <tr>
+                    <td><strong>${shipment.tracking}</strong></td>
+                    <td>${formatDate(shipment.date)}</td>
+                    <td>${shipment.sender}</td>
+                    <td>${shipment.recipient}</td>
+                    <td>${shipment.city}</td>
+                    <td>${shipment.carrier}</td>
+                    <td>${getStatusBadge(shipment.status)}</td>
+                    <td>€${shipment.value.toFixed(2)}</td>
+                    <td>
+                        <button class="action-btn" title="Visualizza">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn" title="Modifica">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn" title="Elimina">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT');
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                pending: '<span class="status-badge pending"><i class="fas fa-clock"></i> In Attesa</span>',
+                transit: '<span class="status-badge transit"><i class="fas fa-truck"></i> In Transito</span>',
+                delivered: '<span class="status-badge delivered"><i class="fas fa-check"></i> Consegnato</span>',
+                delayed: '<span class="status-badge delayed"><i class="fas fa-exclamation"></i> In Ritardo</span>'
+            };
+            return badges[status] || status;
+        }
+
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <strong>${title}</strong>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer;">×</button>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Export functions
+        function exportToPDF() {
+            showNotification('Export PDF', 'Generazione PDF in corso...', 'info');
+            // PDF export logic here
+        }
+
+        function exportToExcel() {
+            showNotification('Export Excel', 'Generazione Excel in corso...', 'info');
+            // Excel export logic here
+        }
+
+        // Action button styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .action-btn {
+                background: none;
+                border: none;
+                color: var(--sol-text-secondary);
+                padding: 0.5rem;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                transition: var(--sol-transition);
+            }
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: var(--sol-text-primary);
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
