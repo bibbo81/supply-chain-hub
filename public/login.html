@@ -311,8 +311,8 @@
         <div class="login-card">
             <!-- Tab Navigation -->
             <div class="tab-container">
-                <button class="tab-button active" onclick="switchTab('login')">Accedi</button>
-                <button class="tab-button" onclick="switchTab('register')">Registrati</button>
+                <button class="tab-button active" data-tab="login">Accedi</button>
+                <button class="tab-button" data-tab="register">Registrati</button>
             </div>
 
             <!-- Error/Success Messages -->
@@ -365,7 +365,7 @@
                 </form>
 
                 <div class="form-footer">
-                    <a href="#" onclick="showForgotPassword()">Password dimenticata?</a>
+                    <a href="#" onclick="showForgotPassword(); return false;">Password dimenticata?</a>
                 </div>
             </div>
 
@@ -447,7 +447,7 @@
                 </form>
 
                 <div class="form-footer">
-                    Già registrato? <a href="#" onclick="switchTab('login')">Accedi</a>
+                    Già registrato? <a href="#" class="login-link">Accedi</a>
                 </div>
             </div>
 
@@ -510,13 +510,28 @@
             }
         }
 
-        // Tab switching
-        window.switchTab = function(tab) {
+        // Tab switching with event delegation
+        document.querySelector('.tab-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-button')) {
+                const tab = e.target.dataset.tab;
+                switchTab(tab);
+            }
+        });
+
+        // Link to login tab
+        document.querySelector('.login-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchTab('login');
+        });
+
+        function switchTab(tab) {
             // Update buttons
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active');
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('active');
+                }
             });
-            event.target.classList.add('active');
             
             // Update content
             document.querySelectorAll('.tab-content').forEach(content => {
