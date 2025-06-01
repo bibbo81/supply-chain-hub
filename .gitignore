@@ -4,3 +4,5 @@ node_modules/
 .env
 .DS_Store
 public/config.js
+*.bak
+netlify/functions/backup/
