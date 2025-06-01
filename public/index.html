@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supply Chain Hub - Dashboard</title>
+    <title>Supply Chain Hub - Enterprise Dashboard</title>
+    <meta name="description" content="Advanced Supply Chain Management Dashboard with real-time analytics and reporting">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234f46e5'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007aff'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,73 +15,78 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
     
-    <!-- Solarium CSS Variables -->
+    <!-- Papa Parse for CSV processing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- SheetJS for Excel processing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    
     <style>
+        /* SOLARIUM DESIGN SYSTEM - Apple-inspired Dark Theme + Glassmorphism */
+        
         :root {
-            /* Solarium Colors */
-            --sol-primary: #4f46e5;
-            --sol-primary-dark: #4338ca;
-            --sol-primary-light: #6366f1;
-            --sol-secondary: #ec4899;
-            --sol-secondary-dark: #db2777;
-            --sol-secondary-light: #f472b6;
-            --sol-accent: #06b6d4;
-            --sol-accent-dark: #0891b2;
-            --sol-accent-light: #22d3ee;
+            /* Color Palette */
+            --primary-bg: linear-gradient(135deg, #0a0a0b 0%, #1c1c1e 50%, #2c2c2e 100%);
+            --secondary-bg: rgba(28, 28, 30, 0.85);
+            --card-bg: rgba(44, 44, 46, 0.9);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
             
-            /* Dark Theme */
-            --sol-bg-primary: #0f172a;
-            --sol-bg-secondary: #1e293b;
-            --sol-bg-tertiary: #334155;
-            --sol-surface: rgba(30, 41, 59, 0.8);
-            --sol-surface-hover: rgba(51, 65, 85, 0.8);
+            /* Accent Colors */
+            --accent-color: #007aff;
+            --accent-hover: #0056cc;
+            --success-color: #34c759;
+            --warning-color: #ff9500;
+            --error-color: #ff3b30;
+            --info-color: #5ac8fa;
             
-            /* Text */
-            --sol-text-primary: #f1f5f9;
-            --sol-text-secondary: #cbd5e1;
-            --sol-text-muted: #94a3b8;
+            /* Text Colors */
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a6;
+            --text-tertiary: #6d6d70;
             
-            /* Status Colors */
-            --sol-success: #10b981;
-            --sol-warning: #f59e0b;
-            --sol-error: #ef4444;
-            --sol-info: #3b82f6;
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
             
-            /* Effects */
-            --sol-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            --sol-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            --sol-blur: blur(16px);
-            --sol-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+            
+            /* Transitions */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
         }
-
+        
+        /* Reset & Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--sol-bg-primary);
-            color: var(--sol-text-primary);
+            background: var(--primary-bg);
+            color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
-        }
-
-        /* Background Pattern */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, var(--sol-primary) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--sol-secondary) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, var(--sol-accent) 0%, transparent 50%);
-            opacity: 0.1;
-            z-index: -1;
+            min-height: 100vh;
         }
 
         /* Header */
@@ -90,13 +96,14 @@
             left: 0;
             right: 0;
             height: 70px;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
             z-index: 1000;
             display: flex;
             align-items: center;
-            padding: 0 2rem;
+            padding: 0 var(--spacing-xl);
         }
 
         .header-content {
@@ -104,140 +111,140 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: var(--spacing-lg);
         }
 
         .menu-toggle {
-            display: none;
             background: none;
             border: none;
-            color: var(--sol-text-primary);
+            color: var(--text-primary);
             font-size: 1.5rem;
             cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--sol-transition);
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            transition: var(--transition-fast);
         }
 
         .menu-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--glass-bg);
         }
 
-        .logo {
+        .logo-section {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--sol-text-primary);
+            gap: var(--spacing-md);
         }
-
-        .logo i {
-            font-size: 2rem;
-            color: var(--sol-primary);
-        }
-
-        .logo h1 {
+        
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-color), var(--info-color));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.5rem;
             font-weight: 700;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .header-search {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .header-search input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0.5rem;
-            padding: 0.5rem 2.5rem 0.5rem 1rem;
-            color: var(--sol-text-primary);
-            width: 300px;
-            transition: var(--sol-transition);
-        }
-
-        .header-search input:focus {
-            outline: none;
-            border-color: var(--sol-primary);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .header-search i {
-            position: absolute;
-            right: 0.75rem;
-            color: var(--sol-text-muted);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .header-btn {
-            background: none;
-            border: none;
-            color: var(--sol-text-primary);
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--sol-transition);
-            position: relative;
-        }
-
-        .header-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            background: var(--sol-error);
             color: white;
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            border-radius: 9999px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
+        }
+
+        /* User Menu */
+        .user-menu-wrapper {
+            position: relative;
         }
 
         .user-menu {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 0.5rem;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: var(--sol-transition);
+            transition: var(--transition-fast);
         }
 
         .user-menu:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .user-avatar {
-            width: 2rem;
-            height: 2rem;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: var(--sol-primary);
+            background: var(--accent-color);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: var(--spacing-sm);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            min-width: 200px;
+            padding: var(--spacing-sm);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: var(--transition-fast);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .user-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: var(--spacing-sm) var(--spacing-md);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-fast);
+        }
+
+        .dropdown-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: var(--spacing-sm) 0;
         }
 
         /* Sidebar */
@@ -247,274 +254,428 @@
             left: 0;
             bottom: 0;
             width: 280px;
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--secondary-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
             overflow-y: auto;
             z-index: 999;
-            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            transition: transform var(--transition-normal);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
         }
 
         .sidebar-nav {
-            padding: 2rem 1rem;
+            padding: var(--spacing-xl) var(--spacing-lg);
         }
 
         .nav-section {
-            margin-bottom: 2rem;
+            margin-bottom: var(--spacing-xl);
         }
 
         .nav-section-title {
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: var(--sol-text-muted);
-            margin-bottom: 0.5rem;
-            padding: 0 1rem;
+            color: var(--text-tertiary);
+            margin-bottom: var(--spacing-sm);
+            padding: 0 var(--spacing-md);
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            color: var(--sol-text-secondary);
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
             text-decoration: none;
-            transition: var(--sol-transition);
-            margin-bottom: 0.25rem;
+            transition: var(--transition-fast);
+            margin-bottom: var(--spacing-xs);
         }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--sol-text-primary);
+            background: var(--glass-bg);
+            color: var(--text-primary);
         }
 
         .nav-item.active {
-            background: var(--sol-primary);
+            background: var(--accent-color);
             color: white;
         }
 
         .nav-item i {
-            width: 1.25rem;
+            width: 20px;
             text-align: center;
         }
 
         /* Main Content */
         .main-content {
-            margin-left: 280px;
             margin-top: 70px;
-            padding: 2rem;
-            min-height: calc(100vh - 70px);
+            padding: var(--spacing-xl);
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: margin-left var(--transition-normal);
         }
 
-        .page-header {
-            margin-bottom: 2rem;
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
         }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+        
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            text-decoration: none;
+            white-space: nowrap;
         }
-
-        .page-subtitle {
-            color: var(--sol-text-secondary);
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: var(--shadow-sm);
         }
-
+        
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Upload Section */
+        .upload-section {
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            transition: all var(--transition-normal);
+            cursor: pointer;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent-color);
+            background: rgba(0, 122, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
         /* KPI Cards */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
         }
-
+        
         .kpi-card {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            transition: var(--sol-transition);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
         }
-
+        
         .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--sol-shadow);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.2);
         }
-
+        
         .kpi-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 1rem;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
         }
-
+        
         .kpi-title {
-            font-size: 0.875rem;
-            color: var(--sol-text-secondary);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
-
-        .kpi-icon {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 0.75rem;
+        
+        .kpi-trend {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+            gap: var(--spacing-xs);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
         }
-
-        .kpi-icon.primary {
-            background: rgba(79, 70, 229, 0.2);
-            color: var(--sol-primary);
+        
+        .trend-positive {
+            color: var(--success-color);
+            background: rgba(52, 199, 89, 0.1);
         }
-
-        .kpi-icon.success {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--sol-success);
+        
+        .trend-negative {
+            color: var(--error-color);
+            background: rgba(255, 59, 48, 0.1);
         }
-
-        .kpi-icon.warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--sol-warning);
-        }
-
-        .kpi-icon.info {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--sol-info);
-        }
-
+        
         .kpi-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
         }
-
-        .kpi-change {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
+        
+        .kpi-unit {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
-
-        .kpi-change.positive {
-            color: var(--sol-success);
+        
+        /* Chart Cards */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
         }
-
-        .kpi-change.negative {
-            color: var(--sol-error);
+        
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
         }
-
-        /* Charts */
-        .charts-grid {
+        
+        .chart-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .chart-header {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .chart-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        /* Data Tables */
+        .table-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 1.5rem;
+            gap: var(--spacing-lg);
         }
-
-        .chart-card {
-            background: var(--sol-surface);
-            backdrop-filter: var(--sol-blur);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 1.5rem;
+        
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
         }
-
-        .chart-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
+        
+        .table-header {
+            margin-bottom: var(--spacing-lg);
         }
-
-        .chart-title {
-            font-size: 1.125rem;
+        
+        .table-title {
+            font-size: 1.1rem;
             font-weight: 600;
+            margin-bottom: var(--spacing-xs);
         }
-
-        .chart-actions {
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-table th {
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-table td {
+            color: var(--text-primary);
+        }
+        
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-delivered {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--success-color);
+        }
+        
+        .status-in-transit {
+            background: rgba(255, 149, 0, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .status-pending {
+            background: rgba(90, 200, 250, 0.2);
+            color: var(--info-color);
+        }
+        
+        .status-delayed {
+            background: rgba(255, 59, 48, 0.2);
+            color: var(--error-color);
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            min-width: 320px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform var(--transition-normal);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-header {
             display: flex;
-            gap: 0.5rem;
-        }
-
-        .chart-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--sol-text-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: var(--sol-transition);
-        }
-
-        .chart-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: var(--sol-text-primary);
-        }
-
-        .chart-btn.active {
-            background: var(--sol-primary);
-            color: white;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .menu-toggle {
-                display: block;
-            }
-
-            .header-search {
-                display: none;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .user-menu span {
-                display: none;
-            }
-        }
-
-        /* Loading State */
-        .loading {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            min-height: 200px;
+            margin-bottom: var(--spacing-sm);
         }
-
-        .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--sol-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.9rem;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+        }
+        
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--error-color);
+        }
+        
+        .notification.info {
+            border-left: 4px solid var(--info-color);
         }
 
         /* Backdrop */
@@ -529,12 +690,101 @@
             z-index: 998;
             opacity: 0;
             visibility: hidden;
-            transition: var(--sol-transition);
+            transition: var(--transition-normal);
         }
 
         .backdrop.active {
             opacity: 1;
             visibility: visible;
+        }
+        
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-content {
+                padding: var(--spacing-lg);
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 var(--spacing-md);
+            }
+            
+            .header-subtitle {
+                display: none;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .actions {
+                flex-wrap: wrap;
+            }
+            
+            .notification {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+                transform: translateY(-100px);
+            }
+            
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                padding: var(--spacing-sm);
+                font-size: 0.8rem;
+            }
+            
+            .header-title {
+                font-size: 1.25rem;
+            }
+            
+            .kpi-value {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
@@ -546,31 +796,33 @@
                 <button class="menu-toggle" id="menuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a href="/" class="logo">
-                    <i class="fas fa-truck"></i>
-                    <h1>Supply Chain Hub</h1>
-                </a>
-            </div>
-            
-            <div class="header-right">
-                <div class="header-search">
-                    <input type="search" placeholder="Cerca spedizioni, corrieri...">
-                    <i class="fas fa-search"></i>
-                </div>
-                
-                <div class="header-actions">
-                    <button class="header-btn">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    
-                    <div class="user-menu">
-                        <div class="user-avatar">
-                            <span id="userInitial">U</span>
-                        </div>
-                        <span id="userName">Utente</span>
-                        <i class="fas fa-chevron-down"></i>
+                <div class="logo-section">
+                    <div class="logo">SCH</div>
+                    <div>
+                        <div class="header-title">Supply Chain Hub</div>
+                        <div class="header-subtitle">Enterprise Dashboard & Analytics</div>
                     </div>
+                </div>
+            </div>
+            <div class="user-menu-wrapper">
+                <button class="user-menu" id="userMenuBtn">
+                    <div class="user-avatar">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="dropdown-item">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
                 </div>
             </div>
         </div>
@@ -580,7 +832,7 @@
     <aside class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <div class="nav-section">
-                <div class="nav-section-title">Menu Principale</div>
+                <div class="nav-section-title">PRINCIPALE</div>
                 <a href="/" class="nav-item active">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
@@ -600,23 +852,23 @@
             </div>
             
             <div class="nav-section">
-                <div class="nav-section-title">Analytics</div>
+                <div class="nav-section-title">STRUMENTI</div>
+                <a href="/import.html" class="nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Importa Dati</span>
+                </a>
                 <a href="/reports.html" class="nav-item">
                     <i class="fas fa-file-alt"></i>
                     <span>Report</span>
                 </a>
                 <a href="/costs.html" class="nav-item">
                     <i class="fas fa-coins"></i>
-                    <span>Costi</span>
-                </a>
-                <a href="/import.html" class="nav-item">
-                    <i class="fas fa-upload"></i>
-                    <span>Importa Dati</span>
+                    <span>Analisi Costi</span>
                 </a>
             </div>
             
             <div class="nav-section">
-                <div class="nav-section-title">Configurazione</div>
+                <div class="nav-section-title">CONFIGURAZIONE</div>
                 <a href="/team.html" class="nav-item">
                     <i class="fas fa-users"></i>
                     <span>Team</span>
@@ -629,125 +881,163 @@
                     <i class="fas fa-credit-card"></i>
                     <span>Fatturazione</span>
                 </a>
-                <a href="#" class="nav-item" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Esci</span>
-                </a>
             </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="page-header">
-            <h2 class="page-title">Dashboard</h2>
-            <p class="page-subtitle">Panoramica delle tue spedizioni e performance</p>
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="refreshDashboard()">
+                🔄 Aggiorna
+            </button>
+            <button class="btn btn-secondary" onclick="exportToPDF()">
+                📄 Export PDF
+            </button>
+            <button class="btn btn-primary" onclick="exportToExcel()">
+                📊 Export Excel
+            </button>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
+                <div class="upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
+            </div>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple>
         </div>
 
         <!-- KPI Cards -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <h3 class="kpi-title">Spedizioni Totali</h3>
-                    <div class="kpi-icon primary">
-                        <i class="fas fa-box"></i>
+                    <div class="kpi-title">Fatturato Totale</div>
+                    <div class="kpi-trend trend-positive" id="revenue-trend">
+                        ↗ +12.5%
                     </div>
                 </div>
-                <div class="kpi-value" id="totalShipments">0</div>
-                <div class="kpi-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+12.5% rispetto al mese scorso</span>
-                </div>
+                <div class="kpi-value" id="total-revenue">€2.500.000</div>
+                <div class="kpi-unit">Ultimo trimestre</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <h3 class="kpi-title">In Transito</h3>
-                    <div class="kpi-icon warning">
-                        <i class="fas fa-truck-moving"></i>
+                    <div class="kpi-title">Spedizioni Totali</div>
+                    <div class="kpi-trend trend-positive" id="shipments-trend">
+                        ↗ +8.3%
                     </div>
                 </div>
-                <div class="kpi-value" id="inTransit">0</div>
-                <div class="kpi-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+8.3% rispetto alla settimana scorsa</span>
-                </div>
+                <div class="kpi-value" id="total-shipments">15.420</div>
+                <div class="kpi-unit">Ultimo mese</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <h3 class="kpi-title">Consegnate</h3>
-                    <div class="kpi-icon success">
-                        <i class="fas fa-check-circle"></i>
+                    <div class="kpi-title">Tempo Medio Consegna</div>
+                    <div class="kpi-trend trend-negative" id="delivery-trend">
+                        ↘ -0.3%
                     </div>
                 </div>
-                <div class="kpi-value" id="delivered">0</div>
-                <div class="kpi-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+15.2% rispetto al mese scorso</span>
-                </div>
+                <div class="kpi-value" id="avg-delivery">3.2</div>
+                <div class="kpi-unit">giorni</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-header">
-                    <h3 class="kpi-title">Tasso di Successo</h3>
-                    <div class="kpi-icon info">
-                        <i class="fas fa-percentage"></i>
+                    <div class="kpi-title">Tasso Puntualità</div>
+                    <div class="kpi-trend trend-positive" id="ontime-trend">
+                        ↗ +2.1%
                     </div>
                 </div>
-                <div class="kpi-value" id="successRate">0%</div>
-                <div class="kpi-change negative">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>-2.1% rispetto al mese scorso</span>
-                </div>
+                <div class="kpi-value" id="ontime-rate">94.5%</div>
+                <div class="kpi-unit">consegne puntuali</div>
             </div>
         </div>
 
         <!-- Charts -->
-        <div class="charts-grid">
+        <div class="chart-grid">
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">Andamento Spedizioni</h3>
-                    <div class="chart-actions">
-                        <button class="chart-btn active">Settimana</button>
-                        <button class="chart-btn">Mese</button>
-                        <button class="chart-btn">Anno</button>
-                    </div>
+                    <div class="chart-title">Trend Fatturato</div>
+                    <div class="chart-subtitle">Andamento mensile revenue</div>
                 </div>
-                <div id="revenueChart" class="chart-container"></div>
+                <div class="chart-container" id="revenueChart"></div>
             </div>
 
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">Performance Corrieri</h3>
-                    <div class="chart-actions">
-                        <button class="chart-btn active">Top 5</button>
-                        <button class="chart-btn">Tutti</button>
-                    </div>
+                    <div class="chart-title">Spedizioni per Corriere</div>
+                    <div class="chart-subtitle">Distribuzione volumi</div>
                 </div>
-                <div id="carriersChart" class="chart-container"></div>
+                <div class="chart-container" id="carriersChart"></div>
             </div>
 
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">Tempi di Consegna</h3>
-                    <div class="chart-actions">
-                        <button class="chart-btn active">Media</button>
-                        <button class="chart-btn">Dettaglio</button>
-                    </div>
+                    <div class="chart-title">Performance Consegne</div>
+                    <div class="chart-subtitle">Stato spedizioni</div>
                 </div>
-                <div id="deliveryChart" class="chart-container"></div>
+                <div class="chart-container" id="performanceChart"></div>
             </div>
 
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">Distribuzione Geografica</h3>
-                    <div class="chart-actions">
-                        <button class="chart-btn active">Regioni</button>
-                        <button class="chart-btn">Province</button>
-                    </div>
+                    <div class="chart-title">Distribuzione Geografica</div>
+                    <div class="chart-subtitle">Spedizioni per regione</div>
                 </div>
-                <div id="geoChart" class="chart-container"></div>
+                <div class="chart-container" id="geographicChart"></div>
+            </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="table-grid">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Spedizioni Recenti</div>
+                    <div class="chart-subtitle">Ultimi 5 movimenti</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="shipmentsTable">
+                        <thead>
+                            <tr>
+                                <th>Tracking ID</th>
+                                <th>Destinazione</th>
+                                <th>Corriere</th>
+                                <th>Stato</th>
+                                <th>Valore</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Corrieri Attivi</div>
+                    <div class="chart-subtitle">Partner logistici</div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="carriersTable">
+                        <thead>
+                            <tr>
+                                <th>Corriere</th>
+                                <th>Spedizioni</th>
+                                <th>Tasso Successo</th>
+                                <th>Tempo Medio</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -755,272 +1045,287 @@
     <!-- Backdrop -->
     <div class="backdrop" id="backdrop"></div>
 
-    <!-- Auth Script -->
-    <script src="/auth.js"></script>
-
-    <!-- Dashboard JavaScript -->
+    <!-- Scripts -->
     <script>
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Check authentication
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) {
-                window.location.href = '/login.html';
-                return;
-            }
-
-            // Update user info
-            updateUserInfo();
-
-            // Load dashboard data
-            await loadDashboardData();
-
-            // Initialize charts
-            initializeCharts();
-
-            // Setup event listeners
-            setupEventListeners();
-        });
-
-        // Update user info in header
-        function updateUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const userName = document.getElementById('userName');
-            const userInitial = document.getElementById('userInitial');
-            
-            if (user.email) {
-                userName.textContent = user.email.split('@')[0];
-                userInitial.textContent = user.email[0].toUpperCase();
-            }
-        }
-
-        // Load dashboard data
-        async function loadDashboardData() {
-            try {
-                const response = await fetch('/.netlify/functions/dashboard-stats');
-                if (!response.ok) throw new Error('Failed to load stats');
-                
-                const data = await response.json();
-                
-                // Update KPIs
-                document.getElementById('totalShipments').textContent = data.totalShipments.toLocaleString('it-IT');
-                document.getElementById('inTransit').textContent = data.inTransit.toLocaleString('it-IT');
-                document.getElementById('delivered').textContent = data.delivered.toLocaleString('it-IT');
-                document.getElementById('successRate').textContent = data.successRate + '%';
-                
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                // Use demo data if API fails
-                document.getElementById('totalShipments').textContent = '1,234';
-                document.getElementById('inTransit').textContent = '456';
-                document.getElementById('delivered').textContent = '678';
-                document.getElementById('successRate').textContent = '94.5%';
-            }
-        }
-
-        // Initialize charts
-        function initializeCharts() {
-            // Chart options with Solarium theme
-            const chartOptions = {
-                theme: {
-                    mode: 'dark',
-                    palette: 'palette1',
-                    monochrome: {
-                        enabled: false,
-                        color: '#4f46e5',
-                        shadeTo: 'dark',
-                        shadeIntensity: 0.65
-                    }
+        // Global Dashboard Data Store
+        let dashboardData = {
+            kpi: {
+                totalRevenue: 2500000,
+                totalShipments: 15420,
+                avgDeliveryTime: 3.2,
+                onTimeRate: 94.5,
+                trends: {
+                    revenue: 12.5,
+                    shipments: 8.3,
+                    delivery: -0.3,
+                    onTime: 2.1
+                }
+            },
+            revenue: [
+                { month: 'Gen', value: 380000 },
+                { month: 'Feb', value: 420000 },
+                { month: 'Mar', value: 395000 },
+                { month: 'Apr', value: 445000 },
+                { month: 'Mag', value: 460000 },
+                { month: 'Giu', value: 485000 }
+            ],
+            shipments: {
+                'DHL': 4850,
+                'FedEx': 3920,
+                'UPS': 3140,
+                'TNT': 2180,
+                'GLS': 1330
+            },
+            performance: {
+                onTime: 94.5,
+                delayed: 4.2,
+                failed: 1.3
+            },
+            geographic: {
+                'Nord Italia': 35,
+                'Centro Italia': 28,
+                'Sud Italia': 22,
+                'Isole': 15
+            },
+            shipmentsData: [
+                {
+                    trackingId: 'IT1000001',
+                    destination: 'Milano, IT',
+                    carrier: 'DHL',
+                    status: 'delivered',
+                    value: 1850
                 },
-                chart: {
-                    background: 'transparent',
-                    toolbar: {
+                {
+                    trackingId: 'IT1000002',
+                    destination: 'Roma, IT',
+                    carrier: 'FedEx',
+                    status: 'in-transit',
+                    value: 920
+                },
+                {
+                    trackingId: 'IT1000003',
+                    destination: 'Napoli, IT',
+                    carrier: 'UPS',
+                    status: 'delivered',
+                    value: 2340
+                },
+                {
+                    trackingId: 'IT1000004',
+                    destination: 'Torino, IT',
+                    carrier: 'TNT',
+                    status: 'pending',
+                    value: 675
+                },
+                {
+                    trackingId: 'IT1000005',
+                    destination: 'Bologna, IT',
+                    carrier: 'GLS',
+                    status: 'delayed',
+                    value: 1520
+                }
+            ],
+            carriersData: [
+                {
+                    name: 'DHL',
+                    shipments: 4850,
+                    successRate: 96.2,
+                    avgTime: 2.8,
+                    rating: 4.8
+                },
+                {
+                    name: 'FedEx',
+                    shipments: 3920,
+                    successRate: 94.7,
+                    avgTime: 3.1,
+                    rating: 4.6
+                },
+                {
+                    name: 'UPS',
+                    shipments: 3140,
+                    successRate: 93.8,
+                    avgTime: 3.4,
+                    rating: 4.5
+                },
+                {
+                    name: 'TNT',
+                    shipments: 2180,
+                    successRate: 92.1,
+                    avgTime: 3.7,
+                    rating: 4.2
+                },
+                {
+                    name: 'GLS',
+                    shipments: 1330,
+                    successRate: 90.5,
+                    avgTime: 4.1,
+                    rating: 4.0
+                }
+            ]
+        };
+
+        // Chart instances storage
+        let chartInstances = {};
+
+        // ApexCharts Theme Configuration
+        const solariumTheme = {
+            theme: {
+                mode: 'dark'
+            },
+            chart: {
+                background: 'transparent',
+                toolbar: {
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                },
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            },
+            grid: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                strokeDashArray: 0,
+                xaxis: {
+                    lines: {
                         show: false
                     }
                 },
-                grid: {
-                    borderColor: 'rgba(255, 255, 255, 0.1)'
-                },
-                xaxis: {
-                    labels: {
-                        style: {
-                            colors: '#94a3b8'
-                        }
-                    }
-                },
                 yaxis: {
-                    labels: {
-                        style: {
-                            colors: '#94a3b8'
-                        }
+                    lines: {
+                        show: true
                     }
                 }
-            };
-
-            // Revenue Chart
-            const revenueChart = new ApexCharts(document.querySelector("#revenueChart"), {
-                ...chartOptions,
-                series: [{
-                    name: 'Spedizioni',
-                    data: [31, 40, 28, 51, 42, 59, 48]
-                }],
-                chart: {
-                    type: 'area',
-                    height: 350,
-                    ...chartOptions.chart
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.7,
-                        opacityTo: 0.3,
-                        stops: [0, 90, 100]
+            },
+            colors: ['#007aff', '#34c759', '#ff9500', '#ff3b30', '#8e8e93', '#af52de'],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            xaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
                     }
                 },
-                xaxis: {
-                    categories: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
-                    ...chartOptions.xaxis
+                axisBorder: {
+                    show: false
                 },
-                colors: ['#4f46e5']
-            });
-            revenueChart.render();
-
-            // Carriers Chart
-            const carriersChart = new ApexCharts(document.querySelector("#carriersChart"), {
-                ...chartOptions,
-                series: [{
-                    name: 'Consegne',
-                    data: [44, 55, 41, 67, 22]
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 350,
-                    ...chartOptions.chart
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 8,
-                        horizontal: true,
-                        distributed: true
-                    }
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                xaxis: {
-                    categories: ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'],
-                    ...chartOptions.xaxis
-                },
-                colors: ['#4f46e5', '#ec4899', '#06b6d4', '#10b981', '#f59e0b']
-            });
-            carriersChart.render();
-
-            // Delivery Time Chart
-            const deliveryChart = new ApexCharts(document.querySelector("#deliveryChart"), {
-                ...chartOptions,
-                series: [{
-                    name: 'Tempo medio (ore)',
-                    data: [24, 28, 21, 26, 23, 25, 22]
-                }],
-                chart: {
-                    type: 'line',
-                    height: 350,
-                    ...chartOptions.chart
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                markers: {
-                    size: 6,
-                    strokeWidth: 2,
-                    hover: {
-                        size: 8
-                    }
-                },
-                xaxis: {
-                    categories: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
-                    ...chartOptions.xaxis
-                },
-                colors: ['#06b6d4']
-            });
-            deliveryChart.render();
-
-            // Geographic Distribution Chart
-            const geoChart = new ApexCharts(document.querySelector("#geoChart"), {
-                ...chartOptions,
-                series: [44, 55, 13, 43, 22],
-                chart: {
-                    type: 'donut',
-                    height: 350,
-                    ...chartOptions.chart
-                },
-                labels: ['Lombardia', 'Lazio', 'Campania', 'Veneto', 'Altre'],
-                colors: ['#4f46e5', '#ec4899', '#06b6d4', '#10b981', '#f59e0b'],
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '70%',
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Totale',
-                                    color: '#cbd5e1'
-                                }
-                            }
+                axisTicks: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '12px'
+                    },
+                    formatter: function(value) {
+                        if (value >= 1000) {
+                            return (value / 1000).toFixed(0) + 'k';
                         }
-                    }
-                },
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        colors: '#cbd5e1'
+                        return value;
                     }
                 }
-            });
-            geoChart.render();
-        }
+            },
+            legend: {
+                labels: {
+                    colors: 'rgba(255, 255, 255, 0.8)'
+                },
+                position: 'bottom',
+                horizontalAlign: 'center'
+            },
+            tooltip: {
+                theme: 'dark',
+                style: {
+                    fontSize: '12px'
+                },
+                y: {
+                    formatter: function(value) {
+                        if (typeof value === 'number') {
+                            return value.toLocaleString('it-IT');
+                        }
+                        return value;
+                    }
+                }
+            }
+        };
+
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Supply Chain Hub Dashboard...');
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Setup file upload
+            setupFileUpload();
+            
+            // Update KPIs
+            updateKPIs();
+            
+            // Update tables
+            updateTables();
+            
+            // Initialize charts
+            setTimeout(() => {
+                if (typeof ApexCharts !== 'undefined') {
+                    initCharts();
+                    console.log('Charts initialized successfully');
+                } else {
+                    console.error('ApexCharts not loaded');
+                }
+            }, 100);
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification(
+                    'Dashboard Pronta', 
+                    'Supply Chain Hub caricato con successo', 
+                    'success'
+                );
+            }, 500);
+        });
 
         // Setup event listeners
         function setupEventListeners() {
-            // Menu toggle with proper event handling
+            // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
             
-            // Menu toggle handler
             menuToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
-                toggleSidebar();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
             });
 
-            // Backdrop click handler
             backdrop.addEventListener('click', function() {
-                closeSidebar();
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
             });
 
-            // Sidebar click handler (prevent closing on sidebar click)
-            sidebar.addEventListener('click', function(e) {
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
+                userDropdown.classList.toggle('active');
             });
 
-            // Close sidebar on escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-                    closeSidebar();
-                }
+            document.addEventListener('click', function() {
+                userDropdown.classList.remove('active');
             });
 
-            // Logout handler
+            // Logout
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
                 localStorage.removeItem('supabase.auth.token');
@@ -1028,73 +1333,448 @@
                 window.location.href = '/login.html';
             });
 
-            // Chart action buttons
-            document.querySelectorAll('.chart-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const parent = this.parentElement;
-                    parent.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                });
+            // Update user info
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.email) {
+                document.getElementById('userName').textContent = user.email.split('@')[0];
+                document.getElementById('userInitial').textContent = user.email[0].toUpperCase();
+            }
+        }
+
+        // File Upload System
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
             });
 
-            // Handle window resize
-            let resizeTimer;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    if (window.innerWidth > 1024) {
-                        closeSidebar();
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
+            });
+        }
+
+        // File Upload Handler
+        function handleFileUpload(files) {
+            if (!files.length) return;
+
+            showNotification('Upload in corso', `Elaborazione di ${files.length} file...`, 'info');
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                reader.onload = (e) => {
+                    try {
+                        if (fileExtension === 'csv') {
+                            processCSV(e.target.result, file.name);
+                        } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                            processExcel(e.target.result, file.name);
+                        }
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        showNotification('Errore', `Errore nell'elaborazione del file: ${file.name}`, 'error');
                     }
-                }, 250);
+                };
+
+                if (fileExtension === 'csv') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
             });
         }
 
-        // Toggle sidebar function
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
+        // CSV Processing
+        function processCSV(csvData, filename) {
+            Papa.parse(csvData, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    processRawData(results.data, filename);
+                    showNotification('Successo', `File CSV elaborato: ${filename}`, 'success');
+                }
+            });
+        }
+
+        // Excel Processing
+        function processExcel(arrayBuffer, filename) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
             
-            if (sidebar.classList.contains('active')) {
-                closeSidebar();
-            } else {
-                openSidebar();
+            processRawData(jsonData, filename);
+            showNotification('Successo', `File Excel elaborato: ${filename}`, 'success');
+        }
+
+        // Process Raw Data
+        function processRawData(data, filename) {
+            // Update shipments data
+            const newShipments = data.map((row, index) => ({
+                trackingId: row.tracking || row['TRACKING ID'] || `IT${1000100 + index}`,
+                destination: row.destination || row['DESTINAZIONE'] || 'N/A',
+                carrier: row.carrier || row['CORRIERE'] || 'Unknown',
+                status: row.status || row['STATO'] || 'pending',
+                value: parseFloat(row.value || row['VALORE'] || 0)
+            }));
+
+            dashboardData.shipmentsData = [...dashboardData.shipmentsData, ...newShipments];
+            
+            // Update KPIs
+            dashboardData.kpi.totalShipments += newShipments.length;
+            dashboardData.kpi.totalRevenue += newShipments.reduce((sum, s) => sum + s.value, 0);
+            
+            updateDashboard();
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            updateKPIs();
+            updateTables();
+            updateChartsWithNewData();
+        }
+
+        // Update KPIs
+        function updateKPIs() {
+            document.getElementById('total-revenue').textContent = 
+                `€${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`;
+            document.getElementById('total-shipments').textContent = 
+                dashboardData.kpi.totalShipments.toLocaleString('it-IT');
+            document.getElementById('avg-delivery').textContent = 
+                dashboardData.kpi.avgDeliveryTime.toString();
+            document.getElementById('ontime-rate').textContent = 
+                `${dashboardData.kpi.onTimeRate}%`;
+        }
+
+        // Update Tables
+        function updateTables() {
+            // Update shipments table
+            const shipmentsTableBody = document.querySelector('#shipmentsTable tbody');
+            shipmentsTableBody.innerHTML = '';
+
+            dashboardData.shipmentsData.slice(-5).forEach(shipment => {
+                const row = shipmentsTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${shipment.trackingId}</td>
+                    <td>${shipment.destination}</td>
+                    <td>${shipment.carrier}</td>
+                    <td><span class="status-badge status-${shipment.status}">${shipment.status}</span></td>
+                    <td>€${shipment.value.toLocaleString('it-IT')}</td>
+                `;
+            });
+
+            // Update carriers table
+            const carriersTableBody = document.querySelector('#carriersTable tbody');
+            carriersTableBody.innerHTML = '';
+
+            dashboardData.carriersData.forEach(carrier => {
+                const row = carriersTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${carrier.name}</td>
+                    <td>${carrier.shipments.toLocaleString('it-IT')}</td>
+                    <td>${carrier.successRate}%</td>
+                    <td>${carrier.avgTime} giorni</td>
+                    <td>${carrier.rating}/5</td>
+                `;
+            });
+        }
+
+        // Initialize Charts with ApexCharts
+        function initCharts() {
+            // 1. Revenue Trend Chart
+            const revenueOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Ricavi',
+                    data: dashboardData.revenue.map(item => item.value)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'area',
+                    height: '100%'
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.4,
+                        opacityTo: 0.1,
+                        stops: [0, 90, 100]
+                    }
+                },
+                xaxis: {
+                    ...solariumTheme.xaxis,
+                    categories: dashboardData.revenue.map(item => item.month)
+                }
+            };
+
+            // 2. Carriers Chart
+            const carriersOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Spedizioni',
+                    data: Object.values(dashboardData.shipments)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'bar',
+                    height: '100%'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 8,
+                        horizontal: true,
+                        distributed: true,
+                        barHeight: '70%'
+                    }
+                },
+                xaxis: {
+                    ...solariumTheme.xaxis,
+                    categories: Object.keys(dashboardData.shipments)
+                }
+            };
+
+            // 3. Performance Chart
+            const performanceOptions = {
+                ...solariumTheme,
+                series: Object.values(dashboardData.performance).map(v => parseFloat(v)),
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'donut',
+                    height: '100%'
+                },
+                labels: ['In Orario', 'In Ritardo', 'Fallite'],
+                colors: ['#34c759', '#ff9500', '#ff3b30'],
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Totale',
+                                    fontSize: '14px',
+                                    color: 'rgba(255, 255, 255, 0.8)'
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            // 4. Geographic Chart
+            const geographicOptions = {
+                ...solariumTheme,
+                series: [{
+                    name: 'Distribuzione %',
+                    data: Object.values(dashboardData.geographic)
+                }],
+                chart: {
+                    ...solariumTheme.chart,
+                    type: 'radar',
+                    height: '100%'
+                },
+                xaxis: {
+                    categories: Object.keys(dashboardData.geographic),
+                    labels: {
+                        style: {
+                            colors: Array(Object.keys(dashboardData.geographic).length).fill('rgba(255, 255, 255, 0.8)'),
+                            fontSize: '13px'
+                        }
+                    }
+                },
+                yaxis: {
+                    show: false,
+                    max: 50
+                },
+                plotOptions: {
+                    radar: {
+                        size: undefined,
+                        polygons: {
+                            strokeColors: 'rgba(255, 255, 255, 0.1)',
+                            strokeWidth: 1,
+                            connectorColors: 'rgba(255, 255, 255, 0.1)',
+                            fill: {
+                                colors: ['transparent']
+                            }
+                        }
+                    }
+                },
+                fill: {
+                    opacity: 0.4
+                },
+                markers: {
+                    size: 5,
+                    colors: ['#007aff'],
+                    strokeColors: '#fff',
+                    strokeWidth: 2,
+                    hover: {
+                        size: 8
+                    }
+                }
+            };
+
+            // Create charts
+            if (chartInstances.revenue) chartInstances.revenue.destroy();
+            chartInstances.revenue = new ApexCharts(
+                document.querySelector("#revenueChart"), 
+                revenueOptions
+            );
+            chartInstances.revenue.render();
+
+            if (chartInstances.carriers) chartInstances.carriers.destroy();
+            chartInstances.carriers = new ApexCharts(
+                document.querySelector("#carriersChart"), 
+                carriersOptions
+            );
+            chartInstances.carriers.render();
+
+            if (chartInstances.performance) chartInstances.performance.destroy();
+            chartInstances.performance = new ApexCharts(
+                document.querySelector("#performanceChart"), 
+                performanceOptions
+            );
+            chartInstances.performance.render();
+
+            if (chartInstances.geographic) chartInstances.geographic.destroy();
+            chartInstances.geographic = new ApexCharts(
+                document.querySelector("#geographicChart"), 
+                geographicOptions
+            );
+            chartInstances.geographic.render();
+        }
+
+        // Update Charts with new data
+        function updateChartsWithNewData() {
+            if (!chartInstances.revenue) {
+                initCharts();
+                return;
+            }
+
+            // Update each chart
+            if (chartInstances.revenue) {
+                chartInstances.revenue.updateOptions({
+                    series: [{
+                        data: dashboardData.revenue.map(item => item.value)
+                    }]
+                });
             }
         }
 
-        // Open sidebar function
-        function openSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
+        // Notification System
+        function showNotification(title, message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title">${title}</div>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
             
-            sidebar.classList.add('active');
-            backdrop.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
         }
 
-        // Close sidebar function
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
+        // Refresh Dashboard
+        function refreshDashboard() {
+            showNotification('Aggiornamento', 'Aggiornamento dashboard in corso...', 'info');
             
-            sidebar.classList.remove('active');
-            backdrop.classList.remove('active');
-            document.body.style.overflow = '';
+            // Simulate data refresh
+            dashboardData.kpi.totalRevenue += Math.floor(Math.random() * 10000);
+            dashboardData.kpi.totalShipments += Math.floor(Math.random() * 20);
+            
+            updateDashboard();
+            showNotification('Successo', 'Dashboard aggiornata con successo', 'success');
         }
 
-        // Prevent any UI blocking issues
-        setInterval(() => {
-            // Safety check to ensure UI is never blocked
-            if (document.body.style.pointerEvents === 'none') {
-                document.body.style.pointerEvents = '';
-            }
-            // Ensure backdrop is hidden if sidebar is not active
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
-            if (!sidebar.classList.contains('active') && backdrop.classList.contains('active')) {
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        }, 500);
+        // Export to PDF
+        function exportToPDF() {
+            showNotification('Export PDF', 'Generazione report PDF in corso...', 'info');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(20);
+            doc.text('Supply Chain Hub - Report', 20, 30);
+            
+            doc.setFontSize(12);
+            doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 20, 45);
+
+            // KPIs
+            doc.setFontSize(16);
+            doc.text('Indicatori Chiave', 20, 65);
+            
+            doc.setFontSize(12);
+            let yPos = 80;
+            doc.text(`Fatturato: €${dashboardData.kpi.totalRevenue.toLocaleString('it-IT')}`, 20, yPos);
+            yPos += 10;
+            doc.text(`Spedizioni: ${dashboardData.kpi.totalShipments.toLocaleString('it-IT')}`, 20, yPos);
+            yPos += 10;
+            doc.text(`Tempo Medio: ${dashboardData.kpi.avgDeliveryTime} giorni`, 20, yPos);
+            yPos += 10;
+            doc.text(`Puntualità: ${dashboardData.kpi.onTimeRate}%`, 20, yPos);
+
+            doc.save('supply-chain-report.pdf');
+            showNotification('Successo', 'Report PDF generato', 'success');
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            showNotification('Export Excel', 'Generazione file Excel in corso...', 'info');
+            
+            const wb = XLSX.utils.book_new();
+            
+            // KPI Sheet
+            const kpiData = [
+                ['Indicatore', 'Valore'],
+                ['Fatturato Totale', dashboardData.kpi.totalRevenue],
+                ['Spedizioni Totali', dashboardData.kpi.totalShipments],
+                ['Tempo Medio Consegna', dashboardData.kpi.avgDeliveryTime],
+                ['Tasso Puntualità', dashboardData.kpi.onTimeRate]
+            ];
+            const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+            XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
+            
+            // Shipments Sheet
+            const shipmentsData = [['Tracking', 'Destinazione', 'Corriere', 'Stato', 'Valore']];
+            dashboardData.shipmentsData.forEach(s => {
+                shipmentsData.push([s.trackingId, s.destination, s.carrier, s.status, s.value]);
+            });
+            const shipmentsSheet = XLSX.utils.aoa_to_sheet(shipmentsData);
+            XLSX.utils.book_append_sheet(wb, shipmentsSheet, 'Spedizioni');
+            
+            XLSX.writeFile(wb, 'supply-chain-data.xlsx');
+            showNotification('Successo', 'File Excel generato', 'success');
+        }
     </script>
 </body>
 </html>
