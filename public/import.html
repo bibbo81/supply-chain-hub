@@ -24,167 +24,20 @@
     <style>
         /* Additional styles specific to import page */
         
-        /* Header styles to match dashboard */
-        .sol-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: var(--sol-glass-heavy);
-            backdrop-filter: var(--sol-blur-xl);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000;
-            transition: var(--sol-transition-base);
-        }
-
-        .sol-header-content {
-            height: 100%;
-            padding: 0 var(--sol-space-xl);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1920px;
-            margin: 0 auto;
-        }
-
-        .sol-header-left {
-            display: flex;
-            align-items: center;
-            gap: var(--sol-space-lg);
-        }
-
-        /* Menu toggle button */
-        .menu-toggle {
-            background: none;
-            border: none;
-            color: var(--sol-text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: var(--sol-space-sm);
-            border-radius: var(--sol-radius-sm);
-            transition: var(--sol-transition-fast);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-        }
-
-        .menu-toggle:hover {
-            background: var(--sol-glass-medium);
-        }
-
-        /* Logo styles */
-        .sol-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--sol-space-md);
-            text-decoration: none;
-            color: var(--sol-text-primary);
-            transition: var(--sol-transition-fast);
-        }
-
-        .sol-logo:hover {
-            transform: translateY(-1px);
-        }
-
-        .sol-logo-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--sol-gradient-primary);
-            border-radius: var(--sol-radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.125rem;
-            color: white;
-            box-shadow: var(--sol-shadow-md);
-        }
-
-        .sol-logo-text {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        /* Sidebar styles */
-        .sol-sidebar {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            bottom: 0;
-            width: 280px;
-            background: var(--sol-glass-heavy);
-            backdrop-filter: var(--sol-blur-xl);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            transform: translateX(-100%);
-            transition: transform var(--sol-transition-base);
-            z-index: 999;
-            overflow-y: auto;
-        }
-
-        .sol-sidebar.active {
-            transform: translateX(0);
-        }
-
-        .sol-sidebar-nav {
-            padding: var(--sol-space-xl);
-        }
-
-        .sol-nav-section {
-            margin-bottom: var(--sol-space-xl);
-        }
-
-        .sol-nav-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--sol-text-tertiary);
-            margin-bottom: var(--sol-space-sm);
-        }
-
-        .sol-nav-item {
-            display: flex;
-            align-items: center;
-            gap: var(--sol-space-md);
-            padding: var(--sol-space-sm) var(--sol-space-md);
-            border-radius: var(--sol-radius-md);
-            color: var(--sol-text-secondary);
-            text-decoration: none;
-            transition: var(--sol-transition-fast);
-            margin-bottom: var(--sol-space-xs);
-        }
-
-        .sol-nav-item:hover {
-            background: var(--sol-glass-medium);
-            color: var(--sol-text-primary);
-            transform: translateX(4px);
-        }
-
-        .sol-nav-item.active {
-            background: var(--sol-glass-medium);
-            color: var(--sol-text-primary);
-            border-left: 3px solid var(--sol-accent-primary);
-        }
-
-        .sol-nav-item i {
-            width: 20px;
-            text-align: center;
-        }
+        /* Rimuovo tutti gli stili custom header/sidebar - usiamo solarium.css */
         
         /* Main Layout */
-        .main-content {
+        .sol-main-content {
             margin-top: 80px;
             padding: var(--sol-space-xl);
             max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
-            transition: margin-left var(--sol-transition-base);
         }
-
-        .main-content.sidebar-open {
-            margin-left: 280px;
+        
+        /* Style per dropdown come dashboard */
+        .sol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         /* Page Header */
@@ -928,21 +781,21 @@
         }
 
         /* Backdrop */
-        .backdrop {
+        .sol-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: var(--sol-blur-sm);
             z-index: 998;
             opacity: 0;
             visibility: hidden;
             transition: var(--sol-transition-base);
         }
 
-        .backdrop.active {
+        .sol-backdrop.active {
             opacity: 1;
             visibility: visible;
         }
@@ -988,39 +841,45 @@
     <header class="sol-header">
         <div class="sol-header-content">
             <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
-                <button class="menu-toggle" id="menuToggle">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
                     <i class="fas fa-bars"></i>
                 </button>
                 <a href="/" class="sol-logo">
                     <div class="sol-logo-icon">SCH</div>
-                    <div class="sol-logo-text">Supply Chain Hub</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
                 </a>
             </div>
             
-            <div class="sol-header-center" style="flex: 1;"></div>
-
-            <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm); margin-right: var(--sol-space-lg);">
-                <i class="fas fa-bell" style="color: #ffffff;"></i>
-                <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
-            </button>
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+                </div>
+            </div>
             
-            <div class="user-menu-wrapper">
-                <button class="user-menu" id="userMenuBtn">
-                    <div class="user-avatar">
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm);">
+                    <i class="fas fa-bell" style="color: var(--sol-text-primary);"></i>
+                    <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
+                </button>
+                
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
                         <span id="userInitial">U</span>
                     </div>
-                    <span class="user-name" id="userName">Utente</span>
+                    <span id="userName">Utente</span>
                     <i class="fas fa-chevron-down"></i>
                 </button>
-                <div class="user-dropdown" id="userDropdown">
-                    <a href="#" class="dropdown-item">
+                
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
                         <i class="fas fa-user"></i> Profilo
                     </a>
-                    <a href="/settings.html" class="dropdown-item">
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
                         <i class="fas fa-cog"></i> Impostazioni
                     </a>
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" id="logoutBtn">
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
                         <i class="fas fa-sign-out-alt"></i> Esci
                     </button>
                 </div>
@@ -1030,9 +889,9 @@
 
     <!-- Sidebar -->
     <aside class="sol-sidebar" id="sidebar">
-        <nav class="sol-sidebar-nav">
-            <div class="sol-nav-section">
-                <div class="sol-nav-section-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm);">PRINCIPALE</div>
+        <nav style="padding: var(--sol-space-lg) 0;">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
                 <a href="/dashboard.html" class="sol-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
@@ -1051,8 +910,8 @@
                 </a>
             </div>
             
-            <div class="sol-nav-section" style="margin-top: var(--sol-space-xl);">
-                <div class="sol-nav-section-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm);">STRUMENTI</div>
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
                 <a href="/import.html" class="sol-nav-item active">
                     <i class="fas fa-upload"></i>
                     <span>Importa Dati</span>
@@ -1067,8 +926,8 @@
                 </a>
             </div>
             
-            <div class="sol-nav-section" style="margin-top: var(--sol-space-xl);">
-                <div class="sol-nav-section-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm);">CONFIGURAZIONE</div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
                 <a href="/team.html" class="sol-nav-item">
                     <i class="fas fa-users"></i>
                     <span>Team</span>
@@ -1086,7 +945,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="sol-main-content">
         <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title">Import Dati Avanzato</h1>
@@ -1386,19 +1245,12 @@
                 userMenuBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    userDropdown.classList.toggle('active');
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
                 });
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-                        userDropdown.classList.remove('active');
-                    }
-                });
-
-                // Prevent clicks inside dropdown from closing it
-                userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
+                    userDropdown.style.display = 'none';
                 });
             }
 
