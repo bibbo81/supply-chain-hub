@@ -621,10 +621,11 @@
                 supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
                 window.supabase = supabase;
                 
-                // IMPORTANTE: NON fare auto-redirect qui!
-                // Usa auth.js per gestire i redirect
-                if (window.auth && window.auth.redirectIfAuthenticated) {
-                    await window.auth.redirectIfAuthenticated();
+                // Check if already authenticated
+                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
+                if (token) {
+                    // Redirect to dashboard if already logged in
+                    window.location.href = '/dashboard.html';
                 }
                 
             } catch (error) {
@@ -729,6 +730,14 @@
 
                 if (error) throw error;
 
+                // Store auth token
+                const session = data.session;
+                if (session) {
+                    localStorage.setItem('sb-access-token', session.access_token);
+                    localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+
                 // Store remember me preference
                 if (rememberMe) {
                     localStorage.setItem('rememberEmail', email);
@@ -737,7 +746,7 @@
                 }
 
                 // Success - redirect to dashboard
-                window.location.href = '/';
+                window.location.href = '/dashboard.html';
 
             } catch (error) {
                 hideLoading();
