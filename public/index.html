@@ -86,6 +86,28 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: var(--sol-space-md);
+            cursor: move;
+            position: relative;
+            padding-top: var(--sol-space-md);
+        }
+        
+        /* Drag handle indicator */
+        .widget-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+        
+        .widget-header:hover::before {
+            background: rgba(255, 255, 255, 0.4);
+            width: 60px;
         }
         
         .widget-actions {
@@ -232,6 +254,19 @@
         .sol-chart-container {
             height: 300px;
             position: relative;
+            width: 100%;
+            min-height: 300px;
+        }
+        
+        /* Fix per grafici donut/pie */
+        .widget.chart-widget .apexcharts-canvas {
+            max-width: 100% !important;
+            margin: 0 auto;
+        }
+        
+        .widget.chart-widget svg {
+            max-width: 100% !important;
+            height: auto !important;
         }
         
         /* Modal Styles */
@@ -868,10 +903,23 @@
                         const widgetId = 'carrierDistribution';
                         setTimeout(() => {
                             if (data.topCarriers) {
-                                const chart = new ApexCharts(document.querySelector(`#chart-${widgetId}`), {
+                                const chartElement = document.querySelector(`#chart-${widgetId}`);
+                                if (!chartElement) return;
+                                
+                                const chart = new ApexCharts(chartElement, {
                                     ...chartTheme,
                                     series: data.topCarriers.map(c => c.cost),
-                                    chart: { ...chartTheme.chart, type: 'donut', height: '100%' },
+                                    chart: { 
+                                        ...chartTheme.chart, 
+                                        type: 'donut', 
+                                        height: '100%',
+                                        width: '100%',
+                                        animations: {
+                                            enabled: true,
+                                            easing: 'easeinout',
+                                            speed: 800
+                                        }
+                                    },
                                     labels: data.topCarriers.map(c => c.name),
                                     plotOptions: {
                                         pie: {
@@ -887,7 +935,18 @@
                                                 }
                                             }
                                         }
-                                    }
+                                    },
+                                    responsive: [{
+                                        breakpoint: 480,
+                                        options: {
+                                            chart: {
+                                                width: '100%'
+                                            },
+                                            legend: {
+                                                position: 'bottom'
+                                            }
+                                        }
+                                    }]
                                 });
                                 chart.render();
                                 this.chartInstances[widgetId] = chart;
@@ -1147,6 +1206,7 @@
                     animation: 150,
                     ghostClass: 'dragging',
                     handle: '.widget-header',
+                    cursor: 'move',
                     onEnd: () => {
                         // Update order
                         const widgets = container.querySelectorAll('.widget');
