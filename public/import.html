@@ -127,32 +127,50 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
-        /* Data Table Container - Fixed for scrolling */
+        /* Data Table Container - Fixed definitivo per scrolling */
         .data-table-container {
             background: var(--sol-glass-light);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-lg);
-            overflow: hidden;
             margin-bottom: var(--sol-space-lg);
-            display: flex;
-            flex-direction: column;
-            max-height: 600px;
-        }
-
-        .data-table-wrapper {
-            overflow-x: auto; /* Scroll orizzontale sempre visibile */
-            overflow-y: auto; /* Scroll verticale quando necessario */
-            flex: 1;
             position: relative;
             width: 100%;
         }
 
+        .data-table-wrapper {
+            overflow-x: auto !important; /* Forza scroll orizzontale */
+            overflow-y: auto !important; /* Forza scroll verticale */
+            max-height: 500px;
+            width: 100%;
+            position: relative;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling su iOS */
+        }
+
+        /* Scrollbar styling */
+        .data-table-wrapper::-webkit-scrollbar {
+            height: 12px;
+            width: 12px;
+        }
+
+        .data-table-wrapper::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .data-table-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        .data-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
         /* Table con selezione migliorata */
         .data-table {
-            width: auto; /* Non forzare 100% */
-            min-width: 100%; /* Minimo larghezza del container */
             border-collapse: collapse;
-            table-layout: auto; /* Layout automatico per permettere espansione */
+            width: auto !important; /* Non forzare larghezza */
+            min-width: 100%;
         }
 
         .data-table th,
