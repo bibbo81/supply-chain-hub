@@ -127,26 +127,35 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
-        /* Data Table Container - SEMPLIFICATO per scroll */
+        /* OVERRIDE SCROLL - Approccio nucleare */
+        #dataTableContainer {
+            width: 100% !important;
+            overflow: visible !important;
+        }
+        
         .data-table-container {
-            background: var(--sol-glass-light);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--sol-radius-lg);
-            padding: 0;
-            margin-bottom: var(--sol-space-lg);
+            width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            max-width: 100% !important;
+            display: block !important;
+            position: relative !important;
         }
 
         .data-table-wrapper {
-            width: 100%;
-            overflow-x: scroll; /* SCROLL non auto */
-            overflow-y: visible;
-            max-height: 500px;
+            width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            max-height: 500px !important;
+            display: block !important;
+            position: relative !important;
+            -webkit-overflow-scrolling: touch !important;
         }
 
-        /* Table SENZA width constraints */
         .data-table {
-            border-collapse: collapse;
-            /* NESSUN width, min-width o max-width */
+            width: max-content !important;
+            min-width: 100% !important;
+            display: table !important;
         }
 
         .data-table th,
@@ -987,8 +996,8 @@
                         </div>
                         
                         <div class="data-table-container">
-                            <div class="data-table-wrapper" style="overflow-x: scroll !important; width: 100%; display: block;">
-                                <table class="data-table" id="dataTable" style="width: max-content;">
+                            <div class="data-table-wrapper">
+                                <table class="data-table" id="dataTable">
                                     <thead id="tableHead"></thead>
                                     <tbody id="tableBody"></tbody>
                                 </table>
@@ -1312,12 +1321,17 @@
         // Process CSV
         function processCSV(csvData) {
             console.log('Processing CSV data...');
+            console.log('Raw CSV data (first 500 chars):', csvData.substring(0, 500));
+            
             Papa.parse(csvData, {
                 header: true,
                 dynamicTyping: true,
                 skipEmptyLines: true,
                 complete: (results) => {
                     console.log('Papa Parse results:', results);
+                    console.log('First row data:', JSON.stringify(results.data[0], null, 2));
+                    console.log('Column names:', results.data.length > 0 ? Object.keys(results.data[0]) : 'No data');
+                    
                     fileData = results.data;
                     console.log('Parsed data:', fileData);
                     showPreview();
@@ -1645,8 +1659,21 @@
                 sourceFields.forEach(field => {
                     const td = tr.insertCell();
                     const value = row[field];
-                    // Converti il valore in stringa se è un oggetto
-                    td.textContent = value !== null && value !== undefined ? String(value) : '';
+                    // Assicurati di ottenere il valore corretto
+                    if (value !== null && value !== undefined) {
+                        // Se è un oggetto Date, formattalo
+                        if (value instanceof Date) {
+                            td.textContent = value.toLocaleDateString('it-IT');
+                        } else if (typeof value === 'object') {
+                            // Se è ancora un oggetto, prova JSON.stringify
+                            td.textContent = JSON.stringify(value);
+                        } else {
+                            // Altrimenti usa il valore direttamente
+                            td.textContent = String(value);
+                        }
+                    } else {
+                        td.textContent = '';
+                    }
                     td.className = 'editable';
                     td.dataset.field = field;
                     td.dataset.rowIndex = i;
@@ -1662,6 +1689,29 @@
             
             // Forza un reflow per assicurarsi che gli stili siano applicati
             wrapper.offsetHeight;
+            
+            // FORZA SCROLL - Fix definitivo
+            setTimeout(() => {
+                const tableWrapper = document.querySelector('.data-table-wrapper');
+                if (tableWrapper) {
+                    // Rimuovi tutti gli stili inline esistenti
+                    tableWrapper.style.cssText = '';
+                    // Applica solo gli stili necessari
+                    tableWrapper.style.overflowX = 'scroll';
+                    tableWrapper.style.overflowY = 'auto';
+                    tableWrapper.style.maxHeight = '500px';
+                    tableWrapper.style.width = '100%';
+                    tableWrapper.style.display = 'block';
+                    
+                    // Verifica che la tabella sia più larga del container
+                    const table = tableWrapper.querySelector('.data-table');
+                    if (table) {
+                        console.log('Table width:', table.offsetWidth);
+                        console.log('Wrapper width:', tableWrapper.offsetWidth);
+                        console.log('Needs scroll:', table.offsetWidth > tableWrapper.offsetWidth);
+                    }
+                }
+            }, 100);
             
             // Update pagination
             document.getElementById('showingFrom').textContent = startIndex + 1;
