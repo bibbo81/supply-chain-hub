@@ -127,50 +127,26 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
-        /* Data Table Container - Fixed definitivo per scrolling */
+        /* Data Table Container - SEMPLIFICATO per scroll */
         .data-table-container {
             background: var(--sol-glass-light);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-lg);
+            padding: 0;
             margin-bottom: var(--sol-space-lg);
-            position: relative;
-            width: 100%;
         }
 
         .data-table-wrapper {
-            overflow-x: auto !important; /* Forza scroll orizzontale */
-            overflow-y: auto !important; /* Forza scroll verticale */
-            max-height: 500px;
             width: 100%;
-            position: relative;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling su iOS */
+            overflow-x: scroll; /* SCROLL non auto */
+            overflow-y: visible;
+            max-height: 500px;
         }
 
-        /* Scrollbar styling */
-        .data-table-wrapper::-webkit-scrollbar {
-            height: 12px;
-            width: 12px;
-        }
-
-        .data-table-wrapper::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-        }
-
-        .data-table-wrapper::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-        }
-
-        .data-table-wrapper::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Table con selezione migliorata */
+        /* Table SENZA width constraints */
         .data-table {
             border-collapse: collapse;
-            width: auto !important; /* Non forzare larghezza */
-            min-width: 100%;
+            /* NESSUN width, min-width o max-width */
         }
 
         .data-table th,
@@ -179,8 +155,7 @@
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             white-space: nowrap;
-            position: relative;
-            min-width: 120px; /* Larghezza minima per ogni colonna */
+            min-width: 150px; /* Forza larghezza minima */
         }
 
         .data-table th {
@@ -193,35 +168,15 @@
             border-bottom: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Colonne sticky per checkbox e stato */
+        /* RIMUOVO tutti gli sticky per le colonne */
         .data-table th:first-child,
         .data-table td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 11;
-            background: var(--sol-glass-medium);
             min-width: 50px;
-            max-width: 50px;
         }
 
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
-            position: sticky;
-            left: 50px;
-            z-index: 11;
-            background: var(--sol-glass-medium);
             min-width: 80px;
-            max-width: 80px;
-        }
-
-        .data-table td:first-child,
-        .data-table td:nth-child(2) {
-            background: var(--sol-glass-light);
-        }
-
-        .data-table tr:hover td:first-child,
-        .data-table tr:hover td:nth-child(2) {
-            background: rgba(255, 255, 255, 0.02);
         }
 
         /* Header con mapping destination */
@@ -1022,7 +977,7 @@
                     </div>
 
                     <!-- Data Table with Validation (Step 3-4) -->
-                    <div class="data-table-container" id="dataTableContainer" style="display: none;">
+                    <div id="dataTableContainer" style="display: none;">
                         <!-- Selection info -->
                         <div class="selection-info" id="selectionInfo">
                             <p class="selection-info-text">
@@ -1031,11 +986,13 @@
                             </p>
                         </div>
                         
-                        <div class="data-table-wrapper">
-                            <table class="data-table" id="dataTable">
-                                <thead id="tableHead"></thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
+                        <div class="data-table-container">
+                            <div class="data-table-wrapper" style="overflow-x: scroll !important; width: 100%; display: block;">
+                                <table class="data-table" id="dataTable" style="width: max-content;">
+                                    <thead id="tableHead"></thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
                         </div>
                         
                         <!-- Pagination -->
@@ -1590,17 +1547,37 @@
             console.log('FileData:', fileData);
             console.log('MappedData:', mappedData);
             
+            // Forza lo stile del wrapper per essere sicuri
+            const wrapper = document.querySelector('.data-table-wrapper');
+            if (wrapper) {
+                wrapper.style.overflowX = 'auto';
+                wrapper.style.overflowY = 'auto';
+                wrapper.style.maxHeight = '500px';
+                wrapper.style.width = '100%';
+                wrapper.style.display = 'block';
+            }
+            
+            // Forza lo stile della tabella
+            const table = document.getElementById('dataTable');
+            if (table) {
+                table.style.width = 'auto';
+                table.style.minWidth = '100%';
+                table.style.tableLayout = 'auto';
+            }
+            
             // Create header
             const headerRow = tableHead.insertRow();
             
             // Checkbox column
             let th = document.createElement('th');
             th.innerHTML = '<input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" checked onchange="toggleAllRows()">';
+            th.style.minWidth = '50px';
             headerRow.appendChild(th);
             
             // Status column
             th = document.createElement('th');
             th.textContent = 'Stato';
+            th.style.minWidth = '80px';
             headerRow.appendChild(th);
             
             // Data columns con mapping info
@@ -1616,6 +1593,7 @@
                 const th = document.createElement('th');
                 const mappedField = fieldMappingConfig[sourceField];
                 
+                th.style.minWidth = '150px'; // Larghezza minima per ogni colonna
                 th.innerHTML = `
                     <div class="column-header">
                         <span class="column-name">${sourceField}</span>
@@ -1673,6 +1651,7 @@
                     td.dataset.field = field;
                     td.dataset.rowIndex = i;
                     td.addEventListener('click', handleCellEdit);
+                    td.style.minWidth = '150px'; // Larghezza minima per ogni cella
                 });
                 
                 // Update row selection state
@@ -1680,6 +1659,9 @@
                     tr.classList.add('selected');
                 }
             }
+            
+            // Forza un reflow per assicurarsi che gli stili siano applicati
+            wrapper.offsetHeight;
             
             // Update pagination
             document.getElementById('showingFrom').textContent = startIndex + 1;
@@ -1896,7 +1878,14 @@
 
         // Execute import
         async function executeImport() {
-            const selectedData = mappedData.filter((_, index) => selectedRows.has(index));
+            const selectedData = [];
+            
+            // Prepara solo le righe selezionate con i dati originali
+            selectedRows.forEach(index => {
+                if (fileData[index]) {
+                    selectedData.push(fileData[index]);
+                }
+            });
             
             if (selectedData.length === 0) {
                 showNotification('Attenzione', 'Nessuna riga selezionata per l\'import', 'error');
@@ -1910,31 +1899,33 @@
             importBtn.disabled = true;
             
             try {
-                // Call import API
+                // Prepara il file per l'upload
+                const fileContent = Papa.unparse(selectedData);
+                const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
+                
+                // Call import API con il formato corretto
                 const response = await fetch('/.netlify/functions/import-file', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('sb-access-token')}`
+                        'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
                     },
                     body: JSON.stringify({
-                        data: selectedData,
-                        options: {
-                            skipDuplicates: document.getElementById('skipDuplicates').checked,
-                            updateExisting: document.getElementById('updateExisting').checked
-                        }
+                        file: `data:text/csv;base64,${base64Content}`,
+                        filename: document.getElementById('fileName').textContent,
+                        type: 'csv'
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showNotification('Successo', `Importate ${result.imported} righe con successo`, 'success');
+                    showNotification('Successo', `Import completato: ${result.result.imported} righe importate, ${result.result.skipped} saltate`, 'success');
                     
                     // Add to history
                     addToHistory({
                         fileName: document.getElementById('fileName').textContent,
-                        rowsImported: result.imported,
+                        rowsImported: result.result.imported,
                         status: 'success',
                         date: new Date().toISOString()
                     });
