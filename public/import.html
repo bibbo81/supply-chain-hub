@@ -140,16 +140,19 @@
         }
 
         .data-table-wrapper {
-            overflow: auto; /* Abilita scroll sia orizzontale che verticale */
+            overflow-x: auto; /* Scroll orizzontale sempre visibile */
+            overflow-y: auto; /* Scroll verticale quando necessario */
             flex: 1;
             position: relative;
+            width: 100%;
         }
 
         /* Table con selezione migliorata */
         .data-table {
-            width: 100%;
-            min-width: max-content; /* Permette alla tabella di espandersi */
+            width: auto; /* Non forzare 100% */
+            min-width: 100%; /* Minimo larghezza del container */
             border-collapse: collapse;
+            table-layout: auto; /* Layout automatico per permettere espansione */
         }
 
         .data-table th,
@@ -159,6 +162,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             white-space: nowrap;
             position: relative;
+            min-width: 120px; /* Larghezza minima per ogni colonna */
         }
 
         .data-table th {
@@ -169,6 +173,37 @@
             top: 0;
             z-index: 10;
             border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Colonne sticky per checkbox e stato */
+        .data-table th:first-child,
+        .data-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background: var(--sol-glass-medium);
+            min-width: 50px;
+            max-width: 50px;
+        }
+
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            position: sticky;
+            left: 50px;
+            z-index: 11;
+            background: var(--sol-glass-medium);
+            min-width: 80px;
+            max-width: 80px;
+        }
+
+        .data-table td:first-child,
+        .data-table td:nth-child(2) {
+            background: var(--sol-glass-light);
+        }
+
+        .data-table tr:hover td:first-child,
+        .data-table tr:hover td:nth-child(2) {
+            background: rgba(255, 255, 255, 0.02);
         }
 
         /* Header con mapping destination */
@@ -1521,19 +1556,11 @@
             
             // Checkbox column
             let th = document.createElement('th');
-            th.style.position = 'sticky';
-            th.style.left = '0';
-            th.style.zIndex = '11';
-            th.style.background = 'var(--sol-glass-medium)';
             th.innerHTML = '<input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" checked onchange="toggleAllRows()">';
             headerRow.appendChild(th);
             
             // Status column
             th = document.createElement('th');
-            th.style.position = 'sticky';
-            th.style.left = '50px';
-            th.style.zIndex = '11';
-            th.style.background = 'var(--sol-glass-medium)';
             th.textContent = 'Stato';
             headerRow.appendChild(th);
             
@@ -1581,16 +1608,10 @@
                 
                 // Checkbox cell
                 const checkboxCell = tr.insertCell();
-                checkboxCell.style.position = 'sticky';
-                checkboxCell.style.left = '0';
-                checkboxCell.style.background = 'inherit';
                 checkboxCell.innerHTML = `<input type="checkbox" class="row-checkbox" data-index="${i}" ${selectedRows.has(i) ? 'checked' : ''} onchange="toggleRow(${i})">`;
                 
                 // Status cell
                 const statusCell = tr.insertCell();
-                statusCell.style.position = 'sticky';
-                statusCell.style.left = '50px';
-                statusCell.style.background = 'inherit';
                 const validationIcon = document.createElement('div');
                 validationIcon.className = `validation-icon ${mappedRow.validation}`;
                 
