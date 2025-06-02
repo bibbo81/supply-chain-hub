@@ -19,25 +19,52 @@ const corsHeaders = {
 // ID organizzazione di default per test
 const DEFAULT_ORG_ID = 'bb70d86e-bf38-4a85-adc3-76be46705d52';
 
-// Mappatura colonne per import
+// Mappatura COMPLETA colonne per import (aggiornata con TUTTI i campi)
 const COLUMN_MAPPING = {
-  // Colonne Excel/CSV -> campi database
-  'RIF. SPEDIZIONE': 'rif_spedizione',
+  // Mapping esatto dal foglio Google Sheets
   'N. ODA': 'n_oda',
   'ANNO': 'anno',
   'COD. ART.': 'cod_art',
+  'DESCRIZIONE': 'descrizione',
+  'DESCRIZIONE ESTESA': 'descrizione_estesa',
   'FORNITORE': 'fornitore',
-  'UM': 'um',
+  'U.M.': 'um',
+  'UM': 'um', // alias
   'QTY': 'qty',
-  'FATTURA FORNITORE': 'fattura_fornitore',
-  'COSTO TRASPORTO': 'costo_trasporto',
-  'TIPO SPEDIZIONE': 'tipo_spedizione',
+  'TIPO DI SPEDIZIONE': 'tipo_spedizione',
+  'TIPO SPEDIZIONE': 'tipo_spedizione', // alias senza "DI"
   'SPEDIZIONIERE': 'spedizioniere',
+  'RIF. SPEDIZIONE': 'rif_spedizione',
   'COMPAGNIA': 'compagnia',
   'STATO SPEDIZIONE': 'stato_spedizione',
   'DATA PARTENZA': 'data_partenza',
-  'DATA ARRIVO': 'data_arrivo_effettiva',
-  'PERCENTUALE DAZIO': 'percentuale_dazio'
+  'DATA ARRIVO (EFFETTIVA)': 'data_arrivo_effettiva',
+  'DATA ARRIVO': 'data_arrivo_effettiva', // alias senza parentesi
+  'TRANSIT TIME (Giorni)': 'transit_time_giorni',
+  'TRANSIT TIME': 'transit_time_giorni', // alias
+  'RITARDO (GIORNI)': 'ritardo_giorni',
+  'RITARDO': 'ritardo_giorni', // alias
+  'COSTO TRASPORTO €': 'costo_trasporto',
+  'COSTO TRASPORTO': 'costo_trasporto', // alias senza €
+  'COSTO UN. (€/PZ)': 'costo_unitario_trasporto',
+  'COSTO UNITARIO': 'costo_unitario_trasporto', // alias
+  '% DAZIO': 'percentuale_dazio',
+  'DAZIO %': 'percentuale_dazio', // alias
+  'PERCENTUALE DAZIO': 'percentuale_dazio', // alias
+  'FATTURA FORNITORE': 'fattura_fornitore',
+  // Campi aggiuntivi se presenti
+  'VALORE': 'valore',
+  'COSTO ACQUISTO': 'valore' // alias per valore
+};
+
+// Mapping stati spedizione IT -> EN
+const STATUS_MAPPING = {
+  'CONSEGNATO': 'delivered',
+  'IN TRANSITO': 'in_transit',
+  'IN PREPARAZIONE': 'pending',
+  'RITIRATO': 'picked_up',
+  'IN DOGANA': 'customs',
+  'ANNULLATO': 'cancelled'
 };
 
 // Handler principale della function
@@ -248,7 +275,7 @@ async function importData(data, organizzazione_id) {
     // Inserisci il batch
     if (mappedBatch.length > 0) {
       const { error } = await supabase
-        .from('spedizioni')
+        .from('shipments') // NOTA: cambiato da 'spedizioni' a 'shipments'
         .upsert(mappedBatch, {
           onConflict: 'rif_spedizione,organizzazione_id',
           ignoreDuplicates: false
@@ -272,7 +299,9 @@ async function importData(data, organizzazione_id) {
 // ===== Mappa riga Excel/CSV ai campi database =====
 function mapRowToDatabase(row, organizzazione_id) {
   const mapped = {
-    organizzazione_id: organizzazione_id
+    organizzazione_id: organizzazione_id,
+    // Default status se non specificato
+    status: 'pending'
   };
 
   // Mappa le colonne usando il mapping definito
@@ -300,8 +329,39 @@ function mapRowToDatabase(row, organizzazione_id) {
     mapped.costo_trasporto = parseFloat(mapped.costo_trasporto) || null;
   }
 
+  if (mapped.costo_unitario_trasporto) {
+    mapped.costo_unitario_trasporto = parseFloat(mapped.costo_unitario_trasporto) || null;
+  }
+
   if (mapped.percentuale_dazio) {
     mapped.percentuale_dazio = parseFloat(mapped.percentuale_dazio) || null;
+  }
+
+  if (mapped.transit_time_giorni) {
+    mapped.transit_time_giorni = parseInt(mapped.transit_time_giorni) || null;
+  }
+
+  if (mapped.ritardo_giorni) {
+    mapped.ritardo_giorni = parseInt(mapped.ritardo_giorni) || null;
+  }
+
+  // Calcola valore se non presente (costo acquisto = qty * costo unitario)
+  if (!mapped.valore && mapped.qty && mapped.costo_unitario_trasporto) {
+    mapped.valore = mapped.qty * mapped.costo_unitario_trasporto;
+  }
+
+  // Mappa stato spedizione da IT a EN
+  if (mapped.stato_spedizione) {
+    const statoUpper = mapped.stato_spedizione.toUpperCase();
+    mapped.status = STATUS_MAPPING[statoUpper] || 'pending';
+  }
+
+  // Calcola transit time se abbiamo le date
+  if (mapped.data_partenza && mapped.data_arrivo_effettiva && !mapped.transit_time_giorni) {
+    const partenza = new Date(mapped.data_partenza);
+    const arrivo = new Date(mapped.data_arrivo_effettiva);
+    const diffTime = Math.abs(arrivo - partenza);
+    mapped.transit_time_giorni = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
   // Formatta date
@@ -311,6 +371,11 @@ function mapRowToDatabase(row, organizzazione_id) {
 
   if (mapped.data_arrivo_effettiva) {
     mapped.data_arrivo_effettiva = formatDate(mapped.data_arrivo_effettiva);
+  }
+
+  // Imposta carrier basato su spedizioniere se non presente
+  if (!mapped.carrier && mapped.spedizioniere) {
+    mapped.carrier = mapped.spedizioniere;
   }
 
   return mapped;
@@ -370,6 +435,12 @@ function validateShipmentData(data) {
 
   if (data.costo_trasporto !== null && data.costo_trasporto !== undefined && data.costo_trasporto < 0) {
     errors.push('COSTO TRASPORTO non può essere negativo');
+  }
+
+  if (data.percentuale_dazio !== null && data.percentuale_dazio !== undefined) {
+    if (data.percentuale_dazio < 0 || data.percentuale_dazio > 100) {
+      errors.push('% DAZIO deve essere tra 0 e 100');
+    }
   }
 
   return {

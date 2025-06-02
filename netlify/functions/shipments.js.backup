@@ -18,16 +18,6 @@ const corsHeaders = {
 // ID organizzazione di default per test
 const DEFAULT_ORG_ID = 'bb70d86e-bf38-4a85-adc3-76be46705d52';
 
-// Mapping stati IT -> EN
-const STATUS_MAPPING = {
-  'CONSEGNATO': 'delivered',
-  'IN TRANSITO': 'in_transit',
-  'IN PREPARAZIONE': 'pending',
-  'RITIRATO': 'picked_up',
-  'IN DOGANA': 'customs',
-  'ANNULLATO': 'cancelled'
-};
-
 // Handler principale della function
 exports.handler = async (event, context) => {
   console.log('🚀 Shipments API called:', event.httpMethod, event.path);
@@ -43,19 +33,19 @@ exports.handler = async (event, context) => {
 
   try {
     // Estrai organizzazione_id dal token JWT o usa default
-    const { organizationId, userId } = await getAuthInfo(event);
-    console.log('🏢 Organization ID:', organizationId, 'User ID:', userId);
+    const organizzazione_id = await getOrganizzazioneId(event);
+    console.log('🏢 Organization ID:', organizzazione_id);
 
     // Router per i diversi metodi HTTP
     switch (event.httpMethod) {
       case 'GET':
-        return await handleGet(event, organizationId);
+        return await handleGet(event, organizzazione_id);
       case 'POST':
-        return await handlePost(event, organizationId, userId);
+        return await handlePost(event, organizzazione_id);
       case 'PUT':
-        return await handlePut(event, organizationId);
+        return await handlePut(event, organizzazione_id);
       case 'DELETE':
-        return await handleDelete(event, organizationId);
+        return await handleDelete(event, organizzazione_id);
       default:
         return createResponse(405, { error: 'Method not allowed' });
     }
@@ -69,14 +59,14 @@ exports.handler = async (event, context) => {
   }
 };
 
-// ===== Estrai info autenticazione dal JWT =====
-async function getAuthInfo(event) {
+// ===== Estrai organizzazione_id dal JWT o usa default =====
+async function getOrganizzazioneId(event) {
   try {
     const authHeader = event.headers.authorization || event.headers.Authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('⚠️ No auth token found, using defaults');
-      return { organizationId: DEFAULT_ORG_ID, userId: null };
+      console.log('⚠️ No auth token found, using default organization');
+      return DEFAULT_ORG_ID;
     }
 
     const token = authHeader.replace('Bearer ', '');
@@ -85,23 +75,26 @@ async function getAuthInfo(event) {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user) {
-      console.log('⚠️ Invalid token, using defaults');
-      return { organizationId: DEFAULT_ORG_ID, userId: null };
+      console.log('⚠️ Invalid token, using default organization');
+      return DEFAULT_ORG_ID;
     }
 
     // Ottieni organizzazione_id dal profilo
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('organizzazione_id')
       .eq('id', user.id)
       .single();
     
-    const organizationId = profile?.organizzazione_id || DEFAULT_ORG_ID;
-    
-    return { organizationId, userId: user.id };
+    if (profileError || !profile?.organizzazione_id) {
+      console.log('⚠️ No organization ID in profile, using default');
+      return DEFAULT_ORG_ID;
+    }
+
+    return profile.organizzazione_id;
   } catch (error) {
-    console.error('❌ Error extracting auth info:', error);
-    return { organizationId: DEFAULT_ORG_ID, userId: null };
+    console.error('❌ Error extracting organization ID:', error);
+    return DEFAULT_ORG_ID;
   }
 }
 
@@ -111,7 +104,7 @@ async function handleGet(event, organizzazione_id) {
   
   try {
     if (params.id) {
-      // Ottieni singola spedizione con tutti i campi
+      // Ottieni singola spedizione
       const { data, error } = await supabase
         .from('shipments')
         .select('*')
@@ -125,14 +118,9 @@ async function handleGet(event, organizzazione_id) {
         return createResponse(404, { error: 'Shipment not found' });
       }
 
-      // Aggiungi campo status se manca
-      if (!data.status && data.stato_spedizione) {
-        data.status = STATUS_MAPPING[data.stato_spedizione.toUpperCase()] || 'pending';
-      }
-
       return createResponse(200, data);
     } else {
-      // Lista con filtri e paginazione
+      // Parametri di paginazione
       const page = parseInt(params.page) || 1;
       const limit = parseInt(params.limit) || 10;
       const offset = (page - 1) * limit;
@@ -143,56 +131,21 @@ async function handleGet(event, organizzazione_id) {
         .select('*', { count: 'exact' })
         .eq('organizzazione_id', organizzazione_id);
       
-      // Filtri avanzati
+      // Applica filtri
       if (params.status) {
-        // Supporta sia status EN che stato_spedizione IT
-        if (Object.values(STATUS_MAPPING).includes(params.status)) {
-          query = query.eq('status', params.status);
-        } else {
-          query = query.eq('stato_spedizione', params.status);
-        }
+        query = query.eq('stato_spedizione', params.status);
       }
-      
       if (params.carrier) {
-        query = query.eq('spedizioniere', params.carrier);
+        query = query.eq('compagnia', params.carrier);
       }
-      
-      if (params.supplier) {
-        query = query.eq('fornitore', params.supplier);
-      }
-      
       if (params.search) {
-        // Ricerca su più campi
-        query = query.or(`
-          rif_spedizione.ilike.%${params.search}%,
-          fornitore.ilike.%${params.search}%,
-          n_oda.ilike.%${params.search}%,
-          cod_art.ilike.%${params.search}%,
-          descrizione.ilike.%${params.search}%
-        `);
+        query = query.or(`rif_spedizione.ilike.%${params.search}%,fornitore.ilike.%${params.search}%,n_oda.ilike.%${params.search}%`);
       }
-      
-      // Filtri data
       if (params.date_from) {
         query = query.gte('created_at', params.date_from);
       }
       if (params.date_to) {
         query = query.lte('created_at', params.date_to);
-      }
-      
-      if (params.departure_from) {
-        query = query.gte('data_partenza', params.departure_from);
-      }
-      if (params.departure_to) {
-        query = query.lte('data_partenza', params.departure_to);
-      }
-      
-      // Filtri numerici
-      if (params.min_cost) {
-        query = query.gte('costo_trasporto', parseFloat(params.min_cost));
-      }
-      if (params.max_cost) {
-        query = query.lte('costo_trasporto', parseFloat(params.max_cost));
       }
       
       // Ordinamento
@@ -210,29 +163,15 @@ async function handleGet(event, organizzazione_id) {
         throw error;
       }
 
-      // Aggiungi status EN a tutti i record se manca
-      const enrichedData = (data || []).map(shipment => {
-        if (!shipment.status && shipment.stato_spedizione) {
-          shipment.status = STATUS_MAPPING[shipment.stato_spedizione.toUpperCase()] || 'pending';
-        }
-        return shipment;
-      });
-
-      console.log(`✅ Retrieved ${enrichedData.length} shipments for org ${organizzazione_id}`);
+      console.log(`✅ Retrieved ${data?.length || 0} shipments for org ${organizzazione_id}`);
       
       const response = {
-        data: enrichedData,
+        data: data || [],
         pagination: {
           page,
           limit,
           total: count || 0,
           totalPages: Math.ceil((count || 0) / limit)
-        },
-        filters: {
-          status: params.status,
-          carrier: params.carrier,
-          supplier: params.supplier,
-          search: params.search
         }
       };
       
@@ -245,7 +184,7 @@ async function handleGet(event, organizzazione_id) {
 }
 
 // ===== POST - Crea nuova spedizione =====
-async function handlePost(event, organizzazione_id, user_id) {
+async function handlePost(event, organizzazione_id) {
   try {
     const shipmentData = JSON.parse(event.body);
     console.log('📦 Creating shipment:', shipmentData.rif_spedizione);
@@ -259,26 +198,13 @@ async function handlePost(event, organizzazione_id, user_id) {
       });
     }
 
-    // Prepara dati per inserimento
+    // Prepara dati per inserimento con organizzazione_id
     const cleanData = {
       ...cleanShipmentData(shipmentData),
       organizzazione_id: organizzazione_id,
-      user_id: user_id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-
-    // Calcola campi derivati
-    if (cleanData.data_partenza && cleanData.data_arrivo_effettiva && !cleanData.transit_time_giorni) {
-      const departure = new Date(cleanData.data_partenza);
-      const arrival = new Date(cleanData.data_arrivo_effettiva);
-      cleanData.transit_time_giorni = Math.floor((arrival - departure) / (1000 * 60 * 60 * 24));
-    }
-
-    // Calcola valore se manca e abbiamo qty e costo unitario
-    if (!cleanData.valore && cleanData.qty && cleanData.costo_unitario_trasporto) {
-      cleanData.valore = cleanData.qty * cleanData.costo_unitario_trasporto;
-    }
     
     // Inserisci nel database
     const { data, error } = await supabase
@@ -333,18 +259,11 @@ async function handlePut(event, organizzazione_id) {
       });
     }
 
-    // Rimuovi ID e prepara dati aggiornamento
-    const { id: _, organizzazione_id: __, ...updateData } = cleanShipmentData(shipmentData);
+    // Rimuovi ID dai dati di aggiornamento
+    const { id: _, ...updateData } = cleanShipmentData(shipmentData);
     updateData.updated_at = new Date().toISOString();
 
-    // Ricalcola campi derivati se necessario
-    if (updateData.data_partenza && updateData.data_arrivo_effettiva) {
-      const departure = new Date(updateData.data_partenza);
-      const arrival = new Date(updateData.data_arrivo_effettiva);
-      updateData.transit_time_giorni = Math.floor((arrival - departure) / (1000 * 60 * 60 * 24));
-    }
-
-    // Aggiorna nel database
+    // Aggiorna nel database solo per l'organizzazione corrente
     const { data, error } = await supabase
       .from('shipments')
       .update(updateData)
@@ -446,26 +365,16 @@ function validateShipmentData(data, isUpdate = false) {
     errors.push('COD. ART. must be 8 numeric digits');
   }
 
-  if (data.qty !== undefined && data.qty !== null && data.qty < 0) {
-    errors.push('Quantity cannot be negative');
+  if (data.qty !== undefined && data.qty !== null && data.qty <= 0) {
+    errors.push('Quantity must be greater than zero');
   }
 
   if (data.anno && (data.anno < 2020 || data.anno > 2030)) {
     errors.push('Year must be between 2020 and 2030');
   }
 
-  if (data.costo_trasporto !== undefined && data.costo_trasporto < 0) {
+  if (data.costo_trasporto && data.costo_trasporto < 0) {
     errors.push('Transport cost cannot be negative');
-  }
-
-  if (data.valore !== undefined && data.valore < 0) {
-    errors.push('Value cannot be negative');
-  }
-
-  if (data.percentuale_dazio !== undefined) {
-    if (data.percentuale_dazio < 0 || data.percentuale_dazio > 100) {
-      errors.push('Customs duty must be between 0 and 100');
-    }
   }
 
   return {
@@ -478,15 +387,14 @@ function validateShipmentData(data, isUpdate = false) {
 function cleanShipmentData(data) {
   const cleaned = {};
 
-  // Lista completa di tutti i campi validi
+  // Copia solo i campi validi (usa i nomi italiani del DB)
   const allowedFields = [
     'rif_spedizione', 'n_oda', 'anno', 'cod_art', 'fornitore', 'um', 
     'qty', 'fattura_fornitore', 'costo_trasporto', 'tipo_spedizione', 
     'spedizioniere', 'compagnia', 'stato_spedizione', 'data_partenza', 
     'data_arrivo_effettiva', 'percentuale_dazio', 'descrizione',
     'descrizione_estesa', 'costo_unitario_trasporto', 'transit_time_giorni',
-    'ritardo_giorni', 'valore', 'status', 'carrier', 'destination', 'notes',
-    'tracking_number'
+    'ritardo_giorni'
   ];
 
   for (const field of allowedFields) {
@@ -501,36 +409,18 @@ function cleanShipmentData(data) {
     cleaned.cod_art = cleaned.cod_art.toString().replace(/\D/g, '').padStart(8, '0');
   }
 
-  // Trim stringhe
-  ['rif_spedizione', 'fornitore', 'spedizioniere', 'compagnia', 'n_oda'].forEach(field => {
-    if (cleaned[field] && typeof cleaned[field] === 'string') {
-      cleaned[field] = cleaned[field].trim();
-    }
-  });
-
-  // Mappa stato_spedizione italiano a status inglese
-  if (cleaned.stato_spedizione && !cleaned.status) {
-    const statoUpper = cleaned.stato_spedizione.toUpperCase();
-    cleaned.status = STATUS_MAPPING[statoUpper] || 'pending';
+  if (cleaned.rif_spedizione) {
+    cleaned.rif_spedizione = cleaned.rif_spedizione.trim();
   }
 
-  // Se carrier non è specificato, usa spedizioniere
-  if (!cleaned.carrier && cleaned.spedizioniere) {
-    cleaned.carrier = cleaned.spedizioniere;
+  if (cleaned.fornitore) {
+    cleaned.fornitore = cleaned.fornitore.trim();
   }
 
   // Converti stringhe vuote in null per i campi numerici
-  ['qty', 'anno', 'costo_trasporto', 'percentuale_dazio', 'costo_unitario_trasporto', 
-   'transit_time_giorni', 'ritardo_giorni', 'valore'].forEach(field => {
+  ['qty', 'anno', 'costo_trasporto', 'percentuale_dazio', 'costo_unitario_trasporto', 'transit_time_giorni', 'ritardo_giorni'].forEach(field => {
     if (cleaned[field] === '' || cleaned[field] === undefined) {
       cleaned[field] = null;
-    } else if (cleaned[field] !== null) {
-      // Converti in numero
-      if (field === 'anno' || field === 'transit_time_giorni' || field === 'ritardo_giorni') {
-        cleaned[field] = parseInt(cleaned[field]) || null;
-      } else {
-        cleaned[field] = parseFloat(cleaned[field]) || null;
-      }
     }
   });
 
