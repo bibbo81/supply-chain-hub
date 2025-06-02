@@ -127,35 +127,42 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
-        /* OVERRIDE SCROLL - Approccio nucleare */
+        /* Import main column deve avere larghezza limitata */
+        .import-main {
+            flex: 1;
+            min-width: 0; /* Importante per flex items */
+            overflow: hidden; /* Previene espansione */
+        }
+
+        /* Data Table Container - SEMPLIFICATO per scroll */
         #dataTableContainer {
-            width: 100% !important;
-            overflow: visible !important;
+            width: 100%;
+            overflow: hidden; /* Previene espansione del parent */
         }
         
         .data-table-container {
-            width: 100% !important;
-            overflow-x: auto !important;
-            overflow-y: visible !important;
-            max-width: 100% !important;
-            display: block !important;
-            position: relative !important;
+            background: var(--sol-glass-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: 0;
+            margin-bottom: var(--sol-space-lg);
+            width: 100%;
+            overflow: hidden; /* Importante */
         }
 
         .data-table-wrapper {
-            width: 100% !important;
-            overflow-x: auto !important;
-            overflow-y: visible !important;
-            max-height: 500px !important;
-            display: block !important;
-            position: relative !important;
-            -webkit-overflow-scrolling: touch !important;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 500px;
+            display: block;
         }
 
+        /* Table SENZA width constraints */
         .data-table {
-            width: max-content !important;
-            min-width: 100% !important;
-            display: table !important;
+            border-collapse: collapse;
+            width: max-content; /* La tabella si espande */
+            min-width: 100%;
         }
 
         .data-table th,
@@ -1693,21 +1700,39 @@
             // FORZA SCROLL - Fix definitivo
             setTimeout(() => {
                 const tableWrapper = document.querySelector('.data-table-wrapper');
-                if (tableWrapper) {
-                    // Rimuovi tutti gli stili inline esistenti
-                    tableWrapper.style.cssText = '';
-                    // Applica solo gli stili necessari
-                    tableWrapper.style.overflowX = 'scroll';
+                const tableContainer = document.querySelector('.data-table-container');
+                const mainContainer = document.querySelector('.import-main');
+                
+                if (tableWrapper && tableContainer) {
+                    // Limita la larghezza del container principale
+                    if (mainContainer) {
+                        mainContainer.style.overflow = 'hidden';
+                        mainContainer.style.minWidth = '0';
+                    }
+                    
+                    // Assicura che il container non si espanda
+                    tableContainer.style.overflow = 'hidden';
+                    tableContainer.style.width = '100%';
+                    tableContainer.style.maxWidth = '100%';
+                    
+                    // Configura il wrapper per lo scroll
+                    tableWrapper.style.overflowX = 'auto';
                     tableWrapper.style.overflowY = 'auto';
                     tableWrapper.style.maxHeight = '500px';
                     tableWrapper.style.width = '100%';
+                    tableWrapper.style.maxWidth = '100%';
                     tableWrapper.style.display = 'block';
                     
-                    // Verifica che la tabella sia più larga del container
+                    // La tabella deve espandersi
                     const table = tableWrapper.querySelector('.data-table');
                     if (table) {
+                        table.style.width = 'max-content';
+                        table.style.minWidth = '100%';
+                        
+                        // Debug
                         console.log('Table width:', table.offsetWidth);
                         console.log('Wrapper width:', tableWrapper.offsetWidth);
+                        console.log('Container width:', tableContainer.offsetWidth);
                         console.log('Needs scroll:', table.offsetWidth > tableWrapper.offsetWidth);
                     }
                 }
