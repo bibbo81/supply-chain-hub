@@ -27,6 +27,55 @@
     <!-- Solarium Design System -->
     <link rel="stylesheet" href="/solarium.css">
     
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- PROTEZIONE PAGINA DASHBOARD -->
+    <script>
+        // Protezione pagina dashboard
+        (function() {
+            console.log('[Dashboard] Checking authentication...');
+            
+            // Verifica immediata senza loop
+            const checkDashboardAuth = () => {
+                if (!window.auth) {
+                    console.error('[Dashboard] auth.js not loaded');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Dashboard] Not authenticated, redirecting to login...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Dashboard] User authenticated, loading dashboard...');
+                
+                // Carica i dati utente
+                const user = window.auth.getCurrentUser();
+                if (user) {
+                    console.log('[Dashboard] User loaded:', user.email);
+                    // Aggiorna UI con dati utente quando DOM è pronto
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const userNameEl = document.getElementById('userName');
+                        const userEmailEl = document.getElementById('userEmail');
+                        const userAvatarEl = document.getElementById('userAvatar');
+                        const userInitialEl = document.getElementById('userInitial');
+                        
+                        if (userNameEl) userNameEl.textContent = user.user_metadata?.name || user.email?.split('@')[0] || 'Utente';
+                        if (userEmailEl) userEmailEl.textContent = user.email;
+                        if (userInitialEl) userInitialEl.textContent = (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase();
+                    });
+                }
+            };
+            
+            // Esegui check immediatamente
+            checkDashboardAuth();
+        })();
+    </script>
+    <!-- FINE PROTEZIONE PAGINA -->
+    
     <style>
         /* Page Specific Styles */
         .dashboard-grid {
@@ -1510,20 +1559,8 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication first
-            const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
-            if (!token) {
-                // Redirect to login if not authenticated
-                window.location.href = '/login.html';
-                return;
-            }
-            
-            // Setup user info
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.email) {
-                document.getElementById('userName').textContent = user.email.split('@')[0];
-                document.getElementById('userInitial').textContent = user.email[0].toUpperCase();
-            }
+            // Auth check è già stato fatto nel blocco script in alto
+            // Qui ci occupiamo solo di inizializzare la dashboard
             
             setupEventListeners();
             dashboardManager.init();
@@ -1567,11 +1604,16 @@
             // Logout
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                // Clear all possible auth tokens
-                localStorage.removeItem('sb-access-token');
-                localStorage.removeItem('supabase.auth.token');
-                localStorage.removeItem('user');
-                window.location.href = '/login.html';
+                // Usa auth.logout() invece di pulizia manuale
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    // Fallback
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login.html';
+                }
             });
 
             // File upload

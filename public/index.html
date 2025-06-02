@@ -4,33 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Redirecting...</title>
+    
+    <!-- Blocca TUTTI i tracker esterni PRIMA del caricamento -->
     <script>
-        // Blocca Google Analytics PRIMA di tutto
+        // Blocca Google Analytics
         window['ga-disable-GA_MEASUREMENT_ID'] = true;
         window['google-analytics'] = false;
+        window.ga = function() { return false; };
         
-        // Blocca anche gtag
+        // Blocca gtag
         window.dataLayer = window.dataLayer || [];
         window.gtag = function() { return false; };
+        
+        // Blocca altri tracker comuni
+        window._gaq = window._gaq || [];
+        window._gaq.push = function() { return false; };
+        
+        // Previeni caricamento script esterni
+        const originalAppendChild = HTMLElement.prototype.appendChild;
+        HTMLElement.prototype.appendChild = function(child) {
+            if (child.tagName === 'SCRIPT' && child.src && 
+                (child.src.includes('google-analytics') || 
+                 child.src.includes('googletagmanager') ||
+                 child.src.includes('gtag'))) {
+                console.log('Blocked external tracker:', child.src);
+                return child;
+            }
+            return originalAppendChild.call(this, child);
+        };
     </script>
+    
+    <!-- Auth System -->
     <script src="/auth.js"></script>
-    <script>
-        // Check authentication and redirect accordingly
-        (function() {
-            console.log('Index.html - Checking auth...');
-            
-            // Aggiungi un piccolo delay per evitare redirect troppo veloci
-            setTimeout(() => {
-                if (window.auth && window.auth.isAuthenticated()) {
-                    console.log('Authenticated, going to dashboard');
-                    window.location.replace('/dashboard.html');
-                } else {
-                    console.log('Not authenticated, going to login');
-                    window.location.replace('/login.html');
-                }
-            }, 100);
-        })();
-    </script>
+    
     <style>
         body {
             background: #0a0a0f;
@@ -57,6 +63,14 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .debug-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -64,5 +78,86 @@
         <div class="spinner"></div>
         <p>Redirecting...</p>
     </div>
+    
+    <!-- Debug info (rimuovere in produzione) -->
+    <div class="debug-info" id="debugInfo"></div>
+
+    <script>
+        // Funzione di redirect con protezione anti-loop
+        (function() {
+            console.log('[Index] Starting auth check...');
+            
+            // Flag per prevenire redirect multipli
+            let redirected = false;
+            
+            // Mostra info debug
+            const debugInfo = document.getElementById('debugInfo');
+            const updateDebug = (info) => {
+                if (debugInfo) {
+                    debugInfo.innerHTML = `
+                        <div>Path: ${window.location.pathname}</div>
+                        <div>Auth: ${window.auth ? window.auth.isAuthenticated() : 'loading'}</div>
+                        <div>Token: ${localStorage.getItem('sb-access-token') ? 'present' : 'missing'}</div>
+                        <div>Status: ${info}</div>
+                    `;
+                }
+            };
+            
+            // Controlla se auth.js è caricato
+            const checkAuth = () => {
+                if (!window.auth) {
+                    console.error('[Index] auth.js not loaded yet, retrying...');
+                    updateDebug('Waiting for auth.js...');
+                    setTimeout(checkAuth, 50);
+                    return;
+                }
+                
+                updateDebug('Checking authentication...');
+                
+                // Previeni redirect multipli
+                if (redirected) {
+                    console.log('[Index] Already redirected, stopping...');
+                    updateDebug('Already redirected');
+                    return;
+                }
+                
+                try {
+                    const isAuthenticated = window.auth.isAuthenticated();
+                    console.log('[Index] Authentication status:', isAuthenticated);
+                    
+                    redirected = true;
+                    
+                    if (isAuthenticated) {
+                        updateDebug('Authenticated → Dashboard');
+                        console.log('[Index] User authenticated, redirecting to dashboard...');
+                        window.location.replace('/dashboard.html');
+                    } else {
+                        updateDebug('Not authenticated → Login');
+                        console.log('[Index] User not authenticated, redirecting to login...');
+                        window.location.replace('/login.html');
+                    }
+                } catch (error) {
+                    console.error('[Index] Auth check error:', error);
+                    updateDebug('Error: ' + error.message);
+                    // In caso di errore, vai al login
+                    redirected = true;
+                    window.location.replace('/login.html');
+                }
+            };
+            
+            // Avvia il check con un piccolo delay per assicurarsi che tutto sia caricato
+            setTimeout(checkAuth, 100);
+            
+            // Timeout di sicurezza - se dopo 3 secondi siamo ancora qui, vai al login
+            setTimeout(() => {
+                if (!redirected) {
+                    console.error('[Index] Timeout reached, forcing redirect to login...');
+                    updateDebug('Timeout → Login');
+                    redirected = true;
+                    window.location.replace('/login.html');
+                }
+            }, 3000);
+        })();
+    </script>
 </body>
 </html>
