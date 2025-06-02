@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Redirecting...</title>
+    <script src="/auth.js"></script>
     <script>
         // Check authentication and redirect accordingly
         (function() {
-            const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
-            
-            if (token) {
+            if (window.auth && window.auth.isAuthenticated()) {
                 // User is authenticated, go to dashboard
                 window.location.replace('/dashboard.html');
             } else {
