@@ -601,7 +601,43 @@
 
     <!-- Scripts -->
     <script type="module">
-        // Import Supabase
+       // Aggiungi questo codice in login.html PRIMA dell'import di Supabase
+
+// Fix per il config fetch
+async function initConfig() {
+    try {
+        // Prova prima con percorso relativo
+        let response = await fetch('/.netlify/functions/config');
+        
+        if (!response.ok) {
+            console.log('Config fetch failed, trying without extension...');
+            // Prova senza estensione
+            response = await fetch('/.netlify/functions/config', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+        }
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch config');
+        }
+        
+        const config = await response.json();
+        return config;
+        
+    } catch (error) {
+        console.error('Config fetch error:', error);
+        // Fallback config per development
+        return {
+            supabaseUrl: 'YOUR_SUPABASE_URL', // Sostituisci con il tuo URL
+            supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY' // Sostituisci con la tua key
+        };
+    }
+}
+
+       // Import Supabase
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
         // Global variables
@@ -611,11 +647,8 @@
         // Initialize
         async function init() {
             try {
-                // Fetch configuration
-                const response = await fetch('/.netlify/functions/config');
-                if (!response.ok) throw new Error('Failed to fetch config');
-                
-                config = await response.json();
+                // Fetch configuration usando la nuova funzione
+config = await initConfig();
                 
                 // Initialize Supabase
                 supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
