@@ -1336,28 +1336,42 @@
 
         // Process CSV
         function processCSV(csvData) {
+            console.log('Processing CSV data...');
             Papa.parse(csvData, {
                 header: true,
                 dynamicTyping: true,
                 skipEmptyLines: true,
                 complete: (results) => {
+                    console.log('Papa Parse results:', results);
                     fileData = results.data;
+                    console.log('Parsed data:', fileData);
                     showPreview();
                     moveToStep(2);
+                },
+                error: (error) => {
+                    console.error('Papa Parse error:', error);
+                    showNotification('Errore', 'Errore nel parsing del CSV', 'error');
                 }
             });
         }
 
         // Process Excel
         function processExcel(arrayBuffer) {
-            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-            
-            fileData = jsonData;
-            showPreview();
-            moveToStep(2);
+            console.log('Processing Excel data...');
+            try {
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                console.log('Excel parsed data:', jsonData);
+                fileData = jsonData;
+                showPreview();
+                moveToStep(2);
+            } catch (error) {
+                console.error('Excel parsing error:', error);
+                showNotification('Errore', 'Errore nel parsing del file Excel', 'error');
+            }
         }
 
         // Show preview
@@ -1549,7 +1563,14 @@
             tableHead.innerHTML = '';
             tableBody.innerHTML = '';
             
-            if (mappedData.length === 0) return;
+            if (mappedData.length === 0 || fileData.length === 0) {
+                console.log('No data to display');
+                return;
+            }
+            
+            // Debug log
+            console.log('FileData:', fileData);
+            console.log('MappedData:', mappedData);
             
             // Create header
             const headerRow = tableHead.insertRow();
@@ -1627,7 +1648,9 @@
                 // Data cells - show original data
                 sourceFields.forEach(field => {
                     const td = tr.insertCell();
-                    td.textContent = row[field] || '';
+                    const value = row[field];
+                    // Converti il valore in stringa se è un oggetto
+                    td.textContent = value !== null && value !== undefined ? String(value) : '';
                     td.className = 'editable';
                     td.dataset.field = field;
                     td.dataset.rowIndex = i;
