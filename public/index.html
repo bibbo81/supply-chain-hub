@@ -544,6 +544,11 @@
         .sol-table tr:hover td {
             background: rgba(255, 255, 255, 0.02);
         }
+        
+        /* Dropdown styles */
+        .sol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -581,7 +586,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: var(--sol-glass-heavy); backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none;">
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: var(--sol-glass-heavy); backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000;">
                     <a href="#" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
                         <i class="fas fa-user"></i> Profilo
                     </a>
@@ -1196,8 +1201,16 @@
             // Carica dati dashboard
             async loadDashboardData() {
                 try {
-                    const token = localStorage.getItem('sb-access-token');
+                    const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
                     const period = document.getElementById('periodSelect').value;
+                    
+                    // Se non c'è token, usa solo mock data
+                    if (!token) {
+                        console.log('No token found, using mock data');
+                        this.dashboardData = this.getMockData();
+                        this.renderDashboard();
+                        return;
+                    }
                     
                     const response = await fetch(`/.netlify/functions/dashboard-stats?period=${period}`, {
                         headers: {
@@ -1206,7 +1219,7 @@
                     });
                     
                     if (!response.ok) {
-                        // Use mock data for testing
+                        console.log('API call failed, using mock data');
                         this.dashboardData = this.getMockData();
                     } else {
                         this.dashboardData = await response.json();
@@ -1216,7 +1229,7 @@
                     
                 } catch (error) {
                     console.error('Error loading dashboard:', error);
-                    // Use mock data
+                    // Use mock data on any error
                     this.dashboardData = this.getMockData();
                     this.renderDashboard();
                 }
