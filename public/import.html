@@ -98,14 +98,14 @@
             font-weight: 600;
             font-size: 0.875rem;
             color: var(--sol-text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-sm);
         }
 
-        .field-type {
-            font-size: 0.75rem;
-            color: var(--sol-text-secondary);
-            background: rgba(255, 255, 255, 0.1);
-            padding: var(--sol-space-xs) var(--sol-space-sm);
-            border-radius: var(--sol-radius-full);
+        .field-type-icon {
+            color: var(--sol-text-tertiary);
+            font-size: 0.875rem;
         }
 
         .mapping-select {
@@ -127,13 +127,154 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
-        /* Data Table Container */
+        /* Data Table Container - Fixed for scrolling */
         .data-table-container {
             background: var(--sol-glass-light);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-lg);
             overflow: hidden;
             margin-bottom: var(--sol-space-lg);
+            display: flex;
+            flex-direction: column;
+            max-height: 600px;
+        }
+
+        .data-table-wrapper {
+            overflow: auto; /* Abilita scroll sia orizzontale che verticale */
+            flex: 1;
+            position: relative;
+        }
+
+        /* Table con selezione migliorata */
+        .data-table {
+            width: 100%;
+            min-width: max-content; /* Permette alla tabella di espandersi */
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--sol-space-sm) var(--sol-space-md);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .data-table th {
+            background: var(--sol-glass-medium);
+            font-weight: 600;
+            color: var(--sol-text-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Header con mapping destination */
+        .column-header {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sol-space-xs);
+        }
+
+        .column-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .column-mapping {
+            font-size: 0.75rem;
+            color: var(--sol-accent-primary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
+        }
+
+        .column-mapping i {
+            font-size: 0.625rem;
+        }
+
+        /* Cell editing */
+        .data-table td {
+            color: var(--sol-text-primary);
+            cursor: pointer;
+            transition: var(--sol-transition-fast);
+        }
+
+        .data-table td.editable:hover {
+            background: rgba(0, 122, 255, 0.1);
+            outline: 1px solid rgba(0, 122, 255, 0.3);
+        }
+
+        .data-table td.editing {
+            padding: 0;
+        }
+
+        .cell-editor {
+            width: 100%;
+            padding: var(--sol-space-sm) var(--sol-space-md);
+            background: var(--sol-glass-medium);
+            border: 2px solid rgba(0, 122, 255, 0.5);
+            border-radius: var(--sol-radius-sm);
+            color: var(--sol-text-primary);
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Checkbox per selezione righe */
+        .row-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #007AFF;
+            cursor: pointer;
+        }
+
+        .select-all-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #007AFF;
+            cursor: pointer;
+        }
+
+        /* Riga selezionata */
+        .data-table tr.selected {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .data-table tr.selected td {
+            color: var(--sol-text-primary);
+        }
+
+        /* Validation status */
+        .validation-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+        }
+
+        .validation-icon.valid {
+            background: rgba(52, 199, 89, 0.2);
+            color: #34C759;
+        }
+
+        .validation-icon.warning {
+            background: rgba(255, 149, 0, 0.2);
+            color: #FF9500;
+        }
+
+        .validation-icon.error {
+            background: rgba(255, 59, 48, 0.2);
+            color: #FF3B30;
         }
 
         /* Preview Section */
@@ -248,6 +389,25 @@
             color: var(--sol-text-primary);
         }
 
+        /* Selection Info */
+        .selection-info {
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-md);
+            margin-bottom: var(--sol-space-md);
+            display: none;
+        }
+
+        .selection-info.show {
+            display: block;
+        }
+
+        .selection-info-text {
+            font-size: 0.875rem;
+            color: var(--sol-text-primary);
+        }
+
         /* Validation Badges */
         .validation-badge {
             display: inline-flex;
@@ -307,8 +467,19 @@
         .action-buttons {
             display: flex;
             gap: var(--sol-space-md);
-            justify-content: flex-end;
+            justify-content: space-between;
             margin-top: var(--sol-space-xl);
+            align-items: center;
+        }
+
+        .action-buttons-left {
+            display: flex;
+            gap: var(--sol-space-md);
+        }
+
+        .action-buttons-right {
+            display: flex;
+            gap: var(--sol-space-md);
         }
 
         /* Pagination */
@@ -619,22 +790,23 @@
 <body>
     <!-- Header -->
     <header class="sol-header">
-    <div class="sol-header-content">
-        <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
-            <button class="menu-toggle" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a href="/" class="sol-logo">
-                <div class="sol-logo-icon">SCH</div>
-                <div class="sol-logo-text">Supply Chain Hub</div>
-            </a>
-        </div> 
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <div class="sol-logo-text">Supply Chain Hub</div>
+                </a>
+            </div>
+            
+            <div class="sol-header-center" style="flex: 1;"></div>
 
-                <div class="sol-header-center" style="flex: 1;"></div>
-<button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm); margin-right: var(--sol-space-lg);">
-            <i class="fas fa-bell" style="color: #ffffff;"></i>
-            <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
-        </button>
+            <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm); margin-right: var(--sol-space-lg);">
+                <i class="fas fa-bell" style="color: #ffffff;"></i>
+                <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
+            </button>
             
             <div class="user-menu-wrapper">
                 <button class="user-menu" id="userMenuBtn">
@@ -665,7 +837,7 @@
         <nav class="sol-sidebar-nav">
             <div class="sol-nav-section">
                 <div class="sol-nav-section-title" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm);">PRINCIPALE</div>
-                <a href="/" class="sol-nav-item">
+                <a href="/dashboard.html" class="sol-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
@@ -797,11 +969,21 @@
                     </div>
 
                     <!-- Data Table with Validation (Step 3-4) -->
-                    <div class="data-table-container">
-                        <table class="sol-table" id="dataTable">
-                            <thead id="tableHead"></thead>
-                            <tbody id="tableBody"></tbody>
-                        </table>
+                    <div class="data-table-container" id="dataTableContainer" style="display: none;">
+                        <!-- Selection info -->
+                        <div class="selection-info" id="selectionInfo">
+                            <p class="selection-info-text">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="selectedCount">0</span> righe selezionate per l'import
+                            </p>
+                        </div>
+                        
+                        <div class="data-table-wrapper">
+                            <table class="data-table" id="dataTable">
+                                <thead id="tableHead"></thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
                         
                         <!-- Pagination -->
                         <div class="pagination">
@@ -822,18 +1004,26 @@
 
                     <!-- Action Buttons -->
                     <div class="action-buttons">
-                        <button class="sol-btn sol-btn-glass" id="backBtn" onclick="previousStep()">
-                            <i class="fas fa-arrow-left"></i>
-                            Indietro
-                        </button>
-                        <button class="sol-btn sol-btn-primary" id="nextBtn" onclick="nextStep()">
-                            Avanti
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                        <button class="sol-btn sol-btn-primary" id="importBtn" onclick="executeImport()" style="display: none;">
-                            <i class="fas fa-upload"></i>
-                            Esegui Import
-                        </button>
+                        <div class="action-buttons-left">
+                            <button class="sol-btn sol-btn-glass" id="backBtn" onclick="previousStep()">
+                                <i class="fas fa-arrow-left"></i>
+                                Indietro
+                            </button>
+                        </div>
+                        <div class="action-buttons-right">
+                            <button class="sol-btn sol-btn-glass" id="selectAllBtn" onclick="toggleSelectAll()" style="display: none;">
+                                <i class="fas fa-check-square"></i>
+                                Seleziona Tutto
+                            </button>
+                            <button class="sol-btn sol-btn-primary" id="nextBtn" onclick="nextStep()">
+                                Avanti
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button class="sol-btn sol-btn-primary" id="importBtn" onclick="executeImport()" style="display: none;">
+                                <i class="fas fa-upload"></i>
+                                Importa Selezionati
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -921,6 +1111,7 @@
         let currentStep = 1;
         let fileData = [];
         let mappedData = [];
+        let selectedRows = new Set();
         let currentPage = 1;
         const rowsPerPage = 20;
         let validationResults = {
@@ -928,29 +1119,30 @@
             warnings: 0,
             errors: 0
         };
+        let fieldMappingConfig = {};
 
-        // Field mapping configuration
+        // Field mapping configuration con icone descrittive
         const fieldMappings = {
-            'N. ODA': { target: 'orderNumber', type: 'text', required: true },
-            'COD. ART.': { target: 'articleCode', type: 'text', required: true },
-            'DESCRIZIONE': { target: 'description', type: 'text', required: false },
-            'DESCRIZIONE ESTESA': { target: 'extendedDescription', type: 'text', required: false },
-            'FORNITORE': { target: 'supplier', type: 'text', required: true },
-            'U.M.': { target: 'unitMeasure', type: 'text', required: false },
-            'QTY': { target: 'quantity', type: 'number', required: true },
-            'TIPO DI SPEDIZIONE': { target: 'shippingType', type: 'select', required: true },
-            'SPEDIZIONIERE': { target: 'forwarder', type: 'text', required: true },
-            'RIF SPEDIZIONE': { target: 'shipmentRef', type: 'text', required: true },
-            'COMPAGNIA': { target: 'company', type: 'text', required: true },
-            'STATO SPEDIZIONE': { target: 'status', type: 'select', required: true },
-            'DATA PARTENZA': { target: 'departureDate', type: 'date', required: true },
-            'DATA ARRIVO (EFFETTIVA)': { target: 'arrivalDate', type: 'date', required: false },
-            'TRANSIT TIME (Giorni)': { target: 'transitTime', type: 'number', required: false },
-            'RITARDO (Giorni)': { target: 'delay', type: 'number', required: false },
-            'COSTO TRASPORTO €': { target: 'transportCost', type: 'currency', required: false },
-            'COSTO UN MOV. (€/PZ)': { target: 'unitCost', type: 'currency', required: false },
-            '% DAZIO': { target: 'customsDuty', type: 'percentage', required: false },
-            'FATTURA FORNITORE': { target: 'supplierInvoice', type: 'text', required: false }
+            'N. ODA': { target: 'orderNumber', type: 'text', required: true, icon: 'fa-hashtag' },
+            'COD. ART.': { target: 'articleCode', type: 'text', required: true, icon: 'fa-barcode' },
+            'DESCRIZIONE': { target: 'description', type: 'text', required: false, icon: 'fa-align-left' },
+            'DESCRIZIONE ESTESA': { target: 'extendedDescription', type: 'text', required: false, icon: 'fa-align-justify' },
+            'FORNITORE': { target: 'supplier', type: 'text', required: true, icon: 'fa-building' },
+            'U.M.': { target: 'unitMeasure', type: 'text', required: false, icon: 'fa-ruler' },
+            'QTY': { target: 'quantity', type: 'number', required: true, icon: 'fa-sort-numeric-up' },
+            'TIPO DI SPEDIZIONE': { target: 'shippingType', type: 'select', required: true, icon: 'fa-shipping-fast' },
+            'SPEDIZIONIERE': { target: 'forwarder', type: 'text', required: true, icon: 'fa-truck' },
+            'RIF SPEDIZIONE': { target: 'shipmentRef', type: 'text', required: true, icon: 'fa-tag' },
+            'COMPAGNIA': { target: 'company', type: 'text', required: true, icon: 'fa-ship' },
+            'STATO SPEDIZIONE': { target: 'status', type: 'select', required: true, icon: 'fa-info-circle' },
+            'DATA PARTENZA': { target: 'departureDate', type: 'date', required: true, icon: 'fa-calendar-alt' },
+            'DATA ARRIVO (EFFETTIVA)': { target: 'arrivalDate', type: 'date', required: false, icon: 'fa-calendar-check' },
+            'TRANSIT TIME (Giorni)': { target: 'transitTime', type: 'number', required: false, icon: 'fa-clock' },
+            'RITARDO (Giorni)': { target: 'delay', type: 'number', required: false, icon: 'fa-hourglass-half' },
+            'COSTO TRASPORTO €': { target: 'transportCost', type: 'currency', required: false, icon: 'fa-euro-sign' },
+            'COSTO UN MOV. (€/PZ)': { target: 'unitCost', type: 'currency', required: false, icon: 'fa-coins' },
+            '% DAZIO': { target: 'customsDuty', type: 'percentage', required: false, icon: 'fa-percent' },
+            'FATTURA FORNITORE': { target: 'supplierInvoice', type: 'text', required: false, icon: 'fa-file-invoice' }
         };
 
         // Initialize
@@ -1017,9 +1209,14 @@
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login.html';
+                    if (window.auth && window.auth.logout) {
+                        window.auth.logout();
+                    } else {
+                        localStorage.removeItem('sb-access-token');
+                        localStorage.removeItem('supabase.auth.token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                    }
                 });
             }
 
@@ -1165,11 +1362,13 @@
         function updateStepContent() {
             // Hide all steps
             document.getElementById('mappingStep').style.display = 'none';
+            document.getElementById('dataTableContainer').style.display = 'none';
             
             // Update buttons
             document.getElementById('backBtn').style.display = currentStep > 2 ? 'inline-flex' : 'none';
             document.getElementById('nextBtn').style.display = currentStep < 4 ? 'inline-flex' : 'none';
             document.getElementById('importBtn').style.display = currentStep === 4 ? 'inline-flex' : 'none';
+            document.getElementById('selectAllBtn').style.display = currentStep >= 3 ? 'inline-flex' : 'none';
             
             switch(currentStep) {
                 case 2:
@@ -1201,17 +1400,21 @@
                 const mappingCard = document.createElement('div');
                 mappingCard.className = 'mapping-card';
                 
-                const mapping = fieldMappings[field] || { target: '', type: 'text', required: false };
+                const mapping = fieldMappings[field] || { target: '', type: 'text', required: false, icon: 'fa-question' };
                 
                 mappingCard.innerHTML = `
                     <div class="mapping-header">
-                        <span class="source-field">${field}</span>
-                        <span class="field-type">${mapping.type}</span>
+                        <span class="source-field">
+                            <i class="fas ${mapping.icon || 'fa-question'}"></i>
+                            ${field}
+                        </span>
                     </div>
                     <select class="mapping-select" data-source="${field}">
                         <option value="">-- Non importare --</option>
                         ${Object.entries(fieldMappings).map(([key, val]) => 
-                            `<option value="${val.target}" ${field === key ? 'selected' : ''}>${key}</option>`
+                            `<option value="${val.target}" ${field === key ? 'selected' : ''}>
+                                ${key} ${val.required ? '*' : ''}
+                            </option>`
                         ).join('')}
                     </select>
                 `;
@@ -1224,6 +1427,7 @@
         function validateData() {
             validationResults = { valid: 0, warnings: 0, errors: 0 };
             mappedData = [];
+            fieldMappingConfig = {};
             
             const mappings = {};
             document.querySelectorAll('.mapping-select').forEach(select => {
@@ -1231,11 +1435,20 @@
                 const target = select.value;
                 if (target) {
                     mappings[source] = target;
+                    // Store mapping config
+                    const fieldConfig = Object.entries(fieldMappings).find(([k, v]) => v.target === target);
+                    if (fieldConfig) {
+                        fieldMappingConfig[source] = fieldConfig[0];
+                    }
                 }
             });
             
-            fileData.forEach(row => {
-                const mappedRow = { validation: 'valid' };
+            fileData.forEach((row, index) => {
+                const mappedRow = { 
+                    validation: 'valid',
+                    _originalIndex: index,
+                    _selected: true // Di default tutte selezionate
+                };
                 let hasError = false;
                 let hasWarning = false;
                 
@@ -1278,16 +1491,20 @@
                 }
                 
                 mappedData.push(mappedRow);
+                selectedRows.add(index); // Seleziona tutte le righe inizialmente
             });
             
             // Update validation summary
             document.getElementById('validRows').innerHTML = `<i class="fas fa-check"></i> ${validationResults.valid}`;
             document.getElementById('warningRows').innerHTML = `<i class="fas fa-exclamation"></i> ${validationResults.warnings}`;
             document.getElementById('errorRows').innerHTML = `<i class="fas fa-times"></i> ${validationResults.errors}`;
+            
+            updateSelectionInfo();
         }
 
-        // Show data table
+        // Show data table with improved headers
         function showDataTable() {
+            document.getElementById('dataTableContainer').style.display = 'block';
             document.getElementById('previewTitle').textContent = currentStep === 3 ? 'Validazione Dati' : 'Conferma Import';
             
             const tableHead = document.getElementById('tableHead');
@@ -1301,16 +1518,50 @@
             
             // Create header
             const headerRow = tableHead.insertRow();
-            const th = document.createElement('th');
+            
+            // Checkbox column
+            let th = document.createElement('th');
+            th.style.position = 'sticky';
+            th.style.left = '0';
+            th.style.zIndex = '11';
+            th.style.background = 'var(--sol-glass-medium)';
+            th.innerHTML = '<input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" checked onchange="toggleAllRows()">';
+            headerRow.appendChild(th);
+            
+            // Status column
+            th = document.createElement('th');
+            th.style.position = 'sticky';
+            th.style.left = '50px';
+            th.style.zIndex = '11';
+            th.style.background = 'var(--sol-glass-medium)';
             th.textContent = 'Stato';
             headerRow.appendChild(th);
             
-            Object.keys(mappedData[0]).forEach(key => {
-                if (key !== 'validation') {
-                    const th = document.createElement('th');
-                    th.textContent = key;
-                    headerRow.appendChild(th);
-                }
+            // Data columns con mapping info
+            const reverseMapping = {};
+            Object.entries(fieldMappings).forEach(([key, val]) => {
+                reverseMapping[val.target] = key;
+            });
+            
+            // Get source fields from original data
+            const sourceFields = fileData.length > 0 ? Object.keys(fileData[0]) : [];
+            
+            sourceFields.forEach(sourceField => {
+                const th = document.createElement('th');
+                const mappedField = fieldMappingConfig[sourceField];
+                
+                th.innerHTML = `
+                    <div class="column-header">
+                        <span class="column-name">${sourceField}</span>
+                        ${mappedField ? `
+                            <span class="column-mapping">
+                                <i class="fas fa-arrow-down"></i>
+                                ${mappedField}
+                            </span>
+                        ` : '<span class="column-mapping" style="color: var(--sol-text-tertiary);">Non mappato</span>'}
+                    </div>
+                `;
+                headerRow.appendChild(th);
             });
             
             // Show current page data
@@ -1318,32 +1569,54 @@
             const endIndex = Math.min(startIndex + rowsPerPage, mappedData.length);
             
             for (let i = startIndex; i < endIndex; i++) {
-                const row = mappedData[i];
+                const row = fileData[i]; // Use original data
+                const mappedRow = mappedData[i];
                 const tr = tableBody.insertRow();
                 
-                if (row.validation === 'error') {
+                if (mappedRow.validation === 'error') {
                     tr.style.background = 'rgba(255, 59, 48, 0.05)';
-                } else if (row.validation === 'warning') {
+                } else if (mappedRow.validation === 'warning') {
                     tr.style.background = 'rgba(255, 149, 0, 0.05)';
                 }
                 
+                // Checkbox cell
+                const checkboxCell = tr.insertCell();
+                checkboxCell.style.position = 'sticky';
+                checkboxCell.style.left = '0';
+                checkboxCell.style.background = 'inherit';
+                checkboxCell.innerHTML = `<input type="checkbox" class="row-checkbox" data-index="${i}" ${selectedRows.has(i) ? 'checked' : ''} onchange="toggleRow(${i})">`;
+                
                 // Status cell
                 const statusCell = tr.insertCell();
-                if (row.validation === 'error') {
-                    statusCell.innerHTML = '<i class="fas fa-times" style="color: #FF3B30"></i>';
-                } else if (row.validation === 'warning') {
-                    statusCell.innerHTML = '<i class="fas fa-exclamation" style="color: #FF9500"></i>';
-                } else {
-                    statusCell.innerHTML = '<i class="fas fa-check" style="color: #34C759"></i>';
-                }
+                statusCell.style.position = 'sticky';
+                statusCell.style.left = '50px';
+                statusCell.style.background = 'inherit';
+                const validationIcon = document.createElement('div');
+                validationIcon.className = `validation-icon ${mappedRow.validation}`;
                 
-                // Data cells
-                Object.entries(row).forEach(([key, value]) => {
-                    if (key !== 'validation') {
-                        const td = tr.insertCell();
-                        td.textContent = value || '';
-                    }
+                if (mappedRow.validation === 'error') {
+                    validationIcon.innerHTML = '<i class="fas fa-times"></i>';
+                } else if (mappedRow.validation === 'warning') {
+                    validationIcon.innerHTML = '<i class="fas fa-exclamation"></i>';
+                } else {
+                    validationIcon.innerHTML = '<i class="fas fa-check"></i>';
+                }
+                statusCell.appendChild(validationIcon);
+                
+                // Data cells - show original data
+                sourceFields.forEach(field => {
+                    const td = tr.insertCell();
+                    td.textContent = row[field] || '';
+                    td.className = 'editable';
+                    td.dataset.field = field;
+                    td.dataset.rowIndex = i;
+                    td.addEventListener('click', handleCellEdit);
                 });
+                
+                // Update row selection state
+                if (selectedRows.has(i)) {
+                    tr.classList.add('selected');
+                }
             }
             
             // Update pagination
@@ -1354,138 +1627,382 @@
             // Update pagination buttons
             document.getElementById('prevPage').disabled = currentPage === 1;
             document.getElementById('nextPage').disabled = endIndex >= mappedData.length;
+            
+            // Update selection info
+            updateSelectionInfo();
         }
 
-        // Navigation functions
+        // Handle cell editing
+        function handleCellEdit(e) {
+            const td = e.target;
+            if (td.classList.contains('editing')) return;
+            
+            const originalValue = td.textContent;
+            const field = td.dataset.field;
+            const rowIndex = parseInt(td.dataset.rowIndex);
+            
+            td.classList.add('editing');
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalValue;
+            input.className = 'cell-editor';
+            
+            td.textContent = '';
+            td.appendChild(input);
+            input.focus();
+            input.select();
+            
+            const saveEdit = () => {
+                const newValue = input.value;
+                td.textContent = newValue;
+                td.classList.remove('editing');
+                
+                // Update data
+                fileData[rowIndex][field] = newValue;
+                
+                // Re-validate if needed
+                if (document.getElementById('validateRequired').checked) {
+                    validateData();
+                    showDataTable();
+                }
+            };
+            
+            const cancelEdit = () => {
+                td.textContent = originalValue;
+                td.classList.remove('editing');
+            };
+            
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEdit();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelEdit();
+                }
+            });
+        }
+
+        // Toggle row selection
+        function toggleRow(index) {
+            if (selectedRows.has(index)) {
+                selectedRows.delete(index);
+            } else {
+                selectedRows.add(index);
+            }
+            updateSelectionInfo();
+            
+            // Update visual state
+            const checkbox = document.querySelector(`input[data-index="${index}"]`);
+            if (checkbox) {
+                const row = checkbox.closest('tr');
+                if (selectedRows.has(index)) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            }
+        }
+
+        // Toggle all rows
+        function toggleAllRows() {
+            const selectAll = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            
+            if (selectAll.checked) {
+                // Select all
+                mappedData.forEach((_, index) => selectedRows.add(index));
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    cb.closest('tr').classList.add('selected');
+                });
+            } else {
+                // Deselect all
+                selectedRows.clear();
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.closest('tr').classList.remove('selected');
+                });
+            }
+            
+            updateSelectionInfo();
+        }
+
+        // Toggle select all button
+        function toggleSelectAll() {
+            const allSelected = selectedRows.size === mappedData.length;
+            
+            if (allSelected) {
+                selectedRows.clear();
+            } else {
+                mappedData.forEach((_, index) => selectedRows.add(index));
+            }
+            
+            // Update checkboxes
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                const index = parseInt(cb.dataset.index);
+                cb.checked = selectedRows.has(index);
+                if (cb.checked) {
+                    cb.closest('tr').classList.add('selected');
+                } else {
+                    cb.closest('tr').classList.remove('selected');
+                }
+            });
+            
+            // Update select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = selectedRows.size === mappedData.length;
+            }
+            
+            updateSelectionInfo();
+        }
+
+        // Update selection info
+        function updateSelectionInfo() {
+            const selectedCount = selectedRows.size;
+            document.getElementById('selectedCount').textContent = selectedCount;
+            
+            const selectionInfo = document.getElementById('selectionInfo');
+            if (selectedCount > 0) {
+                selectionInfo.classList.add('show');
+            } else {
+                selectionInfo.classList.remove('show');
+            }
+        }
+
+        // Change page
+        function changePage(direction) {
+            const totalPages = Math.ceil(mappedData.length / rowsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                showDataTable();
+            }
+        }
+
+        // Next step
         function nextStep() {
             if (currentStep < 4) {
                 moveToStep(currentStep + 1);
             }
         }
 
+        // Previous step
         function previousStep() {
             if (currentStep > 2) {
                 moveToStep(currentStep - 1);
             }
         }
 
-        function changePage(direction) {
-            const maxPage = Math.ceil(mappedData.length / rowsPerPage);
-            const newPage = currentPage + direction;
-            
-            if (newPage >= 1 && newPage <= maxPage) {
-                currentPage = newPage;
-                showDataTable();
-            }
-        }
-
+        // Reset import
         function resetImport() {
             currentStep = 1;
             fileData = [];
             mappedData = [];
+            selectedRows.clear();
             currentPage = 1;
-            validationResults = { valid: 0, warnings: 0, errors: 0 };
+            fieldMappingConfig = {};
             
             document.getElementById('uploadStep').style.display = 'block';
             document.getElementById('previewSection').classList.remove('active');
             document.getElementById('fileInput').value = '';
             
-            moveToStep(1);
+            // Reset file info
+            document.getElementById('fileName').textContent = '-';
+            document.getElementById('fileSize').textContent = '-';
+            document.getElementById('totalRowsInfo').textContent = '-';
+            document.getElementById('columnsInfo').textContent = '-';
+            
+            // Reset validation info
+            document.getElementById('validRows').innerHTML = '<i class="fas fa-check"></i> 0';
+            document.getElementById('warningRows').innerHTML = '<i class="fas fa-exclamation"></i> 0';
+            document.getElementById('errorRows').innerHTML = '<i class="fas fa-times"></i> 0';
+            
+            // Reset steps
+            document.querySelectorAll('.sol-step').forEach((el, index) => {
+                if (index === 0) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active', 'completed');
+                }
+            });
         }
 
         // Execute import
         async function executeImport() {
-            const skipDuplicates = document.getElementById('skipDuplicates').checked;
-            const updateExisting = document.getElementById('updateExisting').checked;
+            const selectedData = mappedData.filter((_, index) => selectedRows.has(index));
+            
+            if (selectedData.length === 0) {
+                showNotification('Attenzione', 'Nessuna riga selezionata per l\'import', 'error');
+                return;
+            }
             
             // Show loading
-            document.getElementById('importBtn').disabled = true;
-            document.getElementById('importBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importazione in corso...';
+            const importBtn = document.getElementById('importBtn');
+            const originalText = importBtn.innerHTML;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importazione in corso...';
+            importBtn.disabled = true;
             
             try {
-                // Simulate import process
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Add to history
-                addToHistory({
-                    fileName: document.getElementById('fileName').textContent,
-                    rows: mappedData.length,
-                    status: 'success',
-                    date: new Date()
+                // Call import API
+                const response = await fetch('/.netlify/functions/import-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('sb-access-token')}`
+                    },
+                    body: JSON.stringify({
+                        data: selectedData,
+                        options: {
+                            skipDuplicates: document.getElementById('skipDuplicates').checked,
+                            updateExisting: document.getElementById('updateExisting').checked
+                        }
+                    })
                 });
                 
-                // Show success
-                showNotification(
-                    'Import Completato!', 
-                    `Righe importate: ${validationResults.valid}\nAvvisi: ${validationResults.warnings}\nErrori: ${validationResults.errors}`,
-                    'success'
-                );
+                const result = await response.json();
                 
-                // Reset after delay
-                setTimeout(() => {
-                    resetImport();
-                }, 2000);
-                
+                if (response.ok) {
+                    showNotification('Successo', `Importate ${result.imported} righe con successo`, 'success');
+                    
+                    // Add to history
+                    addToHistory({
+                        fileName: document.getElementById('fileName').textContent,
+                        rowsImported: result.imported,
+                        status: 'success',
+                        date: new Date().toISOString()
+                    });
+                    
+                    // Reset after delay
+                    setTimeout(() => {
+                        resetImport();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Errore durante l\'import');
+                }
             } catch (error) {
                 console.error('Import error:', error);
-                showNotification('Errore', 'Errore durante l\'import', 'error');
+                showNotification('Errore', error.message || 'Errore durante l\'import', 'error');
             } finally {
-                document.getElementById('importBtn').disabled = false;
-                document.getElementById('importBtn').innerHTML = '<i class="fas fa-upload"></i> Esegui Import';
+                importBtn.innerHTML = originalText;
+                importBtn.disabled = false;
             }
+        }
+
+        // Load import history
+        function loadImportHistory() {
+            const history = JSON.parse(localStorage.getItem('importHistory') || '[]');
+            const historyContainer = document.getElementById('importHistory');
+            
+            historyContainer.innerHTML = '';
+            
+            history.slice(0, 5).forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const date = new Date(item.date);
+                const dateStr = date.toLocaleDateString('it-IT', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                historyItem.innerHTML = `
+                    <div>
+                        <div style="font-weight: 500;">${item.fileName}</div>
+                        <div class="history-date">${dateStr}</div>
+                    </div>
+                    <div class="history-status">
+                        <span style="color: #34C759;">${item.rowsImported} righe</span>
+                    </div>
+                `;
+                
+                historyContainer.appendChild(historyItem);
+            });
+            
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align: center; color: var(--sol-text-tertiary); font-size: 0.875rem;">Nessun import recente</div>';
+            }
+        }
+
+        // Add to history
+        function addToHistory(item) {
+            const history = JSON.parse(localStorage.getItem('importHistory') || '[]');
+            history.unshift(item);
+            // Keep only last 10 items
+            history.splice(10);
+            localStorage.setItem('importHistory', JSON.stringify(history));
+            loadImportHistory();
+        }
+
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <h4 class="notification-title">${title}</h4>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="notification-message">${message}</p>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
         }
 
         // Download template
         function downloadTemplate(type) {
             const templates = {
                 basic: {
-                    headers: ['tracking', 'date', 'sender', 'recipient', 'city', 'carrier', 'status', 'value'],
-                    name: 'template-base.csv'
+                    name: 'template_base.csv',
+                    content: 'N. ODA,COD. ART.,DESCRIZIONE,FORNITORE,QTY,TIPO DI SPEDIZIONE,SPEDIZIONIERE,RIF SPEDIZIONE,COMPAGNIA,STATO SPEDIZIONE,DATA PARTENZA\n' +
+                             '12345,ART001,Prodotto Test,Fornitore ABC,100,Mare,DHL,REF123,MSC,In transito,2024-01-15'
                 },
                 advanced: {
-                    headers: Object.keys(fieldMappings),
-                    name: 'template-avanzato.xlsx'
+                    name: 'template_avanzato.xlsx',
+                    content: 'Per template Excel avanzato, contatta il supporto'
                 },
                 google: {
-                    headers: Object.keys(fieldMappings),
-                    name: 'template-google-sheet.xlsx'
+                    name: 'template_google_sheet.csv',
+                    content: 'N. ODA,COD. ART.,DESCRIZIONE,DESCRIZIONE ESTESA,FORNITORE,U.M.,QTY,TIPO DI SPEDIZIONE,SPEDIZIONIERE,RIF SPEDIZIONE,COMPAGNIA,STATO SPEDIZIONE,DATA PARTENZA,DATA ARRIVO (EFFETTIVA),TRANSIT TIME (Giorni),RITARDO (Giorni),COSTO TRASPORTO €,COSTO UN MOV. (€/PZ),% DAZIO,FATTURA FORNITORE\n' +
+                             '12345,ART001,Prodotto Test,Descrizione completa del prodotto,Fornitore ABC,PZ,100,Mare,DHL,REF123,MSC,In transito,2024-01-15,2024-02-15,31,0,1500.00,15.00,10,INV-2024-001'
                 }
             };
             
             const template = templates[type];
-            
-            // Create sample data
-            const data = [template.headers];
-            
-            // Add sample row
-            const sampleRow = template.headers.map(header => {
-                switch(header) {
-                    case 'tracking':
-                    case 'N. ODA': return 'IT1000001';
-                    case 'date':
-                    case 'DATA PARTENZA': return '2025-06-01';
-                    case 'status':
-                    case 'STATO SPEDIZIONE': return 'In transito';
-                    case 'value':
-                    case 'COSTO TRASPORTO €': return '1500';
-                    default: return 'Esempio';
-                }
-            });
-            data.push(sampleRow);
-            
-            // Create and download file
-            if (type === 'basic') {
-                const csv = Papa.unparse(data);
-                downloadFile(csv, template.name, 'text/csv');
+            if (template && type !== 'advanced') {
+                const blob = new Blob([template.content], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = template.name;
+                link.click();
             } else {
-                const ws = XLSX.utils.aoa_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Template');
-                XLSX.writeFile(wb, template.name);
+                showNotification('Info', 'Template Excel avanzato disponibile a breve', 'info');
             }
         }
 
-        // Utility functions
+        // Helper functions
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -1497,79 +2014,6 @@
         function isValidDate(dateString) {
             const date = new Date(dateString);
             return date instanceof Date && !isNaN(date);
-        }
-
-        function downloadFile(content, fileName, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Import history
-        function loadImportHistory() {
-            const history = JSON.parse(localStorage.getItem('importHistory') || '[]');
-            const container = document.getElementById('importHistory');
-            
-            container.innerHTML = '';
-            
-            history.slice(-5).reverse().forEach(item => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                historyItem.innerHTML = `
-                    <div>
-                        <div>${item.fileName}</div>
-                        <div class="history-date">${new Date(item.date).toLocaleDateString('it-IT')}</div>
-                    </div>
-                    <div class="history-status">
-                        ${item.status === 'success' ? '<i class="fas fa-check" style="color: #34C759"></i>' : '<i class="fas fa-times" style="color: #FF3B30"></i>'}
-                        <span>${item.rows} righe</span>
-                    </div>
-                `;
-                container.appendChild(historyItem);
-            });
-            
-            if (history.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: var(--sol-text-secondary); font-size: 0.875rem;">Nessun import precedente</div>';
-            }
-        }
-
-        function addToHistory(item) {
-            const history = JSON.parse(localStorage.getItem('importHistory') || '[]');
-            history.push(item);
-            
-            // Keep only last 20 items
-            if (history.length > 20) {
-                history.shift();
-            }
-            
-            localStorage.setItem('importHistory', JSON.stringify(history));
-            loadImportHistory();
-        }
-
-        // Notification System
-        function showNotification(title, message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="notification-header">
-                    <div class="notification-title">${title}</div>
-                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-                </div>
-                <div class="notification-message">${message}</div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
         }
     </script>
 </body>
