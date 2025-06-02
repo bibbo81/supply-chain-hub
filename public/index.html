@@ -4,17 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Redirecting...</title>
+    <script>
+        // Blocca Google Analytics PRIMA di tutto
+        window['ga-disable-GA_MEASUREMENT_ID'] = true;
+        window['google-analytics'] = false;
+        
+        // Blocca anche gtag
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function() { return false; };
+    </script>
     <script src="/auth.js"></script>
     <script>
         // Check authentication and redirect accordingly
         (function() {
-            if (window.auth && window.auth.isAuthenticated()) {
-                // User is authenticated, go to dashboard
-                window.location.replace('/dashboard.html');
-            } else {
-                // User is not authenticated, go to login
-                window.location.replace('/login.html');
-            }
+            console.log('Index.html - Checking auth...');
+            
+            // Aggiungi un piccolo delay per evitare redirect troppo veloci
+            setTimeout(() => {
+                if (window.auth && window.auth.isAuthenticated()) {
+                    console.log('Authenticated, going to dashboard');
+                    window.location.replace('/dashboard.html');
+                } else {
+                    console.log('Not authenticated, going to login');
+                    window.location.replace('/login.html');
+                }
+            }, 100);
         })();
     </script>
     <style>
