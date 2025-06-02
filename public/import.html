@@ -175,18 +175,17 @@
         }
 
         .data-table th {
-            background: var(--sol-glass-heavy);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            /* Stesso stile delle card Info */
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            -webkit-backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 600;
             color: var(--sol-text-primary);
             position: sticky;
             top: 0;
             z-index: 10;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-            
-            /* Aggiunge uno sfondo più solido per leggibilità */
-            background-color: rgba(20, 20, 30, 0.95);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
         }
         
         /* Aggiunge un'ombra sotto l'header quando si scrolla */
@@ -201,7 +200,7 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), transparent);
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
             pointer-events: none;
         }
 
@@ -639,6 +638,11 @@
             border-radius: var(--sol-radius-sm);
             transition: var(--sol-transition-fast);
             font-size: 0.875rem;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
         }
 
         .dropdown-item:hover {
