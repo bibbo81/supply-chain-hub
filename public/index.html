@@ -443,6 +443,107 @@
                 right: var(--sol-space-lg);
             }
         }
+        
+        /* KPI Card Styles */
+        .sol-kpi-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .sol-kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--sol-space-md);
+        }
+        
+        .sol-kpi-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--sol-text-secondary);
+            margin: 0;
+        }
+        
+        .sol-kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .sol-kpi-trend.positive {
+            color: #34C759;
+        }
+        
+        .sol-kpi-trend.negative {
+            color: #FF3B30;
+        }
+        
+        .sol-kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--sol-text-primary);
+            margin: var(--sol-space-md) 0 var(--sol-space-sm) 0;
+        }
+        
+        .sol-kpi-subtitle {
+            font-size: 0.75rem;
+            color: var(--sol-text-tertiary);
+        }
+        
+        /* Badge Styles */
+        .sol-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .sol-badge-error {
+            background: rgba(255, 59, 48, 0.15);
+            color: #FF3B30;
+        }
+        
+        .sol-badge-warning {
+            background: rgba(255, 149, 0, 0.15);
+            color: #FF9500;
+        }
+        
+        .sol-badge-info {
+            background: rgba(0, 122, 255, 0.15);
+            color: #007AFF;
+        }
+        
+        /* Table Styles */
+        .sol-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .sol-table th,
+        .sol-table td {
+            text-align: left;
+            padding: var(--sol-space-md);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .sol-table th {
+            font-weight: 600;
+            color: var(--sol-text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .sol-table td {
+            color: var(--sol-text-primary);
+        }
+        
+        .sol-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
     </style>
 </head>
 <body>
@@ -782,7 +883,7 @@
 
     <script>
         // Dashboard Manager - Sistema personalizzazione FIXED
-        const dashboardManager = {
+        window.dashboardManager = {
             // Widget disponibili
             availableWidgets: {
                 // KPI Widgets
@@ -898,7 +999,7 @@
                                 }
                             });
                             chart.render();
-                            this.chartInstances[widgetId] = chart;
+                            dashboardManager.chartInstances[widgetId] = chart;
                         }, 100);
                         return `
                             <div class="sol-chart-card">
@@ -963,7 +1064,7 @@
                                 }]
                             });
                             chart.render();
-                            this.chartInstances[widgetId] = chart;
+                            dashboardManager.chartInstances[widgetId] = chart;
                         }, 100);
                         return `
                             <div class="sol-chart-card">
@@ -1381,3 +1482,388 @@
                 labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } },
                 axisBorder: { show: false },
                 axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } }
+            },
+            legend: {
+                labels: { colors: 'rgba(255, 255, 255, 0.7)' }
+            },
+            tooltip: {
+                theme: 'dark',
+                style: { fontSize: '12px' }
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            dashboardManager.init();
+        });
+
+        // Event Listeners (manteniamo dal codice originale)
+        function setupEventListeners() {
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            document.addEventListener('click', function() {
+                userDropdown.style.display = 'none';
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('supabase.auth.token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            // File upload
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+        }
+
+        // File upload handler
+        function handleFileUpload(file) {
+            currentFileName = file.name;
+            const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+            
+            // Update modal info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = fileSize;
+            
+            // Update icon based on file type
+            const fileTypeIcon = document.getElementById('fileTypeIcon');
+            if (file.name.endsWith('.csv')) {
+                fileTypeIcon.className = 'fas fa-file-csv';
+            } else {
+                fileTypeIcon.className = 'fas fa-file-excel';
+            }
+            
+            // Process file
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.csv')) {
+                reader.onload = (e) => processCSVForPreview(e.target.result);
+                reader.readAsText(file);
+            } else {
+                reader.onload = (e) => processExcelForPreview(e.target.result);
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // Process CSV for preview
+        function processCSVForPreview(csvData) {
+            const results = Papa.parse(csvData, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true
+            });
+            
+            currentFileData = results.data;
+            
+            // Update modal info
+            document.getElementById('fileRows').textContent = results.data.length + ' righe';
+            document.getElementById('fileColumns').textContent = Object.keys(results.data[0] || {}).length + ' colonne';
+            
+            // Show preview
+            showImportModal(results.data.slice(0, 5), Object.keys(results.data[0] || {}));
+        }
+
+        // Process Excel for preview
+        function processExcelForPreview(excelData) {
+            const workbook = XLSX.read(excelData, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            
+            currentFileData = jsonData;
+            
+            // Update modal info
+            document.getElementById('fileRows').textContent = jsonData.length + ' righe';
+            document.getElementById('fileColumns').textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
+            
+            // Show preview
+            showImportModal(jsonData.slice(0, 5), Object.keys(jsonData[0] || {}));
+        }
+
+        // Show import modal
+        function showImportModal(previewData, columns) {
+            // Build preview table
+            const previewTable = document.getElementById('previewTable');
+            const thead = previewTable.querySelector('thead');
+            const tbody = previewTable.querySelector('tbody');
+            
+            // Clear existing content
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // Add headers
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Add preview rows
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = row[col] || '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            // Show modal
+            document.getElementById('importModal').classList.add('active');
+        }
+
+        // Close import modal
+        window.closeImportModal = function() {
+            document.getElementById('importModal').classList.remove('active');
+            currentFileData = null;
+            currentFileName = '';
+        }
+
+        // Confirm import
+        window.confirmImport = async function() {
+            if (!currentFileData || currentFileData.length === 0) {
+                showNotification('Nessun dato da importare', 'error');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('importStatus').style.display = 'block';
+            document.getElementById('confirmImportBtn').disabled = true;
+            
+            try {
+                const token = localStorage.getItem('sb-access-token');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                
+                // Prepare data
+                const formData = new FormData();
+                const csvContent = Papa.unparse(currentFileData);
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                formData.append('file', blob, currentFileName);
+                formData.append('skipDuplicates', document.getElementById('skipDuplicates').checked);
+                formData.append('validateData', document.getElementById('validateData').checked);
+                formData.append('updateExisting', document.getElementById('updateExisting').checked);
+                
+                // Send to server
+                const response = await fetch('/.netlify/functions/import-file', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Import completato: ${result.imported} record importati`, 'success');
+                    setTimeout(() => {
+                        closeImportModal();
+                        refreshDashboard();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Errore durante l\'import');
+                }
+                
+            } catch (error) {
+                console.error('Import error:', error);
+                showNotification(error.message || 'Errore durante l\'import', 'error');
+            } finally {
+                document.getElementById('importStatus').style.display = 'none';
+                document.getElementById('confirmImportBtn').disabled = false;
+            }
+        }
+
+        // Refresh dashboard
+        window.refreshDashboard = function() {
+            dashboardManager.loadDashboardData();
+            showNotification('Dashboard aggiornata', 'success');
+        }
+
+        // Export to PDF
+        window.exportToPDF = async function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.text('Supply Chain Hub - Dashboard Report', 20, 20);
+            
+            // Add date
+            doc.setFontSize(10);
+            doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
+            
+            // Add KPIs
+            doc.setFontSize(14);
+            doc.text('KPI Principali', 20, 45);
+            
+            const data = dashboardManager.dashboardData;
+            if (data) {
+                doc.setFontSize(10);
+                doc.text(`Spedizioni Totali: ${data.totalShipments?.toLocaleString('it-IT') || 0}`, 20, 55);
+                doc.text(`Costo Totale Trasporto: €${data.costs?.totalTransportCost?.toLocaleString('it-IT') || 0}`, 20, 65);
+                doc.text(`Tempo Medio Consegna: ${data.avgDeliveryTime || 0} giorni`, 20, 75);
+                doc.text(`Tasso Puntualità: ${data.onTimeDelivery || 0}%`, 20, 85);
+            }
+            
+            // Save PDF
+            doc.save('dashboard-report.pdf');
+            showNotification('Report PDF generato', 'success');
+        }
+
+        // Export to Excel
+        window.exportToExcel = async function() {
+            const data = dashboardManager.dashboardData;
+            if (!data) {
+                showNotification('Nessun dato da esportare', 'error');
+                return;
+            }
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // KPI Sheet
+            const kpiData = [
+                ['KPI', 'Valore', 'Variazione %'],
+                ['Spedizioni Totali', data.totalShipments || 0, data.shipmentsGrowth || 0],
+                ['Costo Totale Trasporto', data.costs?.totalTransportCost || 0, data.costs?.costGrowth || 0],
+                ['Tempo Medio Consegna (giorni)', data.avgDeliveryTime || 0, data.deliveryTimeChange || 0],
+                ['Tasso Puntualità (%)', data.onTimeDelivery || 0, data.onTimeChange || 0]
+            ];
+            const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
+            XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
+            
+            // Carriers Sheet
+            if (data.topCarriers) {
+                const carriersData = [['Corriere', 'Costo', 'Spedizioni']];
+                data.topCarriers.forEach(c => {
+                    carriersData.push([c.name, c.cost, c.shipments]);
+                });
+                const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData);
+                XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri');
+            }
+            
+            // Suppliers Sheet
+            if (data.topSuppliers) {
+                const suppliersData = [['Fornitore', 'Quantità', 'Costo', 'Spedizioni']];
+                data.topSuppliers.forEach(s => {
+                    suppliersData.push([s.name, s.quantity, s.cost, s.shipments]);
+                });
+                const suppliersSheet = XLSX.utils.aoa_to_sheet(suppliersData);
+                XLSX.utils.book_append_sheet(wb, suppliersSheet, 'Fornitori');
+            }
+            
+            // Save file
+            XLSX.writeFile(wb, `dashboard-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+            showNotification('Export Excel completato', 'success');
+        }
+
+        // Helper function: Show notification
+        window.showNotification = function(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 16px 24px;
+                background: var(--sol-glass-heavy);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                z-index: 3000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                max-width: 400px;
+            `;
+            
+            // Add icon
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
+            
+            // Add message
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
