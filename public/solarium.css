@@ -159,6 +159,7 @@ body::before {
     left: 0;
     right: 0;
     height: 80px;
+    overflow: visible; /* Permette al badge di uscire dall'header */
     background: var(--sol-glass-light);
     backdrop-filter: saturate(180%) var(--sol-blur-xl);
     -webkit-backdrop-filter: saturate(180%) var(--sol-blur-xl);
