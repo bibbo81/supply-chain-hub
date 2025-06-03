@@ -30,77 +30,75 @@
     <!-- Auth System -->
     <script src="/auth.js"></script>
     
-   <!-- Trova questa sezione nel file dashboard.html (intorno alla riga 62) e sostituiscila con: -->
-
-<!-- PROTEZIONE PAGINA DASHBOARD -->
-<script>
-    (function() {
-        console.log('[Dashboard] Checking authentication...');
-        
-        // Aspetta auth.js
-        function checkAuth() {
-            if (!window.auth) {
-                setTimeout(checkAuth, 100);
-                return;
-            }
+    <!-- PROTEZIONE PAGINA DASHBOARD -->
+    <script>
+        (function() {
+            console.log('[Dashboard] Checking authentication...');
             
-            // Se non autenticato, redirect a login
-            if (!window.auth.isAuthenticated()) {
-                console.log('[Dashboard] Not authenticated, redirecting...');
-                window.location.replace('/login.html');
-                return;
-            }
-            
-            console.log('[Dashboard] User authenticated');
-            
-            // Update UI con i dati utente corretti
-            const user = window.auth.getCurrentUser();
-            if (user) {
-                // Funzione per aggiornare UI
-                const updateUserUI = () => {
-                    const userNameEl = document.getElementById('userName');
-                    const userEmailEl = document.getElementById('userEmail');
-                    const userInitialEl = document.getElementById('userInitial');
-                    
-                    // Estrai il nome corretto
-                    let displayName = 'Utente';
-                    let initial = 'U';
-                    
-                    // Prima prova con user_metadata
-                    if (user.user_metadata && user.user_metadata.full_name) {
-                        displayName = user.user_metadata.full_name;
-                        initial = displayName.charAt(0).toUpperCase();
-                    } else if (user.user_metadata && user.user_metadata.name) {
-                        displayName = user.user_metadata.name;
-                        initial = displayName.charAt(0).toUpperCase();
-                    } else if (user.email) {
-                        // Fallback: usa la parte prima della @ nell'email
-                        displayName = user.email.split('@')[0];
-                        // Capitalizza la prima lettera
-                        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-                        initial = displayName.charAt(0);
-                    }
-                    
-                    // Aggiorna elementi DOM
-                    if (userNameEl) userNameEl.textContent = displayName;
-                    if (userEmailEl) userEmailEl.textContent = user.email || '';
-                    if (userInitialEl) userInitialEl.textContent = initial;
-                    
-                    console.log('[Dashboard] User UI updated:', { displayName, email: user.email });
-                };
+            // Aspetta auth.js
+            function checkAuth() {
+                if (!window.auth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
                 
-                // Esegui update quando DOM è pronto
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', updateUserUI);
-                } else {
-                    updateUserUI();
+                // Se non autenticato, redirect a login
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Dashboard] Not authenticated, redirecting...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Dashboard] User authenticated');
+                
+                // Update UI con i dati utente corretti
+                const user = window.auth.getCurrentUser();
+                if (user) {
+                    // Funzione per aggiornare UI
+                    const updateUserUI = () => {
+                        const userNameEl = document.getElementById('userName');
+                        const userEmailEl = document.getElementById('userEmail');
+                        const userInitialEl = document.getElementById('userInitial');
+                        
+                        // Estrai il nome corretto
+                        let displayName = 'Utente';
+                        let initial = 'U';
+                        
+                        // Prima prova con user_metadata
+                        if (user.user_metadata && user.user_metadata.full_name) {
+                            displayName = user.user_metadata.full_name;
+                            initial = displayName.charAt(0).toUpperCase();
+                        } else if (user.user_metadata && user.user_metadata.name) {
+                            displayName = user.user_metadata.name;
+                            initial = displayName.charAt(0).toUpperCase();
+                        } else if (user.email) {
+                            // Fallback: usa la parte prima della @ nell'email
+                            displayName = user.email.split('@')[0];
+                            // Capitalizza la prima lettera
+                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            initial = displayName.charAt(0);
+                        }
+                        
+                        // Aggiorna elementi DOM
+                        if (userNameEl) userNameEl.textContent = displayName;
+                        if (userEmailEl) userEmailEl.textContent = user.email || '';
+                        if (userInitialEl) userInitialEl.textContent = initial;
+                        
+                        console.log('[Dashboard] User UI updated:', { displayName, email: user.email });
+                    };
+                    
+                    // Esegui update quando DOM è pronto
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updateUserUI);
+                    } else {
+                        updateUserUI();
+                    }
                 }
             }
-        }
-        
-        checkAuth();
-    })();
-</script>
+            
+            checkAuth();
+        })();
+    </script>
     
     <style>
         /* Page Specific Styles */
@@ -627,277 +625,294 @@
     </style>
 </head>
 <body>
- <!-- HEADER UNIFICATO PER SUPPLY CHAIN HUB -->
-<!-- Da inserire in tutte le pagine HTML del progetto -->
-
+    <!-- HEADER UNIFICATO PER SUPPLY CHAIN HUB -->
     <header class="sol-header" style="overflow: visible;">
-    <div class="sol-header-content">
-        <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
-            <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a href="/dashboard.html" class="sol-logo">
-                <div class="sol-logo-icon">SCH</div>
-                <span class="sol-logo-text">Supply Chain Hub</span>
-            </a>
-        </div>
-        
-        <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
-            <div style="position: relative;">
-                <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
-                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
-            </div>
-        </div>
-        
-        <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-            <!-- Notification Button Fix -->
-            <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
-                 <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
-            </button>
-            
-            <!-- User Menu Button -->
-            <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
-                <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                    <span id="userInitial">U</span>
-                </div>
-                <span id="userName">Utente</span>
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            
-            <!-- User Dropdown -->
-            <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-                <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
-                    <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
-                </div>
-                <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                    <i class="fas fa-user"></i> Profilo
-                </a>
-                <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                    <i class="fas fa-cog"></i> Impostazioni
-                </a>
-                <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
-                <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
-                    <i class="fas fa-sign-out-alt"></i> Esci
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                    <i class="fas fa-bars"></i>
                 </button>
+                <a href="/dashboard.html" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
+                </a>
             </div>
-        </div>
-    </div>
-</header>
-
-<!-- SCRIPT PER GESTIRE IL NOME UTENTE -->
-<script>
-(function() {
-    // Funzione per formattare il nome
-    function formatUserName(user) {
-        // Prima controlla se c'è un display_name personalizzato nel profilo
-        if (user.user_metadata && user.user_metadata.display_name) {
-            return user.user_metadata.display_name;
-        }
-        
-        // Altrimenti usa full_name o name
-        let fullName = '';
-        if (user.user_metadata) {
-            fullName = user.user_metadata.full_name || user.user_metadata.name || '';
-        }
-        
-        // Se abbiamo un nome completo, formattiamolo
-        if (fullName) {
-            // Rimuovi punteggiatura e formatta correttamente
-            fullName = fullName.replace(/[._-]/g, ' ');
-            // Capitalizza ogni parola
-            return fullName.split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(' ');
-        }
-        
-        // Fallback: usa l'email
-        if (user.email) {
-            const emailName = user.email.split('@')[0];
-            // Trasforma email in nome (es: fabrizio.cagnucci -> Fabrizio Cagnucci)
-            return emailName
-                .replace(/[._-]/g, ' ')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(' ');
-        }
-        
-        return 'Utente';
-    }
-    
-    // Funzione per ottenere le iniziali
-    function getUserInitials(name) {
-        const words = name.split(' ').filter(w => w.length > 0);
-        if (words.length >= 2) {
-            return words[0][0].toUpperCase() + words[1][0].toUpperCase();
-        } else if (words.length === 1) {
-            return words[0][0].toUpperCase();
-        }
-        return 'U';
-    }
-    
-    // Aggiorna UI quando DOM è pronto
-    function updateUserUI() {
-        const user = window.auth ? window.auth.getCurrentUser() : null;
-        if (!user) return;
-        
-        const displayName = formatUserName(user);
-        const initials = getUserInitials(displayName);
-        
-        // Aggiorna elementi header
-        const userNameEl = document.getElementById('userName');
-        const userInitialEl = document.getElementById('userInitial');
-        const userFullNameEl = document.getElementById('userFullName');
-        const userEmailEl = document.getElementById('userEmail');
-        
-        if (userNameEl) userNameEl.textContent = displayName;
-        if (userInitialEl) userInitialEl.textContent = initials;
-        if (userFullNameEl) userFullNameEl.textContent = displayName;
-        if (userEmailEl) userEmailEl.textContent = user.email || '';
-    }
-    
-    // Aspetta che auth.js sia caricato
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(updateUserUI, 100);
-        });
-    } else {
-        setTimeout(updateUserUI, 100);
-    }
-})();
-</script>
-
-<!-- NOTIFICATION DROPDOWN (da aggiungere dopo il button delle notifiche) -->
-<div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-    <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
-    </div>
-    <div style="max-height: 400px; overflow-y: auto;">
-        <!-- Notifica 1 -->
-        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
-            <div style="display: flex; gap: var(--sol-space-md);">
-                <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
-                </div>
-                <div style="flex: 1;">
-                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Spedizione in Ritardo</p>
-                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Container MRKU4252004 - 3 giorni di ritardo</p>
-                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
-                </div>
-            </div>
-        </div>
-        <!-- Notifica 2 -->
-        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
-            <div style="display: flex; gap: var(--sol-space-md);">
-                <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fas fa-check-circle" style="color: #34C759;"></i>
-                </div>
-                <div style="flex: 1;">
-                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Consegna Completata</p>
-                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Ordine #12345 consegnato con successo</p>
-                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">5 ore fa</p>
-                </div>
-            </div>
-        </div>
-        <!-- Notifica 3 -->
-        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
-            <div style="display: flex; gap: var(--sol-space-md);">
-                <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fas fa-info-circle" style="color: #007AFF;"></i>
-                </div>
-                <div style="flex: 1;">
-                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Nuovo Import Completato</p>
-                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">150 spedizioni importate con successo</p>
-                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">Ieri</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
-        <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
-    </div>
-</div>
-
-<!-- STYLE AGGIUNTIVI PER NOTIFICHE -->
-<style>
-.notification-item:hover {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-/* Fix per icona notifiche più visibile */
-#notificationBtn {
-    position: relative;
-    transition: var(--sol-transition-base);
-}
-
-#notificationBtn:hover {
-    transform: translateY(-1px);
-}
-
-#notificationBtn:active {
-    transform: translateY(0);
-}
-
-/* Assicuriamoci che il dropdown sia dello stesso colore in tutte le pagine */
-/* Assicuriamoci che il dropdown sia dello stesso colore in tutte le pagine */
-.sol-dropdown {
-    background: rgba(20, 20, 30, 0.95) !important;
-}
-
-/* Responsive notification button */
-#notificationBtn {
-    width: 44px;
-    height: 44px;
-}
-
-@media (min-width: 768px) {
-    #notificationBtn {
-        width: 60px;
-        height: 60px;
-    }
-}
-
-/* Adjust badge position for mobile */
-@media (max-width: 767px) {
-    #notificationBtn span {
-        width: 16px !important;
-        height: 16px !important;
-        font-size: 0.625rem !important;
-        top: 6px !important;
-        right: 4px !important;
-    }
-}
-</style>
-
-<!-- SCRIPT PER GESTIRE NOTIFICHE -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const notificationBtn = document.getElementById('notificationBtn');
-    const notificationDropdown = document.getElementById('notificationDropdown');
-    
-    if (notificationBtn && notificationDropdown) {
-        notificationBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
             
-            // Chiudi user dropdown se aperto
-            const userDropdown = document.getElementById('userDropdown');
-            if (userDropdown) userDropdown.style.display = 'none';
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+                </div>
+            </div>
             
-            // Toggle notification dropdown
-            notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        // Chiudi dropdown quando si clicca fuori
-        document.addEventListener('click', function(e) {
-            if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
-                notificationDropdown.style.display = 'none';
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <!-- Notification Button Fix -->
+                <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                    <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+                </button>
+                
+                <!-- User Menu Button -->
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <!-- User Dropdown -->
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                        <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                    </div>
+                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICATION DROPDOWN - POSIZIONE CORRETTA -->
+    <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+        <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <!-- Notifica 1 -->
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Spedizione in Ritardo</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Container MRKU4252004 - 3 giorni di ritardo</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Notifica 2 -->
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-check-circle" style="color: #34C759;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Consegna Completata</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Ordine #12345 consegnato con successo</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">5 ore fa</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Notifica 3 -->
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-info-circle" style="color: #007AFF;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Nuovo Import Completato</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">150 spedizioni importate con successo</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">Ieri</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+            <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
+        </div>
+    </div>
+
+    <!-- STYLE AGGIUNTIVI PER NOTIFICHE E MOBILE -->
+    <style>
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Fix per icona notifiche più visibile */
+        #notificationBtn {
+            position: relative;
+            transition: var(--sol-transition-base);
+        }
+
+        #notificationBtn:hover {
+            transform: translateY(-1px);
+        }
+
+        #notificationBtn:active {
+            transform: translateY(0);
+        }
+
+        /* Assicuriamoci che il dropdown sia dello stesso colore in tutte le pagine */
+        .sol-dropdown {
+            background: rgba(20, 20, 30, 0.95) !important;
+        }
+
+        /* Responsive notification button */
+        #notificationBtn {
+            width: 44px;
+            height: 44px;
+        }
+
+        @media (min-width: 768px) {
+            #notificationBtn {
+                width: 60px;
+                height: 60px;
             }
-        });
-    }
-});
-</script>
+        }
+
+        /* Adjust badge position for mobile */
+        @media (max-width: 767px) {
+            #notificationBtn span {
+                width: 16px !important;
+                height: 16px !important;
+                font-size: 0.625rem !important;
+                top: 6px !important;
+                right: 4px !important;
+            }
+        }
+
+        /* Nascondi upload area su mobile */
+        @media (max-width: 768px) {
+            #uploadArea {
+                display: none;
+            }
+            
+            /* Più spazio per l'action bar */
+            .sol-action-bar {
+                margin-top: var(--sol-space-lg);
+            }
+            
+            /* Fix posizione dropdown su mobile */
+            #notificationDropdown {
+                right: 10px !important;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+        }
+    </style>
+
+    <!-- SCRIPT PER GESTIRE IL NOME UTENTE -->
+    <script>
+    (function() {
+        // Funzione per formattare il nome
+        function formatUserName(user) {
+            // Prima controlla se c'è un display_name personalizzato nel profilo
+            if (user.user_metadata && user.user_metadata.display_name) {
+                return user.user_metadata.display_name;
+            }
+            
+            // Altrimenti usa full_name o name
+            let fullName = '';
+            if (user.user_metadata) {
+                fullName = user.user_metadata.full_name || user.user_metadata.name || '';
+            }
+            
+            // Se abbiamo un nome completo, formattiamolo
+            if (fullName) {
+                // Rimuovi punteggiatura e formatta correttamente
+                fullName = fullName.replace(/[._-]/g, ' ');
+                // Capitalizza ogni parola
+                return fullName.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+            }
+            
+            // Fallback: usa l'email
+            if (user.email) {
+                const emailName = user.email.split('@')[0];
+                // Trasforma email in nome (es: fabrizio.cagnucci -> Fabrizio Cagnucci)
+                return emailName
+                    .replace(/[._-]/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+            }
+            
+            return 'Utente';
+        }
+        
+        // Funzione per ottenere le iniziali
+        function getUserInitials(name) {
+            const words = name.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2) {
+                return words[0][0].toUpperCase() + words[1][0].toUpperCase();
+            } else if (words.length === 1) {
+                return words[0][0].toUpperCase();
+            }
+            return 'U';
+        }
+        
+        // Aggiorna UI quando DOM è pronto
+        function updateUserUI() {
+            const user = window.auth ? window.auth.getCurrentUser() : null;
+            if (!user) return;
+            
+            const displayName = formatUserName(user);
+            const initials = getUserInitials(displayName);
+            
+            // Aggiorna elementi header
+            const userNameEl = document.getElementById('userName');
+            const userInitialEl = document.getElementById('userInitial');
+            const userFullNameEl = document.getElementById('userFullName');
+            const userEmailEl = document.getElementById('userEmail');
+            
+            if (userNameEl) userNameEl.textContent = displayName;
+            if (userInitialEl) userInitialEl.textContent = initials;
+            if (userFullNameEl) userFullNameEl.textContent = displayName;
+            if (userEmailEl) userEmailEl.textContent = user.email || '';
+        }
+        
+        // Aspetta che auth.js sia caricato
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(updateUserUI, 100);
+            });
+        } else {
+            setTimeout(updateUserUI, 100);
+        }
+    })();
+    </script>
+
+    <!-- SCRIPT PER GESTIRE NOTIFICHE -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        
+        if (notificationBtn && notificationDropdown) {
+            notificationBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Chiudi user dropdown se aperto
+                const userDropdown = document.getElementById('userDropdown');
+                if (userDropdown) userDropdown.style.display = 'none';
+                
+                // Toggle notification dropdown
+                notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Chiudi dropdown quando si clicca fuori
+            document.addEventListener('click', function(e) {
+                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
+        }
+    });
+    </script>
 
     <!-- Sidebar -->
     <aside class="sol-sidebar" id="sidebar">
@@ -913,8 +928,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span>Spedizioni</span>
                 </a>
                 <a href="/carriers.html" class="sol-nav-item">
-                    <i class="fas fa-truck"></i>
-                    <span>Corrieri</span>
+                    <i class="fas fa-ship"></i>
+                    <span>Compagnie</span>
                 </a>
                 <a href="/tracking.html" class="sol-nav-item">
                     <i class="fas fa-map-marker-alt"></i>
@@ -1184,6 +1199,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        // Funzione helper per formattazione numeri in italiano
+        function formatCurrency(value, decimals = 0) {
+            return new Intl.NumberFormat('it-IT', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(value);
+        }
+
+        function formatNumber(value, decimals = 0) {
+            return new Intl.NumberFormat('it-IT', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(value);
+        }
+
         // Dashboard Manager - Sistema personalizzazione FIXED
         window.dashboardManager = {
             // Widget disponibili
@@ -1221,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="sol-kpi-title">Spedizioni Totali</h3>
                                 <div class="sol-kpi-trend ${data.shipmentsGrowth >= 0 ? 'positive' : 'negative'}">
                                     <i class="fas fa-arrow-${data.shipmentsGrowth >= 0 ? 'up' : 'down'}"></i>
-                                    ${Math.abs(data.shipmentsGrowth || 0)}%
+                                    ${formatNumber(Math.abs(data.shipmentsGrowth || 0), 1)}%
                                 </div>
                             </div>
                             <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
@@ -1241,10 +1273,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="sol-kpi-title">Tempo Medio Consegna</h3>
                                 <div class="sol-kpi-trend ${data.deliveryTimeChange <= 0 ? 'positive' : 'negative'}">
                                     <i class="fas fa-arrow-${data.deliveryTimeChange <= 0 ? 'down' : 'up'}"></i>
-                                    ${Math.abs(data.deliveryTimeChange || 0)}%
+                                    ${formatNumber(Math.abs(data.deliveryTimeChange || 0), 1)}%
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${data.avgDeliveryTime || 0}</div>
+                            <div class="sol-kpi-value">${formatNumber(data.avgDeliveryTime || 0, 1)}</div>
                             <div class="sol-kpi-subtitle">giorni</div>
                         </div>
                     `
@@ -1261,10 +1293,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="sol-kpi-title">Tasso Puntualità</h3>
                                 <div class="sol-kpi-trend ${data.onTimeChange >= 0 ? 'positive' : 'negative'}">
                                     <i class="fas fa-arrow-${data.onTimeChange >= 0 ? 'up' : 'down'}"></i>
-                                    ${Math.abs(data.onTimeChange || 0)}%
+                                    ${formatNumber(Math.abs(data.onTimeChange || 0), 1)}%
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${data.onTimeDelivery || 0}%</div>
+                            <div class="sol-kpi-value">${formatNumber(data.onTimeDelivery || 0, 1)}%</div>
                             <div class="sol-kpi-subtitle">consegne puntuali</div>
                         </div>
                     `
@@ -1347,26 +1379,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                             size: '65%',
                                             labels: {
                                                 show: true,
-name: {
-    show: true,
-    fontSize: '16px',
-    fontFamily: 'inherit',
-    fontWeight: 600,
-    color: undefined,
-    offsetY: -10
-},
-value: {
-    show: true,
-    fontSize: '24px',
-    fontFamily: 'inherit',
-    fontWeight: 400,
-    color: undefined,
-    offsetY: 16,
-    formatter: function (val) {
-        return formatNumber(parseInt(val));
-    }
-},
-                                                show: true,
+                                                name: {
+                                                    show: true,
+                                                    fontSize: '16px',
+                                                    fontFamily: 'inherit',
+                                                    fontWeight: 600,
+                                                    color: undefined,
+                                                    offsetY: -10
+                                                },
+                                                value: {
+                                                    show: true,
+                                                    fontSize: '24px',
+                                                    fontFamily: 'inherit',
+                                                    fontWeight: 400,
+                                                    color: undefined,
+                                                    offsetY: 16,
+                                                    formatter: function (val) {
+                                                        return formatNumber(parseInt(val));
+                                                    }
+                                                },
                                                 total: {
                                                     show: true,
                                                     label: 'Totale',
@@ -1434,7 +1465,7 @@ value: {
                                                 <td>${s.name}</td>
                                                 <td>${formatNumber(s.quantity)}</td>
                                                 <td>${formatCurrency(s.cost)}</td>
-                                                <td>${s.shipments}</td>
+                                                <td>${formatNumber(s.shipments)}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -1467,17 +1498,17 @@ value: {
                                     <tbody>
                                         <tr>
                                             <td><i class="fas fa-dollar-sign"></i> Spedizioni Alto Costo</td>
-                                            <td>${alerts.highCostShipments || 0}</td>
+                                            <td>${formatNumber(alerts.highCostShipments || 0)}</td>
                                             <td><span class="sol-badge sol-badge-error">Attenzione</span></td>
                                         </tr>
                                         <tr>
                                             <td><i class="fas fa-clock"></i> Spedizioni in Ritardo</td>
-                                            <td>${alerts.delayedShipments || 0}</td>
+                                            <td>${formatNumber(alerts.delayedShipments || 0)}</td>
                                             <td><span class="sol-badge sol-badge-warning">Monitora</span></td>
                                         </tr>
                                         <tr>
                                             <td><i class="fas fa-map-marker-alt"></i> Senza Tracking</td>
-                                            <td>${alerts.missingTracking || 0}</td>
+                                            <td>${formatNumber(alerts.missingTracking || 0)}</td>
                                             <td><span class="sol-badge sol-badge-info">Aggiorna</span></td>
                                         </tr>
                                     </tbody>
@@ -1799,23 +1830,6 @@ value: {
         let currentFileName = '';
         let chartInstances = {};
 
-// Funzione helper per formattazione numeri in italiano
-function formatCurrency(value, decimals = 0) {
-    return new Intl.NumberFormat('it-IT', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value);
-}
-
-function formatNumber(value, decimals = 0) {
-    return new Intl.NumberFormat('it-IT', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value);
-}
-
         // Chart theme
         const chartTheme = {
             theme: { mode: 'dark' },
@@ -1979,7 +1993,7 @@ function formatNumber(value, decimals = 0) {
             currentFileData = results.data;
             
             // Update modal info
-            document.getElementById('fileRows').textContent = results.data.length + ' righe';
+            document.getElementById('fileRows').textContent = formatNumber(results.data.length) + ' righe';
             document.getElementById('fileColumns').textContent = Object.keys(results.data[0] || {}).length + ' colonne';
             
             // Show preview
@@ -1995,7 +2009,7 @@ function formatNumber(value, decimals = 0) {
             currentFileData = jsonData;
             
             // Update modal info
-            document.getElementById('fileRows').textContent = jsonData.length + ' righe';
+            document.getElementById('fileRows').textContent = formatNumber(jsonData.length) + ' righe';
             document.getElementById('fileColumns').textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
             
             // Show preview
@@ -2080,7 +2094,7 @@ function formatNumber(value, decimals = 0) {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showNotification(`Import completato: ${result.imported} record importati`, 'success');
+                    showNotification(`Import completato: ${formatNumber(result.imported)} record importati`, 'success');
                     setTimeout(() => {
                         closeImportModal();
                         refreshDashboard();
@@ -2124,10 +2138,10 @@ function formatNumber(value, decimals = 0) {
             const data = dashboardManager.dashboardData;
             if (data) {
                 doc.setFontSize(10);
-                doc.text(`Spedizioni Totali: ${data.totalShipments?.toLocaleString('it-IT') || 0}`, 20, 55);
-                doc.text(`Costo Totale Trasporto: €${data.costs?.totalTransportCost?.toLocaleString('it-IT') || 0}`, 20, 65);
-                doc.text(`Tempo Medio Consegna: ${data.avgDeliveryTime || 0} giorni`, 20, 75);
-                doc.text(`Tasso Puntualità: ${data.onTimeDelivery || 0}%`, 20, 85);
+                doc.text(`Spedizioni Totali: ${formatNumber(data.totalShipments || 0)}`, 20, 55);
+                doc.text(`Costo Totale Trasporto: ${formatCurrency(data.costs?.totalTransportCost || 0)}`, 20, 65);
+                doc.text(`Tempo Medio Consegna: ${formatNumber(data.avgDeliveryTime || 0, 1)} giorni`, 20, 75);
+                doc.text(`Tasso Puntualità: ${formatNumber(data.onTimeDelivery || 0, 1)}%`, 20, 85);
             }
             
             // Save PDF
