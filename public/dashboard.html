@@ -1918,18 +1918,7 @@
                 document.body.style.overflow = '';
             });
 
-            // User dropdown
-            const userMenuBtn = document.getElementById('userMenuBtn');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            userMenuBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-            });
-
-            document.addEventListener('click', function() {
-                userDropdown.style.display = 'none';
+            // User dropdown const userMenuBtn = document.getElementById('userMenuBtn'); const userDropdown = document.getElementById('userDropdown'); if (userMenuBtn && userDropdown) { userMenuBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none'; }); // Previeni la chiusura del dropdown quando si clicca su un link userDropdown.addEventListener('click', function(e) { e.stopPropagation(); }); document.addEventListener('click', function() { userDropdown.style.display = 'none';
             });
 
             // Logout

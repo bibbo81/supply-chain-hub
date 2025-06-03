@@ -1015,19 +1015,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.style.overflow = '';
             });
 
-            // User dropdown
+            // User dropdown - FIXED WITH NULL CHECKS
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
             
-            userMenuBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-            });
-
-            document.addEventListener('click', function() {
-                userDropdown.style.display = 'none';
-            });
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                // Previeni la chiusura del dropdown quando si clicca su un link
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
 
             // Logout - FIX: usa window.auth.logout()
             document.getElementById('logoutBtn').addEventListener('click', function(e) {

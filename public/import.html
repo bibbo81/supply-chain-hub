@@ -1575,6 +1575,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
                 });
 
+                // Previeni la chiusura del dropdown quando si clicca su un link
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
                     userDropdown.style.display = 'none';

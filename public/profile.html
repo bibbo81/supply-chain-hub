@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Hub - Profilo Utente</title>
+    <meta name="description" content="Gestisci il tuo profilo personale e le impostazioni account">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007aff'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="/solarium.css">
+    
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- Page Protection -->
+    <script>
+        (function() {
+            console.log('[Profile] Checking authentication...');
+            
+            function checkAuth() {
+                if (!window.auth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
+                
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Profile] Not authenticated, redirecting...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Profile] User authenticated');
+            }
+            
+            checkAuth();
+        })();
+    </script>
+    
+    <style>
+        /* Page Specific Styles */
+        .sol-main-content {
+            margin-top: 80px;
+            padding: var(--sol-space-xl);
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: var(--sol-space-3xl);
+        }
+        
+        .profile-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: var(--sol-space-sm);
+            background: linear-gradient(135deg, var(--sol-text-primary) 0%, var(--sol-text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .profile-subtitle {
+            color: var(--sol-text-secondary);
+            font-size: 1.125rem;
+        }
+        
+        /* Profile Container */
+        .profile-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: var(--sol-space-2xl);
+            align-items: start;
+        }
+        
+        /* Avatar Section */
+        .avatar-section {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-2xl);
+            text-align: center;
+        }
+        
+        .avatar-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto var(--sol-space-xl);
+        }
+        
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--sol-gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .avatar-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .avatar-upload {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 48px;
+            height: 48px;
+            background: var(--sol-gradient-primary);
+            border: 3px solid var(--sol-bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--sol-transition-base);
+            box-shadow: var(--sol-shadow-md);
+        }
+        
+        .avatar-upload:hover {
+            transform: scale(1.1);
+            box-shadow: var(--sol-shadow-lg);
+        }
+        
+        .avatar-upload i {
+            color: white;
+            font-size: 1.125rem;
+        }
+        
+        #avatarInput {
+            display: none;
+        }
+        
+        .user-info {
+            margin-bottom: var(--sol-space-lg);
+        }
+        
+        .user-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .user-role {
+            color: var(--sol-text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: var(--sol-space-sm);
+        }
+        
+        .user-company {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
+            padding: var(--sol-space-xs) var(--sol-space-md);
+            background: var(--sol-glass-medium);
+            border-radius: var(--sol-radius-full);
+            font-size: 0.875rem;
+            color: var(--sol-text-primary);
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--sol-space-md);
+            margin-top: var(--sol-space-xl);
+            padding-top: var(--sol-space-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--sol-text-primary);
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--sol-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Form Sections */
+        .form-sections {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sol-space-2xl);
+        }
+        
+        .form-section {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-2xl);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sol-space-xl);
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-md);
+        }
+        
+        .section-title i {
+            color: var(--sol-text-secondary);
+            font-size: 1rem;
+        }
+        
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--sol-space-lg);
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sol-space-sm);
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--sol-text-secondary);
+        }
+        
+        .form-label.required::after {
+            content: ' *';
+            color: #FF3B30;
+        }
+        
+        .form-control {
+            padding: var(--sol-space-md);
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            color: var(--sol-text-primary);
+            font-size: 0.95rem;
+            transition: var(--sol-transition-base);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            background: var(--sol-glass-heavy);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
+        .form-control:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .form-control::placeholder {
+            color: var(--sol-text-quaternary);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Password Section */
+        .password-requirements {
+            margin-top: var(--sol-space-md);
+            padding: var(--sol-space-md);
+            background: var(--sol-glass-light);
+            border-radius: var(--sol-radius-md);
+            font-size: 0.875rem;
+        }
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-sm);
+            margin-bottom: var(--sol-space-xs);
+            color: var(--sol-text-secondary);
+        }
+        
+        .requirement:last-child {
+            margin-bottom: 0;
+        }
+        
+        .requirement.met {
+            color: #34C759;
+        }
+        
+        .requirement i {
+            font-size: 0.75rem;
+        }
+        
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            gap: var(--sol-space-lg);
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--sol-space-md) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info {
+            flex: 1;
+        }
+        
+        .setting-label {
+            font-weight: 500;
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .setting-description {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 28px;
+            background: var(--sol-glass-medium);
+            border-radius: var(--sol-radius-full);
+            cursor: pointer;
+            transition: var(--sol-transition-base);
+        }
+        
+        .toggle-switch input {
+            display: none;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: var(--sol-text-tertiary);
+            border-radius: 50%;
+            transition: var(--sol-transition-base);
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            transform: translateX(20px);
+            background: white;
+        }
+        
+        .toggle-switch input:checked ~ .toggle-switch {
+            background: var(--sol-gradient-primary);
+        }
+        
+        /* Action Buttons */
+        .form-actions {
+            display: flex;
+            gap: var(--sol-space-md);
+            justify-content: flex-end;
+            margin-top: var(--sol-space-xl);
+            padding-top: var(--sol-space-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Delete Account */
+        .danger-zone {
+            margin-top: var(--sol-space-2xl);
+            padding: var(--sol-space-xl);
+            background: rgba(255, 59, 48, 0.05);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            border-radius: var(--sol-radius-lg);
+        }
+        
+        .danger-title {
+            color: #FF3B30;
+            font-weight: 600;
+            margin-bottom: var(--sol-space-sm);
+        }
+        
+        .danger-text {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            margin-bottom: var(--sol-space-md);
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: var(--sol-glass-heavy);
+            backdrop-filter: var(--sol-blur-xl);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-lg);
+            min-width: 320px;
+            box-shadow: var(--sol-shadow-lg);
+            z-index: 1100;
+            transform: translateX(400px);
+            transition: transform var(--sol-transition-base);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--sol-space-md);
+        }
+        
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .notification.success .notification-icon {
+            background: rgba(52, 199, 89, 0.2);
+            color: #34C759;
+        }
+        
+        .notification.error .notification-icon {
+            background: rgba(255, 59, 48, 0.2);
+            color: #FF3B30;
+        }
+        
+        .notification-text {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+        }
+        
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--sol-radius-xl);
+        }
+        
+        .loading-overlay.show {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .profile-container {
+                grid-template-columns: 280px 1fr;
+                gap: var(--sol-space-xl);
+            }
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            /* Header Mobile */
+            #userName { display: none; }
+            .sol-logo-text { display: none; }
+            .sol-header-center { display: none; }
+            #userMenuBtn .fa-chevron-down { display: none; }
+            .sol-header-content { padding: 0 var(--sol-space-md); }
+            .sol-header-right { gap: var(--sol-space-xs) !important; }
+            
+            #notificationDropdown {
+                right: 10px !important;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+            
+            /* Main Content */
+            .sol-main-content {
+                padding: var(--sol-space-md);
+                margin-top: 60px;
+            }
+            
+            /* Profile Layout */
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: var(--sol-space-xl);
+            }
+            
+            .profile-header {
+                margin-bottom: var(--sol-space-xl);
+            }
+            
+            .profile-title {
+                font-size: 1.75rem;
+            }
+            
+            .profile-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            /* Avatar Section Mobile */
+            .avatar-section {
+                padding: var(--sol-space-xl);
+            }
+            
+            .avatar-wrapper {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .avatar-image {
+                font-size: 3rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--sol-space-sm);
+            }
+            
+            /* Form Mobile */
+            .form-section {
+                padding: var(--sol-space-lg);
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: var(--sol-space-md);
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .section-title {
+                font-size: 1.125rem;
+            }
+            
+            /* Actions Mobile */
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .form-actions .sol-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Settings Mobile */
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--sol-space-md);
+            }
+            
+            .toggle-switch {
+                align-self: flex-start;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .avatar-wrapper {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER UNIFICATO STANDARD -->
+    <header class="sol-header" style="overflow: visible;">
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/dashboard.html" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
+                </a>
+            </div>
+            
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+                </div>
+            </div>
+            
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                    <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+                </button>
+                
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                        <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                    </div>
+                    <a href="/profile.html" class="sol-dropdown-item active" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Dropdown -->
+    <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+        <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Spedizione in Ritardo</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Container MRKU4252004 - 3 giorni di ritardo</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+            <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sol-sidebar" id="sidebar">
+        <nav style="padding: var(--sol-space-lg) 0;">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
+                <a href="/dashboard.html" class="sol-nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/shipments.html" class="sol-nav-item">
+                    <i class="fas fa-box"></i>
+                    <span>Spedizioni</span>
+                </a>
+                <a href="/carriers.html" class="sol-nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Corrieri</span>
+                </a>
+                <a href="/tracking.html" class="sol-nav-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Tracking</span>
+                </a>
+            </div>
+            
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
+                <a href="/import.html" class="sol-nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Importa Dati</span>
+                </a>
+                <a href="/reports.html" class="sol-nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Report</span>
+                </a>
+                <a href="/costs.html" class="sol-nav-item">
+                    <i class="fas fa-coins"></i>
+                    <span>Analisi Costi</span>
+                </a>
+            </div>
+            
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
+                <a href="/team.html" class="sol-nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Team</span>
+                </a>
+                <a href="/settings.html" class="sol-nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Impostazioni</span>
+                </a>
+                <a href="/billing.html" class="sol-nav-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Fatturazione</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="sol-main-content">
+        <div class="profile-header">
+            <h1 class="profile-title">Il Mio Profilo</h1>
+            <p class="profile-subtitle">Gestisci i tuoi dati personali e le impostazioni account</p>
+        </div>
+
+        <div class="profile-container">
+            <!-- Left Column: Avatar & Stats -->
+            <div class="avatar-section">
+                <div class="avatar-wrapper">
+                    <div class="avatar-image" id="avatarPreview">
+                        <span id="avatarInitials">FC</span>
+                    </div>
+                    <label for="avatarInput" class="avatar-upload">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatarInput" accept="image/*">
+                </div>
+
+                <div class="user-info">
+                    <h2 class="user-name" id="profileUserName">Fabrizio Cagnucci</h2>
+                    <p class="user-role">Amministratore</p>
+                    <div class="user-company">
+                        <i class="fas fa-building"></i>
+                        <span id="profileCompany">Azienda Demo SpA</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalImports">152</div>
+                        <div class="stat-label">Import Totali</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalShipments">3.2k</div>
+                        <div class="stat-label">Spedizioni</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="lastAccess">2h</div>
+                        <div class="stat-label">Ultimo Accesso</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="accountAge">6m</div>
+                        <div class="stat-label">Account Attivo</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Forms -->
+            <div class="form-sections">
+                <!-- Personal Information -->
+                <form id="personalInfoForm" class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-user"></i>
+                            Informazioni Personali
+                        </h3>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label required" for="firstName">Nome</label>
+                            <input type="text" id="firstName" class="form-control" placeholder="Nome" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required" for="lastName">Cognome</label>
+                            <input type="text" id="lastName" class="form-control" placeholder="Cognome" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label class="form-label required" for="email">Email</label>
+                            <input type="email" id="email" class="form-control" placeholder="email@esempio.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Telefono</label>
+                            <input type="tel" id="phone" class="form-control" placeholder="+39 123 456 7890">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="jobTitle">Ruolo</label>
+                            <input type="text" id="jobTitle" class="form-control" placeholder="es. Responsabile Logistica">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label class="form-label" for="bio">Bio</label>
+                            <textarea id="bio" class="form-control" placeholder="Scrivi qualcosa su di te..." rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="sol-btn sol-btn-glass" onclick="resetForm('personalInfoForm')">
+                            Annulla
+                        </button>
+                        <button type="submit" class="sol-btn sol-btn-primary">
+                            <i class="fas fa-save"></i>
+                            Salva Modifiche
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Change Password -->
+                <form id="passwordForm" class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-lock"></i>
+                            Cambia Password
+                        </h3>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label required" for="currentPassword">Password Attuale</label>
+                            <input type="password" id="currentPassword" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required" for="newPassword">Nuova Password</label>
+                            <input type="password" id="newPassword" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required" for="confirmPassword">Conferma Password</label>
+                            <input type="password" id="confirmPassword" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="password-requirements">
+                        <p style="font-weight: 500; margin-bottom: var(--sol-space-sm);">La password deve contenere:</p>
+                        <div class="requirement" id="reqLength">
+                            <i class="fas fa-circle"></i>
+                            Almeno 8 caratteri
+                        </div>
+                        <div class="requirement" id="reqUppercase">
+                            <i class="fas fa-circle"></i>
+                            Una lettera maiuscola
+                        </div>
+                        <div class="requirement" id="reqLowercase">
+                            <i class="fas fa-circle"></i>
+                            Una lettera minuscola
+                        </div>
+                        <div class="requirement" id="reqNumber">
+                            <i class="fas fa-circle"></i>
+                            Un numero
+                        </div>
+                        <div class="requirement" id="reqSpecial">
+                            <i class="fas fa-circle"></i>
+                            Un carattere speciale
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="sol-btn sol-btn-glass" onclick="resetForm('passwordForm')">
+                            Annulla
+                        </button>
+                        <button type="submit" class="sol-btn sol-btn-primary">
+                            <i class="fas fa-key"></i>
+                            Aggiorna Password
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Preferences -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-sliders-h"></i>
+                            Preferenze
+                        </h3>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Notifiche Email</div>
+                                <div class="setting-description">Ricevi aggiornamenti sulle spedizioni via email</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Notifiche Desktop</div>
+                                <div class="setting-description">Mostra notifiche sul desktop per eventi importanti</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="desktopNotifications">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Report Settimanali</div>
+                                <div class="setting-description">Ricevi un riepilogo settimanale delle attività</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="weeklyReports" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Modalità Scura</div>
+                                <div class="setting-description">Attiva il tema scuro per l'interfaccia</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="darkMode" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="danger-zone">
+                    <h4 class="danger-title">Zona Pericolosa</h4>
+                    <p class="danger-text">Una volta eliminato, non sarà possibile recuperare il tuo account e tutti i dati associati.</p>
+                    <button class="sol-btn sol-btn-danger" onclick="confirmDeleteAccount()">
+                        <i class="fas fa-trash"></i>
+                        Elimina Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Backdrop -->
+    <div class="sol-backdrop" id="backdrop"></div>
+
+    <!-- Scripts -->
+    <script>
+        // Global state
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadUserData();
+            updateUserUI();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Previeni la chiusura del dropdown quando si clicca su un link
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            document.addEventListener('click', function() {
+                userDropdown.style.display = 'none';
+            });
+
+            // Notification dropdown
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            notificationBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                userDropdown.style.display = 'none';
+                notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login.html');
+                }
+            });
+
+            // Avatar upload
+            document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
+
+            // Form submissions
+            document.getElementById('personalInfoForm').addEventListener('submit', handlePersonalInfoSubmit);
+            document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
+
+            // Password validation
+            document.getElementById('newPassword').addEventListener('input', validatePassword);
+
+            // Preference toggles
+            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+                toggle.addEventListener('change', handlePreferenceChange);
+            });
+        }
+
+        // Load user data
+        function loadUserData() {
+            currentUser = window.auth ? window.auth.getCurrentUser() : null;
+            if (!currentUser) {
+                currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            }
+
+            if (currentUser) {
+                // Populate form fields
+                const name = formatUserName(currentUser);
+                const nameParts = name.split(' ');
+                
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                document.getElementById('email').value = currentUser.email || '';
+                document.getElementById('profileUserName').textContent = name;
+                document.getElementById('avatarInitials').textContent = getUserInitials(name);
+                
+                // Load organization info
+                if (currentUser.user_metadata) {
+                    document.getElementById('profileCompany').textContent = 
+                        currentUser.user_metadata.company_name || 'Azienda Demo SpA';
+                }
+            }
+        }
+
+        // Update UI elements
+        function updateUserUI() {
+            const user = currentUser;
+            if (!user) return;
+            
+            const displayName = formatUserName(user);
+            const initials = getUserInitials(displayName);
+            
+            // Update header elements
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userInitial').textContent = initials;
+            document.getElementById('userFullName').textContent = displayName;
+            document.getElementById('userEmail').textContent = user.email || '';
+        }
+
+        // Format user name
+        function formatUserName(user) {
+            if (user.user_metadata && user.user_metadata.display_name) {
+                return user.user_metadata.display_name;
+            }
+            
+            let fullName = '';
+            if (user.user_metadata) {
+                fullName = user.user_metadata.full_name || user.user_metadata.name || '';
+            }
+            
+            if (fullName) {
+                fullName = fullName.replace(/[._-]/g, ' ');
+                return fullName.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+            }
+            
+            if (user.email) {
+                const emailName = user.email.split('@')[0];
+                return emailName
+                    .replace(/[._-]/g, ' ')
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+            }
+            
+            return 'Utente';
+        }
+
+        // Get user initials
+        function getUserInitials(name) {
+            const words = name.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2) {
+                return words[0][0].toUpperCase() + words[1][0].toUpperCase();
+            } else if (words.length === 1) {
+                return words[0][0].toUpperCase();
+            }
+            return 'U';
+        }
+
+        // Handle avatar upload
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Errore', 'L\'immagine non può superare i 5MB', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const avatarPreview = document.getElementById('avatarPreview');
+                avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar">`;
+                
+                // Here you would upload to server
+                showNotification('Successo', 'Avatar aggiornato con successo', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Handle personal info form submit
+        async function handlePersonalInfoSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                jobTitle: document.getElementById('jobTitle').value,
+                bio: document.getElementById('bio').value
+            };
+
+            // Show loading
+            showLoading(e.target);
+
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Update local data
+                if (currentUser) {
+                    currentUser.user_metadata = {
+                        ...currentUser.user_metadata,
+                        full_name: `${formData.firstName} ${formData.lastName}`,
+                        phone: formData.phone,
+                        job_title: formData.jobTitle,
+                        bio: formData.bio
+                    };
+                    
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
+
+                hideLoading(e.target);
+                showNotification('Successo', 'Dati personali aggiornati con successo', 'success');
+                updateUserUI();
+            } catch (error) {
+                hideLoading(e.target);
+                showNotification('Errore', 'Errore durante l\'aggiornamento dei dati', 'error');
+            }
+        }
+
+        // Handle password form submit
+        async function handlePasswordSubmit(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showNotification('Errore', 'Le password non coincidono', 'error');
+                return;
+            }
+
+            if (!isPasswordValid(newPassword)) {
+                showNotification('Errore', 'La password non soddisfa i requisiti minimi', 'error');
+                return;
+            }
+
+            showLoading(e.target);
+
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                hideLoading(e.target);
+                showNotification('Successo', 'Password aggiornata con successo', 'success');
+                e.target.reset();
+                resetPasswordValidation();
+            } catch (error) {
+                hideLoading(e.target);
+                showNotification('Errore', 'Errore durante l\'aggiornamento della password', 'error');
+            }
+        }
+
+        // Validate password
+        function validatePassword(e) {
+            const password = e.target.value;
+            
+            // Length
+            updateRequirement('reqLength', password.length >= 8);
+            
+            // Uppercase
+            updateRequirement('reqUppercase', /[A-Z]/.test(password));
+            
+            // Lowercase
+            updateRequirement('reqLowercase', /[a-z]/.test(password));
+            
+            // Number
+            updateRequirement('reqNumber', /[0-9]/.test(password));
+            
+            // Special character
+            updateRequirement('reqSpecial', /[!@#$%^&*(),.?":{}|<>]/.test(password));
+        }
+
+        // Update requirement indicator
+        function updateRequirement(id, isMet) {
+            const req = document.getElementById(id);
+            if (isMet) {
+                req.classList.add('met');
+                req.querySelector('i').className = 'fas fa-check-circle';
+            } else {
+                req.classList.remove('met');
+                req.querySelector('i').className = 'fas fa-circle';
+            }
+        }
+
+        // Check if password is valid
+        function isPasswordValid(password) {
+            return password.length >= 8 &&
+                   /[A-Z]/.test(password) &&
+                   /[a-z]/.test(password) &&
+                   /[0-9]/.test(password) &&
+                   /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        }
+
+        // Reset password validation
+        function resetPasswordValidation() {
+            ['reqLength', 'reqUppercase', 'reqLowercase', 'reqNumber', 'reqSpecial'].forEach(id => {
+                updateRequirement(id, false);
+            });
+        }
+
+        // Handle preference changes
+        function handlePreferenceChange(e) {
+            const preference = e.target.id;
+            const value = e.target.checked;
+            
+            // Save preference
+            localStorage.setItem(`pref_${preference}`, value);
+            
+            // Apply changes
+            if (preference === 'darkMode') {
+                // Theme is always dark in this design
+            }
+            
+            showNotification('Preferenze', 'Preferenze aggiornate', 'success');
+        }
+
+        // Reset form
+        function resetForm(formId) {
+            document.getElementById(formId).reset();
+            if (formId === 'passwordForm') {
+                resetPasswordValidation();
+            }
+        }
+
+        // Confirm delete account
+        function confirmDeleteAccount() {
+            if (confirm('Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.')) {
+                // Here you would call the delete account API
+                showNotification('Info', 'Funzionalità in arrivo', 'info');
+            }
+        }
+
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-times' : 'fa-info'}"></i>
+                    </div>
+                    <div class="notification-text">
+                        <div class="notification-title">${title}</div>
+                        <div class="notification-message">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Show loading overlay
+        function showLoading(form) {
+            const section = form.closest('.form-section');
+            let overlay = section.querySelector('.loading-overlay');
+            
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = '<div class="spinner"></div>';
+                section.style.position = 'relative';
+                section.appendChild(overlay);
+            }
+            
+            overlay.classList.add('show');
+        }
+
+        // Hide loading overlay
+        function hideLoading(form) {
+            const section = form.closest('.form-section');
+            const overlay = section.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+    </script>
+
+    <!-- Additional style for dropdown consistency -->
+    <style>
+        .sol-dropdown {
+            background: rgba(20, 20, 30, 0.95) !important;
+        }
+        
+        .sol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sol-dropdown-item.active {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+        
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</body>
+</html>
