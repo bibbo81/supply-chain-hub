@@ -601,64 +601,62 @@
 
     <!-- Scripts -->
     <script type="module">
-       // Aggiungi questo codice in login.html PRIMA dell'import di Supabase
-
-// Fix per il config fetch
-async function initConfig() {
-    try {
-        // Prova prima con percorso relativo
-        let response = await fetch('/.netlify/functions/config');
-        
-        if (!response.ok) {
-            console.log('Config fetch failed, trying without extension...');
-            // Prova senza estensione
-            response = await fetch('/.netlify/functions/config', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            });
-        }
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch config');
-        }
-        
-        const config = await response.json();
-        return config;
-        
-    } catch (error) {
-        console.error('Config fetch error:', error);
-        // Fallback config per development
-        return {
-            supabaseUrl: 'YOUR_SUPABASE_URL', // Sostituisci con il tuo URL
-            supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY' // Sostituisci con la tua key
-        };
-    }
-}
-
-       // Import Supabase
+        // Import Supabase
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
         // Global variables
         let supabase;
         let config;
 
+        // Fix per il config fetch
+        async function initConfig() {
+            try {
+                // Prova prima con percorso relativo
+                let response = await fetch('/.netlify/functions/config');
+                
+                if (!response.ok) {
+                    console.log('Config fetch failed, trying without extension...');
+                    // Prova senza estensione
+                    response = await fetch('/.netlify/functions/config', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch config');
+                }
+                
+                const config = await response.json();
+                return config;
+                
+            } catch (error) {
+                console.error('Config fetch error:', error);
+                // Fallback config per development
+                return {
+                    supabaseUrl: 'YOUR_SUPABASE_URL', // Sostituisci con il tuo URL
+                    supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY' // Sostituisci con la tua key
+                };
+            }
+        }
+
         // Initialize
         async function init() {
             try {
                 // Fetch configuration usando la nuova funzione
-config = await initConfig();
+                config = await initConfig();
                 
                 // Initialize Supabase
                 supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
                 window.supabase = supabase;
                 
-                // Check if already authenticated
-                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
+                // Check if already authenticated usando window.auth
+                const token = window.auth ? window.auth.isAuthenticated() : false;
                 if (token) {
-                    // Redirect to dashboard if already logged in
-                    window.location.href = '/dashboard.html';
+                    console.log('[Login] Already authenticated, redirecting...');
+                    window.location.replace('/dashboard.html');
                 }
                 
             } catch (error) {
@@ -745,7 +743,7 @@ config = await initConfig();
             document.getElementById('loadingOverlay').classList.remove('show');
         }
 
-        // Login form handler
+        // Login form handler - MODIFICATO PER SAFARI
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
@@ -756,6 +754,8 @@ config = await initConfig();
             const rememberMe = document.getElementById('rememberMe').checked;
 
             try {
+                console.log('[Login] Attempting login for:', email);
+                
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
@@ -763,12 +763,41 @@ config = await initConfig();
 
                 if (error) throw error;
 
-                // Store auth token
+                console.log('[Login] Login successful, storing auth...');
+                
+                // Store auth token - USANDO IL NUOVO METODO
                 const session = data.session;
                 if (session) {
-                    localStorage.setItem('sb-access-token', session.access_token);
-                    localStorage.setItem('supabase.auth.token', JSON.stringify(session));
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // Usa window.auth.storeAuth per gestire Safari
+                    if (window.auth && window.auth.storeAuth) {
+                        const stored = window.auth.storeAuth(session, data.user);
+                        console.log('[Login] Auth stored:', stored);
+                    } else {
+                        // Fallback se auth.js non è caricato
+                        console.log('[Login] Fallback storage method');
+                        localStorage.setItem('sb-access-token', session.access_token);
+                        localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        // Safari fallback
+                        sessionStorage.setItem('sb-access-token', session.access_token);
+                        sessionStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                    
+                    // Verifica che il token sia stato salvato
+                    setTimeout(() => {
+                        const savedToken = localStorage.getItem('sb-access-token') || 
+                                         sessionStorage.getItem('sb-access-token');
+                        console.log('[Login] Token verification:', !!savedToken);
+                        
+                        if (!savedToken) {
+                            console.error('[Login] Token not saved properly!');
+                            // Riprova con cookie
+                            const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+                            document.cookie = `sb-access-token=${session.access_token}; path=/; expires=${expires}`;
+                        }
+                    }, 100);
                 }
 
                 // Store remember me preference
@@ -778,8 +807,11 @@ config = await initConfig();
                     localStorage.removeItem('rememberEmail');
                 }
 
-                // Success - redirect to dashboard
-                window.location.href = '/dashboard.html';
+                // Success - redirect to dashboard con delay per Safari
+                console.log('[Login] Redirecting to dashboard...');
+                setTimeout(() => {
+                    window.location.replace('/dashboard.html');
+                }, 500);
 
             } catch (error) {
                 hideLoading();
