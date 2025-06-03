@@ -1176,10 +1176,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <h3 class="sol-kpi-title">Costo Totale Trasporto</h3>
                                 <div class="sol-kpi-trend ${data.costs?.costGrowth >= 0 ? 'negative' : 'positive'}">
                                     <i class="fas fa-arrow-${data.costs?.costGrowth >= 0 ? 'up' : 'down'}"></i>
-                                    ${Math.abs(data.costs?.costGrowth || 0)}%
+                                    ${formatNumber(Math.abs(data.costs?.costGrowth || 0), 1)}%
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">€${(data.costs?.totalTransportCost || 0).toLocaleString('it-IT')}</div>
+                            <div class="sol-kpi-value">${formatCurrency(data.costs?.totalTransportCost || 0)}</div>
                             <div class="sol-kpi-subtitle">Ultimo periodo</div>
                         </div>
                     `
@@ -1199,7 +1199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${Math.abs(data.shipmentsGrowth || 0)}%
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${(data.totalShipments || 0).toLocaleString('it-IT')}</div>
+                            <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
                             <div class="sol-kpi-subtitle">Ultimo periodo</div>
                         </div>
                     `
@@ -1269,11 +1269,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 chart: { ...chartTheme.chart, type: 'area', height: 350 },
                                 xaxis: { ...chartTheme.xaxis, type: 'datetime' },
                                 yaxis: {
-                                    ...chartTheme.yaxis,
-                                    labels: {
-                                        formatter: (val) => `€${val}`
+                                     ...chartTheme.yaxis,
+                                     labels: {
+                                        formatter: (val) => formatCurrency(val)
                                     }
-                                }
+                                },
+                                tooltip: {
+                                    ...chartTheme.tooltip,
+                                    y: {
+                                        formatter: (val) => formatCurrency(val)
+                                    } 
+                                } 
                             });
                             chart.render();
                             dashboardManager.chartInstances[widgetId] = chart;
@@ -1319,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 total: {
                                                     show: true,
                                                     label: 'Totale',
-                                                    formatter: () => `€${data.costs?.totalTransportCost?.toLocaleString('it-IT') || 0}`
+                                                    formatter: () => formatCurrency(data.costs?.totalTransportCost || 0)
                                                 }
                                             }
                                         }
@@ -1381,8 +1387,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${suppliers.map(s => `
                                             <tr>
                                                 <td>${s.name}</td>
-                                                <td>${s.quantity.toLocaleString('it-IT')}</td>
-                                                <td>€${s.cost.toLocaleString('it-IT')}</td>
+                                                <td>${formatNumber(s.quantity)}</td>
+                                                <td>${formatCurrency(s.cost)}</td>
                                                 <td>${s.shipments}</td>
                                             </tr>
                                         `).join('')}
@@ -1747,6 +1753,23 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentFileData = null;
         let currentFileName = '';
         let chartInstances = {};
+
+// Funzione helper per formattazione numeri in italiano
+function formatCurrency(value, decimals = 0) {
+    return new Intl.NumberFormat('it-IT', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    }).format(value);
+}
+
+function formatNumber(value, decimals = 0) {
+    return new Intl.NumberFormat('it-IT', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    }).format(value);
+}
 
         // Chart theme
         const chartTheme = {
