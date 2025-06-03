@@ -30,92 +30,38 @@
     <!-- Auth System -->
     <script src="/auth.js"></script>
     
-    <!-- PROTEZIONE PAGINA DASHBOARD CON SAFARI FIX -->
+   <!-- PROTEZIONE PAGINA DASHBOARD -->
 <script>
-    // Protezione pagina dashboard
     (function() {
         console.log('[Dashboard] Checking authentication...');
         
-        // Detect Safari
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        if (isSafari) {
-            console.log('[Dashboard] Safari browser detected');
-        }
-        
-        // Anti-loop protection
-        let dashboardCheckCount = parseInt(sessionStorage.getItem('dashboardCheckCount') || '0');
-        
-        if (dashboardCheckCount > 2) {
-            console.error('[Dashboard] Too many auth checks, staying on page');
-            sessionStorage.removeItem('dashboardCheckCount');
-            return;
-        }
-        
-        sessionStorage.setItem('dashboardCheckCount', (dashboardCheckCount + 1).toString());
-        
-        // Verifica immediata senza loop
-        const checkDashboardAuth = () => {
-            // Aspetta che auth.js sia caricato
+        // Aspetta auth.js
+        function checkAuth() {
             if (!window.auth) {
-                console.log('[Dashboard] Waiting for auth.js...');
-                
-                // Riprova dopo un breve delay
-                setTimeout(() => {
-                    if (!window.auth) {
-                        console.error('[Dashboard] auth.js not loaded after wait');
-                        window.location.replace('/login.html');
-                    } else {
-                        checkDashboardAuth();
-                    }
-                }, 200);
+                setTimeout(checkAuth, 100);
                 return;
             }
             
-            // Reset counter on successful load
-            sessionStorage.removeItem('dashboardCheckCount');
-            
+            // Se non autenticato, redirect a login
             if (!window.auth.isAuthenticated()) {
-                console.log('[Dashboard] Not authenticated, redirecting to login...');
+                console.log('[Dashboard] Not authenticated, redirecting...');
                 window.location.replace('/login.html');
                 return;
             }
             
-            console.log('[Dashboard] User authenticated, loading dashboard...');
+            console.log('[Dashboard] User authenticated');
             
-            // Carica i dati utente
+            // Update UI
             const user = window.auth.getCurrentUser();
-            if (user) {
-                console.log('[Dashboard] User loaded:', user.email);
-                
-                // Aggiorna UI con dati utente quando DOM è pronto
-                const updateUserUI = () => {
-                    const userNameEl = document.getElementById('userName');
-                    const userEmailEl = document.getElementById('userEmail');
-                    const userAvatarEl = document.getElementById('userAvatar');
-                    const userInitialEl = document.getElementById('userInitial');
-                    
-                    if (userNameEl) userNameEl.textContent = user.user_metadata?.name || user.email?.split('@')[0] || 'Utente';
-                    if (userEmailEl) userEmailEl.textContent = user.email;
-                    if (userInitialEl) userInitialEl.textContent = (user.user_metadata?.name || user.email || 'U').charAt(0).toUpperCase();
-                };
-                
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', updateUserUI);
-                } else {
-                    updateUserUI();
-                }
+            if (user && document.readyState !== 'loading') {
+                document.getElementById('userName').textContent = user.email?.split('@')[0] || 'Utente';
+                document.getElementById('userInitial').textContent = (user.email || 'U')[0].toUpperCase();
             }
-        };
-        
-        // Per Safari, aggiungi un piccolo delay per garantire che tutto sia pronto
-        if (isSafari) {
-            setTimeout(checkDashboardAuth, 100);
-        } else {
-            checkDashboardAuth();
         }
+        
+        checkAuth();
     })();
 </script>
-<!-- FINE PROTEZIONE PAGINA -->
     
     <style>
         /* Page Specific Styles */

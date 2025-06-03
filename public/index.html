@@ -3,78 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supply Chain Hub - Redirecting...</title>
+    <title>Supply Chain Hub</title>
     
-    <!-- BLOCCO TOTALE ANALYTICS E TRACKER -->
+    <!-- NO ANALYTICS -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.netlify.app; frame-src 'none'; object-src 'none';">
-    
-    <script>
-        // BLOCCO PREVENTIVO IMMEDIATO
-        (function() {
-            // Blocca TUTTI i metodi di tracking
-            const blockTracking = () => {
-                // Google Analytics
-                window['ga-disable-GA_MEASUREMENT_ID'] = true;
-                window['google-analytics'] = false;
-                window.ga = () => false;
-                window.gtag = () => false;
-                window.dataLayer = [];
-                window._gaq = [];
-                window._gat = undefined;
-                window.GoogleAnalyticsObject = undefined;
-                
-                // Blocca fetch verso Google Analytics
-                const originalFetch = window.fetch;
-                window.fetch = function(...args) {
-                    const url = args[0];
-                    if (url && url.toString().includes('google-analytics')) {
-                        console.log('Blocked Google Analytics fetch:', url);
-                        return Promise.reject(new Error('Blocked'));
-                    }
-                    return originalFetch.apply(this, args);
-                };
-                
-                // Blocca XMLHttpRequest verso Google Analytics
-                const originalXHR = window.XMLHttpRequest.prototype.open;
-                window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-                    if (url && url.includes('google-analytics')) {
-                        console.log('Blocked Google Analytics XHR:', url);
-                        return;
-                    }
-                    return originalXHR.apply(this, [method, url, ...rest]);
-                };
-                
-                // Blocca createElement per script di tracking
-                const originalCreateElement = document.createElement;
-                document.createElement = function(tagName) {
-                    const element = originalCreateElement.call(document, tagName);
-                    if (tagName.toLowerCase() === 'script') {
-                        const originalSetAttribute = element.setAttribute;
-                        element.setAttribute = function(name, value) {
-                            if (name === 'src' && value && (
-                                value.includes('google-analytics') ||
-                                value.includes('googletagmanager') ||
-                                value.includes('gtag')
-                            )) {
-                                console.log('Blocked script src:', value);
-                                return;
-                            }
-                            return originalSetAttribute.call(this, name, value);
-                        };
-                    }
-                    return element;
-                };
-            };
-            
-            // Esegui immediatamente
-            blockTracking();
-            
-            // Ri-esegui dopo DOM ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', blockTracking);
-            }
-        })();
-    </script>
     
     <style>
         body {
@@ -86,6 +18,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
         .loading {
             text-align: center;
@@ -102,91 +35,144 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .debug {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            max-width: 400px;
+            display: none;
+        }
+        .debug.show {
+            display: block;
+        }
+        .manual-nav {
+            margin-top: 40px;
+            display: none;
+        }
+        .manual-nav.show {
+            display: block;
+        }
+        .manual-nav a {
+            color: #007AFF;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 8px 16px;
+            border: 1px solid #007AFF;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .manual-nav a:hover {
+            background: #007AFF;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="loading">
         <div class="spinner"></div>
-        <p>Redirecting...</p>
+        <p id="status">Checking authentication...</p>
     </div>
+    
+    <!-- Navigazione manuale di emergenza -->
+    <div class="manual-nav" id="manualNav">
+        <p style="color: #888; margin-bottom: 20px;">Problemi con il redirect automatico?</p>
+        <a href="/login.html">Vai al Login</a>
+        <a href="/dashboard.html">Vai alla Dashboard</a>
+    </div>
+    
+    <!-- Debug info -->
+    <div class="debug" id="debug"></div>
 
-    <!-- Carica auth.js PRIMA del redirect logic -->
+    <!-- Auth.js DEVE essere caricato prima -->
     <script src="/auth.js"></script>
     
-    <!-- Script di redirect MIGLIORATO PER SAFARI -->
     <script>
-        // Redirect logic con Safari fix
+        // NUOVO APPROCCIO: Semplice e diretto
         (function() {
-            console.log('[Index] Starting redirect logic...');
+            const debug = document.getElementById('debug');
+            const status = document.getElementById('status');
+            const manualNav = document.getElementById('manualNav');
+            let logs = [];
             
-            // Detect Safari
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            if (isSafari) {
-                console.log('[Index] Safari browser detected');
-            }
-            
-            // Anti-loop protection
-            let redirectCount = parseInt(sessionStorage.getItem('redirectCount') || '0');
-            
-            if (redirectCount > 3) {
-                console.error('[Index] Too many redirects, going to login as fallback');
-                sessionStorage.removeItem('redirectCount');
-                window.location.replace('/login.html');
-                return;
-            }
-            
-            // Incrementa counter
-            sessionStorage.setItem('redirectCount', (redirectCount + 1).toString());
-            
-            // Funzione di redirect con delay per Safari
-            function doRedirect() {
-                try {
-                    // Usa auth.js se disponibile
-                    if (window.auth && typeof window.auth.isAuthenticated === 'function') {
-                        const authenticated = window.auth.isAuthenticated();
-                        console.log('[Index] Authentication check:', authenticated);
-                        
-                        // Reset counter on successful check
-                        sessionStorage.removeItem('redirectCount');
-                        
-                        if (authenticated) {
-                            console.log('[Index] User authenticated, going to dashboard...');
-                            window.location.replace('/dashboard.html');
-                        } else {
-                            console.log('[Index] User not authenticated, going to login...');
-                            window.location.replace('/login.html');
-                        }
-                    } else {
-                        // Fallback se auth.js non è caricato
-                        console.log('[Index] Auth not loaded, checking localStorage directly...');
-                        const hasToken = !!localStorage.getItem('sb-access-token') || 
-                                       !!sessionStorage.getItem('sb-access-token');
-                        
-                        if (hasToken) {
-                            window.location.replace('/dashboard.html');
-                        } else {
-                            window.location.replace('/login.html');
-                        }
-                    }
-                } catch (e) {
-                    console.error('[Index] Redirect error:', e);
-                    window.location.replace('/login.html');
+            function log(msg) {
+                console.log('[Index]', msg);
+                logs.push(`${new Date().toISOString().substr(11, 8)} - ${msg}`);
+                if (debug) {
+                    debug.innerHTML = logs.slice(-10).join('<br>');
+                    debug.classList.add('show');
                 }
             }
             
-            // Delay maggiore per Safari per garantire che auth.js sia caricato
-            const delay = isSafari ? 300 : 100;
-            
-            setTimeout(doRedirect, delay);
-            
-            // Fallback timeout più lungo per Safari
+            // Mostra navigazione manuale dopo 3 secondi
             setTimeout(() => {
-                if (!window._authRedirecting) {
-                    console.log('[Index] Fallback redirect to login...');
-                    sessionStorage.removeItem('redirectCount');
+                manualNav.classList.add('show');
+            }, 3000);
+            
+            // Funzione principale di redirect
+            function handleRedirect() {
+                log('Starting authentication check...');
+                
+                // Controlla se siamo già stati qui troppe volte
+                const visitCount = parseInt(sessionStorage.getItem('index_visits') || '0');
+                if (visitCount > 2) {
+                    log('Too many visits, showing manual navigation');
+                    status.textContent = 'Seleziona dove vuoi andare:';
+                    document.querySelector('.spinner').style.display = 'none';
+                    sessionStorage.removeItem('index_visits');
+                    return;
+                }
+                sessionStorage.setItem('index_visits', (visitCount + 1).toString());
+                
+                // Aspetta che auth.js sia caricato
+                if (!window.auth) {
+                    log('Waiting for auth.js...');
+                    setTimeout(handleRedirect, 200);
+                    return;
+                }
+                
+                log('auth.js loaded, checking authentication...');
+                
+                try {
+                    const isAuthenticated = window.auth.isAuthenticated();
+                    log(`Authentication result: ${isAuthenticated}`);
+                    
+                    // Reset visit counter on successful check
+                    sessionStorage.removeItem('index_visits');
+                    
+                    // Decidi dove andare
+                    const targetUrl = isAuthenticated ? '/dashboard.html' : '/login.html';
+                    log(`Redirecting to: ${targetUrl}`);
+                    status.textContent = `Redirecting to ${isAuthenticated ? 'Dashboard' : 'Login'}...`;
+                    
+                    // Redirect con un piccolo delay
+                    setTimeout(() => {
+                        window.location.replace(targetUrl);
+                    }, 500);
+                    
+                } catch (error) {
+                    log(`Error during auth check: ${error.message}`);
+                    status.textContent = 'Errore, redirect al login...';
+                    setTimeout(() => {
+                        window.location.replace('/login.html');
+                    }, 1000);
+                }
+            }
+            
+            // Start dopo un piccolo delay
+            setTimeout(handleRedirect, 100);
+            
+            // Emergency fallback dopo 5 secondi
+            setTimeout(() => {
+                if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                    log('Emergency fallback activated');
                     window.location.replace('/login.html');
                 }
-            }, isSafari ? 3000 : 2000);
+            }, 5000);
         })();
     </script>
 </body>

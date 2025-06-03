@@ -1,216 +1,268 @@
-// public/auth.js - Versione SAFARI FIX
+// public/auth.js - SAFARI COMPLETE FIX
 (function() {
     'use strict';
     
     // Detect Safari
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
-    // Sistema auth con fix per Safari
+    console.log('[Auth] Browser:', { isSafari, isIOS });
+    
+    // Sistema auth con fix completo per Safari
     window.auth = {
-        // Storage wrapper per gestire Safari
-        storage: {
-            setItem(key, value) {
-                try {
-                    localStorage.setItem(key, value);
-                    // Fallback per Safari con sessionStorage
-                    if (isSafari) {
-                        sessionStorage.setItem(key, value);
-                    }
-                    return true;
-                } catch (e) {
-                    console.error('Storage error:', e);
-                    // Fallback con cookie per Safari
-                    if (isSafari) {
-                        document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=86400; SameSite=Lax`;
-                    }
-                    return false;
-                }
-            },
+        // Flag per debug
+        _debug: true,
+        
+        // Check se siamo in loop
+        isInLoop() {
+            const loopKey = 'auth_loop_check';
+            const now = Date.now();
+            const lastCheck = parseInt(localStorage.getItem(loopKey) || '0');
             
-            getItem(key) {
-                try {
-                    // Prima prova localStorage
-                    let value = localStorage.getItem(key);
-                    
-                    // Se Safari e non trova in localStorage, prova sessionStorage
-                    if (isSafari && !value) {
-                        value = sessionStorage.getItem(key);
-                    }
-                    
-                    // Ultimo tentativo con cookie per Safari
-                    if (isSafari && !value) {
-                        const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
-                        value = match ? decodeURIComponent(match[2]) : null;
-                    }
-                    
-                    return value;
-                } catch (e) {
-                    console.error('Storage get error:', e);
-                    return null;
-                }
-            },
-            
-            removeItem(key) {
-                try {
-                    localStorage.removeItem(key);
-                    if (isSafari) {
-                        sessionStorage.removeItem(key);
-                        // Rimuovi anche il cookie
-                        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
-                    }
-                } catch (e) {
-                    console.error('Storage remove error:', e);
-                }
-            },
-            
-            clear() {
-                try {
-                    localStorage.clear();
-                    if (isSafari) {
-                        sessionStorage.clear();
-                        // Clear auth cookies
-                        ['sb-access-token', 'sb-refresh-token', 'user', 'supabase.auth.token'].forEach(key => {
-                            document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
-                        });
-                    }
-                } catch (e) {
-                    console.error('Storage clear error:', e);
-                }
+            // Se l'ultimo check è stato meno di 2 secondi fa, siamo in loop
+            if (now - lastCheck < 2000) {
+                console.warn('[Auth] Loop detected!');
+                return true;
             }
+            
+            localStorage.setItem(loopKey, now.toString());
+            return false;
         },
-
-        // Check semplice con storage wrapper
+        
+        // Check authentication con metodo Safari-safe
         isAuthenticated() {
             try {
-                const token = this.storage.getItem('sb-access-token');
+                // Se siamo in loop, return false per forzare login
+                if (this.isInLoop()) {
+                    return false;
+                }
                 
-                // Extra check per Safari - verifica che il token sia valido
-                if (isSafari && token) {
-                    // Verifica base che il token sembri un JWT
+                // Prova metodi multipli per trovare il token
+                let token = null;
+                
+                // Metodo 1: localStorage standard
+                try {
+                    token = localStorage.getItem('sb-access-token');
+                    if (this._debug && token) console.log('[Auth] Token found in localStorage');
+                } catch (e) {
+                    console.warn('[Auth] localStorage not available');
+                }
+                
+                // Metodo 2: sessionStorage (per Safari private browsing)
+                if (!token) {
+                    try {
+                        token = sessionStorage.getItem('sb-access-token');
+                        if (this._debug && token) console.log('[Auth] Token found in sessionStorage');
+                    } catch (e) {
+                        console.warn('[Auth] sessionStorage not available');
+                    }
+                }
+                
+                // Metodo 3: Cerca nel cookie (Safari fallback)
+                if (!token && (isSafari || isIOS)) {
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        const [key, value] = cookie.trim().split('=');
+                        if (key === 'sb-access-token') {
+                            token = decodeURIComponent(value);
+                            if (this._debug) console.log('[Auth] Token found in cookie');
+                            break;
+                        }
+                    }
+                }
+                
+                // Metodo 4: Check Supabase session object
+                if (!token) {
+                    try {
+                        const sessionStr = localStorage.getItem('supabase.auth.token');
+                        if (sessionStr) {
+                            const session = JSON.parse(sessionStr);
+                            token = session?.access_token;
+                            if (this._debug && token) console.log('[Auth] Token found in Supabase session');
+                        }
+                    } catch (e) {
+                        // Ignore parse errors
+                    }
+                }
+                
+                // Validazione base del token
+                if (token && typeof token === 'string') {
+                    // Check formato JWT base (3 parti separate da .)
                     const parts = token.split('.');
-                    if (parts.length !== 3) {
-                        console.log('[Auth] Invalid token format, clearing...');
-                        this.storage.removeItem('sb-access-token');
+                    if (parts.length === 3) {
+                        if (this._debug) console.log('[Auth] Valid token format detected');
+                        return true;
+                    } else {
+                        console.warn('[Auth] Invalid token format');
+                        this.clearAuth();
                         return false;
                     }
                 }
                 
-                return !!token;
+                if (this._debug) console.log('[Auth] No valid token found');
+                return false;
+                
             } catch (e) {
                 console.error('[Auth] Error checking authentication:', e);
                 return false;
             }
         },
-
-        // Logout con storage wrapper
-        logout() {
+        
+        // Clear all auth data
+        clearAuth() {
+            console.log('[Auth] Clearing all auth data...');
+            
+            // Clear localStorage
             try {
-                console.log('[Auth] Logging out...');
-                this.storage.clear();
-                
-                // Force redirect con replace per evitare history issues
-                window.location.replace('/login.html');
+                ['sb-access-token', 'sb-refresh-token', 'user', 'supabase.auth.token'].forEach(key => {
+                    localStorage.removeItem(key);
+                });
             } catch (e) {
-                console.error('[Auth] Logout error:', e);
-                // Force redirect anche in caso di errore
-                window.location.replace('/login.html');
+                console.warn('[Auth] Could not clear localStorage');
+            }
+            
+            // Clear sessionStorage
+            try {
+                ['sb-access-token', 'sb-refresh-token', 'user', 'supabase.auth.token'].forEach(key => {
+                    sessionStorage.removeItem(key);
+                });
+            } catch (e) {
+                console.warn('[Auth] Could not clear sessionStorage');
+            }
+            
+            // Clear cookies (Safari)
+            if (isSafari || isIOS) {
+                ['sb-access-token', 'sb-refresh-token', 'user'].forEach(key => {
+                    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
+                    document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`; // Senza SameSite per compatibilità
+                });
             }
         },
-
-        // Get user con storage wrapper
+        
+        // Logout
+        logout() {
+            console.log('[Auth] Logging out...');
+            this.clearAuth();
+            
+            // Clear loop check
+            localStorage.removeItem('auth_loop_check');
+            
+            // Usa replace invece di href per evitare history issues
+            setTimeout(() => {
+                window.location.replace('/login.html');
+            }, 100);
+        },
+        
+        // Get current user
         getCurrentUser() {
             try {
-                const userStr = this.storage.getItem('user');
-                if (!userStr) return null;
+                // Prova localStorage
+                let userStr = localStorage.getItem('user');
                 
-                const user = JSON.parse(userStr);
-                
-                // Validazione base per Safari
-                if (isSafari && (!user || !user.email)) {
-                    console.log('[Auth] Invalid user data, clearing...');
-                    this.storage.removeItem('user');
-                    return null;
+                // Prova sessionStorage
+                if (!userStr) {
+                    userStr = sessionStorage.getItem('user');
                 }
                 
-                return user;
+                // Prova cookie (Safari)
+                if (!userStr && (isSafari || isIOS)) {
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        const [key, value] = cookie.trim().split('=');
+                        if (key === 'user') {
+                            userStr = decodeURIComponent(value);
+                            break;
+                        }
+                    }
+                }
+                
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user && user.email) {
+                        return user;
+                    }
+                }
+                
+                return null;
             } catch (e) {
                 console.error('[Auth] Error getting user:', e);
                 return null;
             }
         },
-
-        // Store auth con storage wrapper
+        
+        // Store auth - multi-method per Safari
         storeAuth(session, user) {
+            console.log('[Auth] Storing auth data...');
+            
             try {
                 if (session && session.access_token) {
-                    this.storage.setItem('sb-access-token', session.access_token);
-                    
-                    if (session.refresh_token) {
-                        this.storage.setItem('sb-refresh-token', session.refresh_token);
+                    // Store in localStorage
+                    try {
+                        localStorage.setItem('sb-access-token', session.access_token);
+                        if (session.refresh_token) {
+                            localStorage.setItem('sb-refresh-token', session.refresh_token);
+                        }
+                        localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                    } catch (e) {
+                        console.warn('[Auth] Could not store in localStorage');
                     }
                     
-                    // Store full session per Supabase compatibility
-                    this.storage.setItem('supabase.auth.token', JSON.stringify(session));
+                    // Store in sessionStorage (Safari private browsing)
+                    try {
+                        sessionStorage.setItem('sb-access-token', session.access_token);
+                        if (session.refresh_token) {
+                            sessionStorage.setItem('sb-refresh-token', session.refresh_token);
+                        }
+                        sessionStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                    } catch (e) {
+                        console.warn('[Auth] Could not store in sessionStorage');
+                    }
+                    
+                    // Store in cookie (Safari fallback)
+                    if (isSafari || isIOS) {
+                        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+                        document.cookie = `sb-access-token=${encodeURIComponent(session.access_token)}; path=/; expires=${expires}; SameSite=Lax`;
+                        if (session.refresh_token) {
+                            document.cookie = `sb-refresh-token=${encodeURIComponent(session.refresh_token)}; path=/; expires=${expires}; SameSite=Lax`;
+                        }
+                    }
                 }
                 
                 if (user) {
-                    this.storage.setItem('user', JSON.stringify(user));
+                    const userStr = JSON.stringify(user);
+                    
+                    // Store in multiple places
+                    try {
+                        localStorage.setItem('user', userStr);
+                    } catch (e) {
+                        console.warn('[Auth] Could not store user in localStorage');
+                    }
+                    
+                    try {
+                        sessionStorage.setItem('user', userStr);
+                    } catch (e) {
+                        console.warn('[Auth] Could not store user in sessionStorage');
+                    }
+                    
+                    if (isSafari || isIOS) {
+                        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+                        document.cookie = `user=${encodeURIComponent(userStr)}; path=/; expires=${expires}; SameSite=Lax`;
+                    }
                 }
+                
+                // Clear loop check on successful store
+                localStorage.removeItem('auth_loop_check');
                 
                 return true;
             } catch (e) {
                 console.error('[Auth] Error storing auth:', e);
                 return false;
             }
-        },
-
-        // Metodo per verificare se siamo in una pagina di auth
-        isAuthPage() {
-            const path = window.location.pathname;
-            return path === '/login.html' || path === '/register.html' || path === '/';
-        },
-
-        // Metodo per gestire redirect con protezione loop
-        handleRedirect(authenticated) {
-            const currentPath = window.location.pathname;
-            
-            // Se siamo già dove dovremmo essere, non fare nulla
-            if (authenticated && currentPath === '/dashboard.html') {
-                console.log('[Auth] Already on dashboard, no redirect needed');
-                return;
-            }
-            
-            if (!authenticated && (currentPath === '/login.html' || currentPath === '/')) {
-                console.log('[Auth] Already on login page, no redirect needed');
-                return;
-            }
-            
-            // Aggiungi flag per prevenire redirect multipli
-            if (window._authRedirecting) {
-                console.log('[Auth] Already redirecting, skipping...');
-                return;
-            }
-            
-            window._authRedirecting = true;
-            
-            if (authenticated) {
-                console.log('[Auth] Redirecting to dashboard...');
-                window.location.replace('/dashboard.html');
-            } else {
-                console.log('[Auth] Redirecting to login...');
-                window.location.replace('/login.html');
-            }
         }
     };
-
-    // Blocca Google Analytics anche qui
+    
+    // Blocca Google Analytics
     window['ga-disable-GA_MEASUREMENT_ID'] = true;
-    window['google-analytics'] = false;
     window.ga = () => false;
     window.gtag = () => false;
-    
-    // Log Safari detection
-    if (isSafari) {
-        console.log('[Auth] Safari browser detected, using enhanced storage handling');
-    }
 })();
