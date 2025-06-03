@@ -837,56 +837,252 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="sol-header">
-        <div class="sol-header-content">
-            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
-                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <a href="/" class="sol-logo">
-                    <div class="sol-logo-icon">SCH</div>
-                    <span class="sol-logo-text">Supply Chain Hub</span>
-                </a>
+<!-- HEADER UNIFICATO PER SUPPLY CHAIN HUB -->
+<!-- Da inserire in tutte le pagine HTML del progetto -->
+
+<header class="sol-header">
+    <div class="sol-header-content">
+        <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+            <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="/dashboard.html" class="sol-logo">
+                <div class="sol-logo-icon">SCH</div>
+                <span class="sol-logo-text">Supply Chain Hub</span>
+            </a>
+        </div>
+        
+        <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+            <div style="position: relative;">
+                <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
+                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
             </div>
+        </div>
+        
+        <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+            <!-- Notification Button Fix -->
+            <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm);">
+                <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+            </button>
             
-            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
-                <div style="position: relative;">
-                    <input type="search" class="sol-search" placeholder="Cerca spedizioni, corrieri..." style="padding-left: 2.5rem;">
-                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+            <!-- User Menu Button -->
+            <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                    <span id="userInitial">U</span>
                 </div>
-            </div>
+                <span id="userName">Utente</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
             
-            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-                <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm);">
-                    <i class="fas fa-bell" style="color: var(--sol-text-primary);"></i>
-                    <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
+            <!-- User Dropdown -->
+            <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                    <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                </div>
+                <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                    <i class="fas fa-user"></i> Profilo
+                </a>
+                <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                    <i class="fas fa-cog"></i> Impostazioni
+                </a>
+                <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i> Esci
                 </button>
-                
-                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
-                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                        <span id="userInitial">U</span>
-                    </div>
-                    <span id="userName">Utente</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                
-                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-user"></i> Profilo
-                    </a>
-                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-cog"></i> Impostazioni
-                    </a>
-                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
-                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
-                        <i class="fas fa-sign-out-alt"></i> Esci
-                    </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- SCRIPT PER GESTIRE IL NOME UTENTE -->
+<script>
+(function() {
+    // Funzione per formattare il nome
+    function formatUserName(user) {
+        // Prima controlla se c'è un display_name personalizzato nel profilo
+        if (user.user_metadata && user.user_metadata.display_name) {
+            return user.user_metadata.display_name;
+        }
+        
+        // Altrimenti usa full_name o name
+        let fullName = '';
+        if (user.user_metadata) {
+            fullName = user.user_metadata.full_name || user.user_metadata.name || '';
+        }
+        
+        // Se abbiamo un nome completo, formattiamolo
+        if (fullName) {
+            // Rimuovi punteggiatura e formatta correttamente
+            fullName = fullName.replace(/[._-]/g, ' ');
+            // Capitalizza ogni parola
+            return fullName.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+        }
+        
+        // Fallback: usa l'email
+        if (user.email) {
+            const emailName = user.email.split('@')[0];
+            // Trasforma email in nome (es: fabrizio.cagnucci -> Fabrizio Cagnucci)
+            return emailName
+                .replace(/[._-]/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+        }
+        
+        return 'Utente';
+    }
+    
+    // Funzione per ottenere le iniziali
+    function getUserInitials(name) {
+        const words = name.split(' ').filter(w => w.length > 0);
+        if (words.length >= 2) {
+            return words[0][0].toUpperCase() + words[1][0].toUpperCase();
+        } else if (words.length === 1) {
+            return words[0][0].toUpperCase();
+        }
+        return 'U';
+    }
+    
+    // Aggiorna UI quando DOM è pronto
+    function updateUserUI() {
+        const user = window.auth ? window.auth.getCurrentUser() : null;
+        if (!user) return;
+        
+        const displayName = formatUserName(user);
+        const initials = getUserInitials(displayName);
+        
+        // Aggiorna elementi header
+        const userNameEl = document.getElementById('userName');
+        const userInitialEl = document.getElementById('userInitial');
+        const userFullNameEl = document.getElementById('userFullName');
+        const userEmailEl = document.getElementById('userEmail');
+        
+        if (userNameEl) userNameEl.textContent = displayName;
+        if (userInitialEl) userInitialEl.textContent = initials;
+        if (userFullNameEl) userFullNameEl.textContent = displayName;
+        if (userEmailEl) userEmailEl.textContent = user.email || '';
+    }
+    
+    // Aspetta che auth.js sia caricato
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateUserUI, 100);
+        });
+    } else {
+        setTimeout(updateUserUI, 100);
+    }
+})();
+</script>
+
+<!-- NOTIFICATION DROPDOWN (da aggiungere dopo il button delle notifiche) -->
+<div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
+    </div>
+    <div style="max-height: 400px; overflow-y: auto;">
+        <!-- Notifica 1 -->
+        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+            <div style="display: flex; gap: var(--sol-space-md);">
+                <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Spedizione in Ritardo</p>
+                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Container MRKU4252004 - 3 giorni di ritardo</p>
+                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
                 </div>
             </div>
         </div>
-    </header>
+        <!-- Notifica 2 -->
+        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+            <div style="display: flex; gap: var(--sol-space-md);">
+                <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fas fa-check-circle" style="color: #34C759;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Consegna Completata</p>
+                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Ordine #12345 consegnato con successo</p>
+                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">5 ore fa</p>
+                </div>
+            </div>
+        </div>
+        <!-- Notifica 3 -->
+        <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
+            <div style="display: flex; gap: var(--sol-space-md);">
+                <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fas fa-info-circle" style="color: #007AFF;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Nuovo Import Completato</p>
+                    <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">150 spedizioni importate con successo</p>
+                    <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">Ieri</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+        <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
+    </div>
+</div>
 
+<!-- STYLE AGGIUNTIVI PER NOTIFICHE -->
+<style>
+.notification-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Fix per icona notifiche più visibile */
+#notificationBtn {
+    position: relative;
+    transition: var(--sol-transition-base);
+}
+
+#notificationBtn:hover {
+    transform: translateY(-1px);
+}
+
+#notificationBtn:active {
+    transform: translateY(0);
+}
+
+/* Assicuriamoci che il dropdown sia dello stesso colore in tutte le pagine */
+.sol-dropdown {
+    background: rgba(20, 20, 30, 0.95) !important;
+}
+</style>
+
+<!-- SCRIPT PER GESTIRE NOTIFICHE -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    
+    if (notificationBtn && notificationDropdown) {
+        notificationBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Chiudi user dropdown se aperto
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) userDropdown.style.display = 'none';
+            
+            // Toggle notification dropdown
+            notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Chiudi dropdown quando si clicca fuori
+        document.addEventListener('click', function(e) {
+            if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
     <!-- Sidebar -->
     <aside class="sol-sidebar" id="sidebar">
         <nav style="padding: var(--sol-space-lg) 0;">
