@@ -566,6 +566,30 @@ body::before {
     animation: sol-fade-in 0.6s ease-out forwards;
 }
 
+/* Responsive notification button */
+#notificationBtn {
+    width: 44px;
+    height: 44px;
+}
+
+@media (min-width: 768px) {
+    #notificationBtn {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Adjust badge position for mobile */
+@media (max-width: 767px) {
+    #notificationBtn span {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.625rem !important;
+        top: 6px !important;
+        right: 4px !important;
+    }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .sol-sidebar {
