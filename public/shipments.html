@@ -656,6 +656,7 @@
                             <th style="width: 150px;">Fornitore</th>
                             <th style="width: 100px;">Tipo Spedizione</th>
                             <th style="width: 150px;">Spedizioniere</th>
+                            <th style="width: 140px;">Rif. Spedizione</th>
                             <th style="width: 120px;">Stato Spedizione</th>
                             <th style="width: 120px;">Data Partenza</th>
                             <th style="width: 120px;">Data Arrivo</th>
@@ -835,6 +836,7 @@
             const spedizionieri = ['WORLD CARGO', 'SCHENKER', 'DHL EXPRESS', 'FEDEX', 'UPS'];
             const fornitori = ['MAERSK LINE', 'CMA CGM', 'MSC', 'HAPAG-LLOYD', 'COSCO'];
             const tipiSpedizione = ['MARE', 'AEREO', 'STRADA'];
+            const rifSpedizioni = ['MRKU4252004', 'ECMU2728538', 'DHL2024IT001', 'UPS2024EU123', 'TNT2024FR456'];
             
             shipments = Array.from({ length: 20 }, (_, i) => ({
                 nOda: 100 + i,
@@ -843,6 +845,7 @@
                 fornitore: fornitori[Math.floor(Math.random() * fornitori.length)],
                 tipoSpedizione: tipiSpedizione[Math.floor(Math.random() * tipiSpedizione.length)],
                 spedizioniere: spedizionieri[Math.floor(Math.random() * spedizionieri.length)],
+                rifSpedizione: rifSpedizioni[Math.floor(Math.random() * rifSpedizioni.length)],
                 statoSpedizione: statuses[Math.floor(Math.random() * statuses.length)],
                 dataPartenza: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 dataArrivo: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -974,6 +977,7 @@
                     <td>${shipment.fornitore}</td>
                     <td><span class="sol-badge sol-badge-info">${shipment.tipoSpedizione}</span></td>
                     <td>${shipment.spedizioniere}</td>
+                    <td><strong>${shipment.rifSpedizione}</strong></td>
                     <td>${getStatusBadge(shipment.statoSpedizione)}</td>
                     <td>${formatDate(shipment.dataPartenza)}</td>
                     <td>${formatDate(shipment.dataArrivo)}</td>
