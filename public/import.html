@@ -21,6 +21,35 @@
     <!-- SheetJS for Excel processing -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- Page Protection -->
+    <script>
+        (function() {
+            console.log('[Import] Checking authentication...');
+            
+            // Aspetta auth.js
+            function checkAuth() {
+                if (!window.auth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
+                
+                // Se non autenticato, redirect a login
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Import] Not authenticated, redirecting...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Import] User authenticated');
+            }
+            
+            checkAuth();
+        })();
+    </script>
+    
     <style>
         /* Additional styles specific to import page */
         
@@ -177,7 +206,7 @@
         }
 
         .data-table th {
-            background: var(--sol-glass-heavy);
+            background: var(--sol-glass-light);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             font-weight: 600;
@@ -817,20 +846,122 @@
             /* Menu toggle mobile visibility - già visibile su desktop */
         }
 
+        /* MOBILE FIX - APPLICATO */
         @media (max-width: 768px) {
-            .main-content {
+            /* Nasconde elementi non essenziali su mobile */
+            #userName { display: none; }
+            .sol-logo-text { display: none; }
+            .sol-header-center { display: none; }
+            #userMenuBtn .fa-chevron-down { display: none; }
+            
+            /* Riduci padding header */
+            .sol-header-content { padding: 0 var(--sol-space-md); }
+            .sol-header-right { gap: var(--sol-space-xs) !important; }
+            
+            /* Fix dropdown notifiche su mobile */
+            #notificationDropdown {
+                right: 10px !important;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+            
+            /* Fix page content */
+            .sol-main-content {
                 padding: var(--sol-space-md);
+                margin-top: 60px;
             }
-
-            .mapping-container {
+            
+            /* Page header responsive */
+            .page-header { margin-bottom: var(--sol-space-lg); }
+            .page-title { font-size: 1.75rem; }
+            .page-subtitle { font-size: 0.875rem; }
+            
+            /* Import container mobile */
+            .import-container {
                 grid-template-columns: 1fr;
+                gap: var(--sol-space-lg);
             }
-
-            .sol-header-left {
-                gap: var(--sol-space-sm);
+            
+            /* Steps mobile */
+            .sol-steps {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: var(--sol-space-md);
+                -webkit-overflow-scrolling: touch;
             }
+            
+            .sol-step {
+                flex-shrink: 0;
+                min-width: 120px;
+            }
+            
+            /* Mapping grid mobile */
+            .mapping-container { grid-template-columns: 1fr; }
+            
+            /* Template grid mobile */
+            .template-grid { grid-template-columns: 1fr; }
+            
+            /* Info sections mobile */
+            .sidebar-info {
+                order: -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--sol-space-md);
+            }
+            
+            .info-section { padding: var(--sol-space-lg); }
+            
+            /* Action buttons mobile */
+            .action-buttons {
+                flex-direction: column;
+                gap: var(--sol-space-md);
+            }
+            
+            .action-buttons-left,
+            .action-buttons-right {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .action-buttons .sol-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Table wrapper mobile */
+            .data-table-container {
+                margin: 0 -var(--sol-space-md);
+                border-radius: 0;
+            }
+            
+            /* Hide less important columns on mobile */
+            .data-table th:nth-child(n+8),
+            .data-table td:nth-child(n+8) {
+                display: none;
+            }
+            
+            /* Pagination mobile */
+            .pagination {
+                flex-direction: column;
+                gap: var(--sol-space-md);
+                text-align: center;
+            }
+            
+            .pagination-info,
+            .pagination-controls {
+                width: 100%;
+            }
+        }
 
-            .user-name {
+        @media (max-width: 480px) {
+            .sol-step { min-width: 100px; }
+            .sol-step-label { display: none; }
+            .sidebar-info { grid-template-columns: 1fr; }
+            
+            /* Show only first 5 columns on very small screens */
+            .data-table th:nth-child(n+6),
+            .data-table td:nth-child(n+6) {
                 display: none;
             }
         }
@@ -1461,7 +1592,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.removeItem('sb-access-token');
                         localStorage.removeItem('supabase.auth.token');
                         localStorage.removeItem('user');
-                        window.location.href = '/login.html';
+                        window.location.replace('/login.html');
                     }
                 });
             }
