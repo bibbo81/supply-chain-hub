@@ -1322,6 +1322,26 @@ document.addEventListener('DOMContentLoaded', function() {
                                             size: '65%',
                                             labels: {
                                                 show: true,
+name: {
+    show: true,
+    fontSize: '16px',
+    fontFamily: 'inherit',
+    fontWeight: 600,
+    color: undefined,
+    offsetY: -10
+},
+value: {
+    show: true,
+    fontSize: '24px',
+    fontFamily: 'inherit',
+    fontWeight: 400,
+    color: undefined,
+    offsetY: 16,
+    formatter: function (val) {
+        return formatNumber(parseInt(val));
+    }
+},
+                                                show: true,
                                                 total: {
                                                     show: true,
                                                     label: 'Totale',
