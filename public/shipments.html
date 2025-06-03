@@ -21,6 +21,79 @@
     <!-- Solarium Design System -->
     <link rel="stylesheet" href="/solarium.css">
     
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- PROTEZIONE PAGINA -->
+    <script>
+        (function() {
+            console.log('[Shipments] Checking authentication...');
+            
+            // Aspetta auth.js
+            function checkAuth() {
+                if (!window.auth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
+                
+                // Se non autenticato, redirect a login
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Shipments] Not authenticated, redirecting...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Shipments] User authenticated');
+                
+                // Update UI con i dati utente corretti
+                const user = window.auth.getCurrentUser();
+                if (user) {
+                    // Funzione per aggiornare UI
+                    const updateUserUI = () => {
+                        const userNameEl = document.getElementById('userName');
+                        const userEmailEl = document.getElementById('userEmail');
+                        const userInitialEl = document.getElementById('userInitial');
+                        
+                        // Estrai il nome corretto
+                        let displayName = 'Utente';
+                        let initial = 'U';
+                        
+                        // Prima prova con user_metadata
+                        if (user.user_metadata && user.user_metadata.full_name) {
+                            displayName = user.user_metadata.full_name;
+                            initial = displayName.charAt(0).toUpperCase();
+                        } else if (user.user_metadata && user.user_metadata.name) {
+                            displayName = user.user_metadata.name;
+                            initial = displayName.charAt(0).toUpperCase();
+                        } else if (user.email) {
+                            // Fallback: usa la parte prima della @ nell'email
+                            displayName = user.email.split('@')[0];
+                            // Capitalizza la prima lettera
+                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            initial = displayName.charAt(0);
+                        }
+                        
+                        // Aggiorna elementi DOM
+                        if (userNameEl) userNameEl.textContent = displayName;
+                        if (userEmailEl) userEmailEl.textContent = user.email || '';
+                        if (userInitialEl) userInitialEl.textContent = initial;
+                        
+                        console.log('[Shipments] User UI updated:', { displayName, email: user.email });
+                    };
+                    
+                    // Esegui update quando DOM è pronto
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', updateUserUI);
+                    } else {
+                        updateUserUI();
+                    }
+                }
+            }
+            
+            checkAuth();
+        })();
+    </script>
+    
     <style>
         /* Page Specific Styles */
         .sol-main-content {
@@ -144,6 +217,19 @@
             border-radius: var(--sol-radius-xl);
             overflow: hidden;
             box-shadow: var(--sol-shadow-md);
+        }
+        
+        /* FIX: Table header style - deve matchare le card */
+        .sol-table th {
+            background: var(--sol-glass-light) !important; /* NON glass-heavy! */
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--sol-text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: var(--sol-space-md);
         }
         
         .sol-table-header {
@@ -273,6 +359,11 @@
             opacity: 0.3;
             cursor: not-allowed;
         }
+        
+        /* FIX: Dropdown styles - stesso stile della dashboard */
+        .sol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -283,7 +374,7 @@
                 <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
                     <i class="fas fa-bars"></i>
                 </button>
-                <a href="/" class="sol-logo">
+                <a href="/dashboard.html" class="sol-logo">
                     <div class="sol-logo-icon">SCH</div>
                     <span class="sol-logo-text">Supply Chain Hub</span>
                 </a>
@@ -298,8 +389,8 @@
             
             <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
                 <button class="sol-btn sol-btn-glass" style="position: relative; padding: var(--sol-space-sm);">
-                    <i class="fas fa-bell"></i>
-                    <span style="position: absolute; top: -4px; right: -4px; background: var(--sol-gradient-error); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">3</span>
+                    <i class="fas fa-bell" style="color: var(--sol-text-primary);"></i>
+                    <span style="position: absolute; top: -4px; right: -4px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white;">3</span>
                 </button>
                 
                 <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
@@ -310,8 +401,9 @@
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: var(--sol-glass-heavy); backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none;">
-                    <a href="#" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                <!-- FIX: Dropdown con stile corretto come dashboard -->
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
                         <i class="fas fa-user"></i> Profilo
                     </a>
                     <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
@@ -331,7 +423,7 @@
         <nav style="padding: var(--sol-space-lg) 0;">
             <div style="margin-bottom: var(--sol-space-xl);">
                 <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
-                <a href="/" class="sol-nav-item">
+                <a href="/dashboard.html" class="sol-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
@@ -571,15 +663,18 @@
                 <table class="sol-table">
                     <thead>
                         <tr>
-                            <th>TRACKING</th>
-                            <th>DATA</th>
-                            <th>MITTENTE</th>
-                            <th>DESTINATARIO</th>
-                            <th>CITTÀ</th>
-                            <th>CORRIERE</th>
-                            <th>STATO</th>
-                            <th>VALORE</th>
-                            <th>AZIONI</th>
+                            <th style="width: 100px;">N. ODA</th>
+                            <th style="width: 120px;">Cod. Art.</th>
+                            <th style="width: 200px;">Descrizione</th>
+                            <th style="width: 150px;">Fornitore</th>
+                            <th style="width: 100px;">Tipo Spedizione</th>
+                            <th style="width: 150px;">Spedizioniere</th>
+                            <th style="width: 120px;">Stato Spedizione</th>
+                            <th style="width: 120px;">Data Partenza</th>
+                            <th style="width: 120px;">Data Arrivo</th>
+                            <th style="width: 100px;">Transit Time</th>
+                            <th style="width: 100px;">Costo Trasporto €</th>
+                            <th style="width: 100px;">Azioni</th>
                         </tr>
                     </thead>
                     <tbody id="shipmentsTableBody">
@@ -633,7 +728,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadDemoData();
-            updateUserInfo();
         });
 
         // Setup event listeners
@@ -671,12 +765,18 @@
                 userDropdown.style.display = 'none';
             });
 
-            // Logout
+            // Logout - FIX: usa window.auth.logout()
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
                 e.preventDefault();
-                localStorage.removeItem('supabase.auth.token');
-                localStorage.removeItem('user');
-                window.location.href = '/login.html';
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    // Fallback
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login.html');
+                }
             });
 
             // File upload
@@ -742,31 +842,25 @@
             });
         }
 
-        // Update user info
-        function updateUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.email) {
-                document.getElementById('userName').textContent = user.email.split('@')[0];
-                document.getElementById('userInitial').textContent = user.email[0].toUpperCase();
-            }
-        }
-
         // Load demo data
         function loadDemoData() {
-            const statuses = ['pending', 'transit', 'delivered', 'delayed'];
-            const carriers = ['DHL', 'FedEx', 'UPS', 'BRT', 'GLS'];
-            const cities = ['Milano', 'Roma', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze'];
-            const names = ['Mario Rossi', 'Luigi Bianchi', 'Anna Verdi', 'Giuseppe Neri', 'Maria Gialli'];
+            const statuses = ['In transito', 'Consegnato', 'In preparazione', 'In ritardo'];
+            const spedizionieri = ['WORLD CARGO', 'SCHENKER', 'DHL EXPRESS', 'FEDEX', 'UPS'];
+            const fornitori = ['MAERSK LINE', 'CMA CGM', 'MSC', 'HAPAG-LLOYD', 'COSCO'];
+            const tipiSpedizione = ['MARE', 'AEREO', 'STRADA'];
             
             shipments = Array.from({ length: 20 }, (_, i) => ({
-                tracking: `IT${String(1000000 + i).padStart(7, '0')}`,
-                date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                sender: names[Math.floor(Math.random() * names.length)],
-                recipient: names[Math.floor(Math.random() * names.length)],
-                city: cities[Math.floor(Math.random() * cities.length)],
-                carrier: carriers[Math.floor(Math.random() * carriers.length)],
-                status: statuses[Math.floor(Math.random() * statuses.length)],
-                value: Math.floor(Math.random() * 1000) + 50
+                nOda: 100 + i,
+                codArt: `0000000${i}`,
+                descrizione: `Articolo di prova ${i + 1}`,
+                fornitore: fornitori[Math.floor(Math.random() * fornitori.length)],
+                tipoSpedizione: tipiSpedizione[Math.floor(Math.random() * tipiSpedizione.length)],
+                spedizioniere: spedizionieri[Math.floor(Math.random() * spedizionieri.length)],
+                statoSpedizione: statuses[Math.floor(Math.random() * statuses.length)],
+                dataPartenza: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                dataArrivo: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                transitTime: Math.floor(Math.random() * 60) + 1,
+                costoTrasporto: Math.floor(Math.random() * 5000) + 100
             }));
             
             applyFilters();
@@ -887,14 +981,17 @@
             
             tableBody.innerHTML = pageShipments.map(shipment => `
                 <tr>
-                    <td><strong>${shipment.tracking}</strong></td>
-                    <td>${formatDate(shipment.date)}</td>
-                    <td>${shipment.sender}</td>
-                    <td>${shipment.recipient}</td>
-                    <td>${shipment.city}</td>
-                    <td>${shipment.carrier}</td>
-                    <td>${getStatusBadge(shipment.status)}</td>
-                    <td>€${shipment.value.toLocaleString('it-IT')}</td>
+                    <td><strong>${shipment.nOda}</strong></td>
+                    <td>${shipment.codArt}</td>
+                    <td>${shipment.descrizione}</td>
+                    <td>${shipment.fornitore}</td>
+                    <td><span class="sol-badge sol-badge-info">${shipment.tipoSpedizione}</span></td>
+                    <td>${shipment.spedizioniere}</td>
+                    <td>${getStatusBadge(shipment.statoSpedizione)}</td>
+                    <td>${formatDate(shipment.dataPartenza)}</td>
+                    <td>${formatDate(shipment.dataArrivo)}</td>
+                    <td>${shipment.transitTime} giorni</td>
+                    <td><strong>€${shipment.costoTrasporto.toLocaleString('it-IT')}</strong></td>
                     <td>
                         <div style="display: flex; gap: var(--sol-space-xs);">
                             <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" title="Visualizza">
@@ -930,12 +1027,12 @@
 
         function getStatusBadge(status) {
             const statusMap = {
-                pending: { class: 'info', text: 'IN ATTESA' },
-                transit: { class: 'warning', text: 'IN TRANSITO' },
-                delivered: { class: 'success', text: 'CONSEGNATO' },
-                delayed: { class: 'error', text: 'IN RITARDO' }
+                'In transito': { class: 'warning', text: 'IN TRANSITO' },
+                'Consegnato': { class: 'success', text: 'CONSEGNATO' },
+                'In preparazione': { class: 'info', text: 'IN PREPARAZIONE' },
+                'In ritardo': { class: 'error', text: 'IN RITARDO' }
             };
-            const { class: statusClass, text } = statusMap[status] || { class: 'info', text: status };
+            const { class: statusClass, text } = statusMap[status] || { class: 'info', text: status.toUpperCase() };
             return `<span class="sol-badge sol-badge-${statusClass}">${text}</span>`;
         }
 
