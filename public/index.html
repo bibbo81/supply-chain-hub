@@ -110,57 +110,83 @@
         <p>Redirecting...</p>
     </div>
 
-    <!-- Script di redirect SEMPLIFICATO -->
+    <!-- Carica auth.js PRIMA del redirect logic -->
+    <script src="/auth.js"></script>
+    
+    <!-- Script di redirect MIGLIORATO PER SAFARI -->
     <script>
-        // Redirect diretto senza dipendenze esterne
+        // Redirect logic con Safari fix
         (function() {
             console.log('[Index] Starting redirect logic...');
             
-            // Funzione semplice per controllare il token
-            function hasToken() {
-                try {
-                    const token = localStorage.getItem('sb-access-token');
-                    return !!token;
-                } catch (e) {
-                    console.error('[Index] Error checking token:', e);
-                    return false;
-                }
+            // Detect Safari
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            if (isSafari) {
+                console.log('[Index] Safari browser detected');
             }
             
-            // Redirect con timeout per evitare loop
+            // Anti-loop protection
+            let redirectCount = parseInt(sessionStorage.getItem('redirectCount') || '0');
+            
+            if (redirectCount > 3) {
+                console.error('[Index] Too many redirects, going to login as fallback');
+                sessionStorage.removeItem('redirectCount');
+                window.location.replace('/login.html');
+                return;
+            }
+            
+            // Incrementa counter
+            sessionStorage.setItem('redirectCount', (redirectCount + 1).toString());
+            
+            // Funzione di redirect con delay per Safari
             function doRedirect() {
-                const authenticated = hasToken();
-                console.log('[Index] Has token:', authenticated);
-                
-                // Aggiungi un flag per evitare redirect multipli
-                if (window.redirecting) {
-                    console.log('[Index] Already redirecting, stopping...');
-                    return;
-                }
-                
-                window.redirecting = true;
-                
-                // Usa replace invece di href per evitare history
-                if (authenticated) {
-                    console.log('[Index] Going to dashboard...');
-                    window.location.replace('/dashboard.html');
-                } else {
-                    console.log('[Index] Going to login...');
+                try {
+                    // Usa auth.js se disponibile
+                    if (window.auth && typeof window.auth.isAuthenticated === 'function') {
+                        const authenticated = window.auth.isAuthenticated();
+                        console.log('[Index] Authentication check:', authenticated);
+                        
+                        // Reset counter on successful check
+                        sessionStorage.removeItem('redirectCount');
+                        
+                        if (authenticated) {
+                            console.log('[Index] User authenticated, going to dashboard...');
+                            window.location.replace('/dashboard.html');
+                        } else {
+                            console.log('[Index] User not authenticated, going to login...');
+                            window.location.replace('/login.html');
+                        }
+                    } else {
+                        // Fallback se auth.js non è caricato
+                        console.log('[Index] Auth not loaded, checking localStorage directly...');
+                        const hasToken = !!localStorage.getItem('sb-access-token') || 
+                                       !!sessionStorage.getItem('sb-access-token');
+                        
+                        if (hasToken) {
+                            window.location.replace('/dashboard.html');
+                        } else {
+                            window.location.replace('/login.html');
+                        }
+                    }
+                } catch (e) {
+                    console.error('[Index] Redirect error:', e);
                     window.location.replace('/login.html');
                 }
             }
             
-            // Esegui dopo un breve delay
-            setTimeout(doRedirect, 100);
+            // Delay maggiore per Safari per garantire che auth.js sia caricato
+            const delay = isSafari ? 300 : 100;
             
-            // Fallback timeout
+            setTimeout(doRedirect, delay);
+            
+            // Fallback timeout più lungo per Safari
             setTimeout(() => {
-                if (!window.redirecting) {
+                if (!window._authRedirecting) {
                     console.log('[Index] Fallback redirect to login...');
-                    window.redirecting = true;
+                    sessionStorage.removeItem('redirectCount');
                     window.location.replace('/login.html');
                 }
-            }, 2000);
+            }, isSafari ? 3000 : 2000);
         })();
     </script>
 </body>
