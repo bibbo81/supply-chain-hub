@@ -782,9 +782,35 @@
             }
         }
 
-        /* Nascondi upload area su mobile */
+        /* Nascondi sempre upload area - meglio usare /import.html */
+        #uploadArea {
+            display: none !important;
+        }
+        
+        /* Mobile specific fixes */
         @media (max-width: 768px) {
-            #uploadArea {
+            /* Nascondi nome utente su mobile per risparmiare spazio */
+            #userName {
+                display: none;
+            }
+            
+            /* Riduci padding header su mobile */
+            .sol-header-content {
+                padding: 0 var(--sol-space-md);
+            }
+            
+            /* Nascondi testo logo su mobile */
+            .sol-logo-text {
+                display: none;
+            }
+            
+            /* Riduci gap elementi header */
+            .sol-header-right {
+                gap: var(--sol-space-xs) !important;
+            }
+            
+            /* Nascondi chevron su mobile */
+            #userMenuBtn .fa-chevron-down {
                 display: none;
             }
             
@@ -799,6 +825,11 @@
                 left: 10px;
                 width: auto;
                 max-width: calc(100vw - 20px);
+            }
+            
+            /* Nascondi campo ricerca su mobile */
+            .sol-header-center {
+                display: none;
             }
         }
     </style>
@@ -999,13 +1030,8 @@
             </div>
         </div>
 
-        <!-- Upload Section -->
-        <div class="sol-upload-area" id="uploadArea" style="margin-bottom: var(--sol-space-2xl);">
-            <div class="sol-upload-icon">📁</div>
-            <div class="sol-upload-text">Trascina file CSV/Excel o clicca per selezionare</div>
-            <div class="sol-upload-hint">Supporta formati: .csv, .xlsx, .xls</div>
-        </div>
-        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none;">
+        <!-- Upload Section - RIMOSSA -->
+        <!-- Gli utenti devono usare /import.html per importare dati -->
 
         <!-- Dynamic Widgets Container -->
         <div id="widgetsContainer" class="widgets-container">
