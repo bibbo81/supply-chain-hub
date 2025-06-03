@@ -30,7 +30,9 @@
     <!-- Auth System -->
     <script src="/auth.js"></script>
     
-   <!-- PROTEZIONE PAGINA DASHBOARD -->
+   <!-- Trova questa sezione nel file dashboard.html (intorno alla riga 62) e sostituiscila con: -->
+
+<!-- PROTEZIONE PAGINA DASHBOARD -->
 <script>
     (function() {
         console.log('[Dashboard] Checking authentication...');
@@ -51,11 +53,48 @@
             
             console.log('[Dashboard] User authenticated');
             
-            // Update UI
+            // Update UI con i dati utente corretti
             const user = window.auth.getCurrentUser();
-            if (user && document.readyState !== 'loading') {
-                document.getElementById('userName').textContent = user.email?.split('@')[0] || 'Utente';
-                document.getElementById('userInitial').textContent = (user.email || 'U')[0].toUpperCase();
+            if (user) {
+                // Funzione per aggiornare UI
+                const updateUserUI = () => {
+                    const userNameEl = document.getElementById('userName');
+                    const userEmailEl = document.getElementById('userEmail');
+                    const userInitialEl = document.getElementById('userInitial');
+                    
+                    // Estrai il nome corretto
+                    let displayName = 'Utente';
+                    let initial = 'U';
+                    
+                    // Prima prova con user_metadata
+                    if (user.user_metadata && user.user_metadata.full_name) {
+                        displayName = user.user_metadata.full_name;
+                        initial = displayName.charAt(0).toUpperCase();
+                    } else if (user.user_metadata && user.user_metadata.name) {
+                        displayName = user.user_metadata.name;
+                        initial = displayName.charAt(0).toUpperCase();
+                    } else if (user.email) {
+                        // Fallback: usa la parte prima della @ nell'email
+                        displayName = user.email.split('@')[0];
+                        // Capitalizza la prima lettera
+                        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                        initial = displayName.charAt(0);
+                    }
+                    
+                    // Aggiorna elementi DOM
+                    if (userNameEl) userNameEl.textContent = displayName;
+                    if (userEmailEl) userEmailEl.textContent = user.email || '';
+                    if (userInitialEl) userInitialEl.textContent = initial;
+                    
+                    console.log('[Dashboard] User UI updated:', { displayName, email: user.email });
+                };
+                
+                // Esegui update quando DOM è pronto
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', updateUserUI);
+                } else {
+                    updateUserUI();
+                }
             }
         }
         
