@@ -541,10 +541,10 @@
                     </label>
                     <select id="statusFilter" class="sol-filter-select">
                         <option value="">Tutti gli stati</option>
-                        <option value="pending">In Attesa</option>
-                        <option value="transit">In Transito</option>
-                        <option value="delivered">Consegnato</option>
-                        <option value="delayed">In Ritardo</option>
+                        <option value="In preparazione">In preparazione</option>
+                        <option value="In transito">In transito</option>
+                        <option value="Consegnato">Consegnato</option>
+                        <option value="In ritardo">In ritardo</option>
                     </select>
                 </div>
                 <div class="sol-filter-group">
@@ -552,13 +552,12 @@
                         <i class="fas fa-truck"></i> Corriere
                     </label>
                     <select id="carrierFilter" class="sol-filter-select">
-                        <option value="">Tutti i corrieri</option>
-                        <option value="dhl">DHL</option>
-                        <option value="fedex">FedEx</option>
+                        <option value="">Tutti gli spedizionieri</option>
+                        <option value="world cargo">WORLD CARGO</option>
+                        <option value="schenker">SCHENKER</option>
+                        <option value="dhl">DHL EXPRESS</option>
+                        <option value="fedex">FEDEX</option>
                         <option value="ups">UPS</option>
-                        <option value="brt">BRT</option>
-                        <option value="gls">GLS</option>
-                        <option value="tnt">TNT</option>
                     </select>
                 </div>
                 <div class="sol-filter-group">
@@ -925,36 +924,30 @@
             filteredShipments = shipments.filter(shipment => {
                 // Apply all filters
                 const matchesSearch = !searchTerm || 
-                    shipment.tracking.toLowerCase().includes(searchTerm) ||
-                    shipment.recipient.toLowerCase().includes(searchTerm) ||
-                    shipment.sender.toLowerCase().includes(searchTerm) ||
-                    shipment.city.toLowerCase().includes(searchTerm);
+                    (shipment.nOda && shipment.nOda.toString().toLowerCase().includes(searchTerm)) ||
+                    (shipment.codArt && shipment.codArt.toLowerCase().includes(searchTerm)) ||
+                    (shipment.descrizione && shipment.descrizione.toLowerCase().includes(searchTerm)) ||
+                    (shipment.fornitore && shipment.fornitore.toLowerCase().includes(searchTerm)) ||
+                    (shipment.spedizioniere && shipment.spedizioniere.toLowerCase().includes(searchTerm)) ||
+                    (shipment.rifSpedizione && shipment.rifSpedizione.toLowerCase().includes(searchTerm));
                 
-                const matchesStatus = !statusFilter || shipment.status === statusFilter;
-                const matchesCarrier = !carrierFilter || shipment.carrier.toLowerCase() === carrierFilter;
-                const matchesDate = !dateFilter || shipment.date === dateFilter;
-                const matchesSender = !senderFilter || shipment.sender.toLowerCase().includes(senderFilter);
-                const matchesRecipient = !recipientFilter || shipment.recipient.toLowerCase().includes(recipientFilter);
-                const matchesCity = !cityFilter || shipment.city.toLowerCase().includes(cityFilter);
-                const matchesValue = shipment.value >= valueMin && shipment.value <= valueMax;
+                const matchesStatus = !statusFilter || shipment.statoSpedizione === statusFilter;
+                const matchesCarrier = !carrierFilter || (shipment.spedizioniere && shipment.spedizioniere.toLowerCase().includes(carrierFilter.toLowerCase()));
+                const matchesDate = !dateFilter || shipment.dataPartenza === dateFilter;
+                const matchesSender = !senderFilter || (shipment.fornitore && shipment.fornitore.toLowerCase().includes(senderFilter));
+                const matchesRecipient = !recipientFilter; // Non abbiamo questo campo nei nuovi dati
+                const matchesCity = !cityFilter; // Non abbiamo città nei nuovi dati
+                const matchesValue = shipment.costoTrasporto >= valueMin && shipment.costoTrasporto <= valueMax;
                 
                 let matchesDateRange = true;
                 if (dateFrom || dateTo) {
-                    const shipmentDate = new Date(shipment.date);
+                    const shipmentDate = new Date(shipment.dataPartenza);
                     if (dateFrom) matchesDateRange = matchesDateRange && shipmentDate >= new Date(dateFrom);
                     if (dateTo) matchesDateRange = matchesDateRange && shipmentDate <= new Date(dateTo);
                 }
                 
-                let matchesRegion = !regionFilter;
-                if (regionFilter) {
-                    const regionMap = {
-                        nord: ['Milano', 'Torino', 'Genova', 'Venezia', 'Bologna'],
-                        centro: ['Roma', 'Firenze', 'Perugia', 'Ancona'],
-                        sud: ['Napoli', 'Bari', 'Reggio Calabria'],
-                        isole: ['Palermo', 'Catania', 'Cagliari']
-                    };
-                    matchesRegion = regionMap[regionFilter]?.includes(shipment.city) || false;
-                }
+                // Region filter non si applica ai nuovi dati
+                const matchesRegion = !regionFilter;
                 
                 return matchesSearch && matchesStatus && matchesCarrier && matchesDate && 
                        matchesSender && matchesRecipient && matchesCity && matchesValue && 
