@@ -351,6 +351,87 @@
         .sol-dropdown-item:hover {
             background: rgba(255, 255, 255, 0.05);
         }
+        
+        /* MOBILE FIX - NUOVI STILI */
+        @media (max-width: 768px) {
+            /* Nasconde elementi non essenziali su mobile */
+            #userName {
+                display: none;
+            }
+            
+            .sol-logo-text {
+                display: none;
+            }
+            
+            .sol-header-center {
+                display: none;
+            }
+            
+            #userMenuBtn .fa-chevron-down {
+                display: none;
+            }
+            
+            /* Riduci padding header */
+            .sol-header-content {
+                padding: 0 var(--sol-space-md);
+            }
+            
+            .sol-header-right {
+                gap: var(--sol-space-xs) !important;
+            }
+            
+            /* Fix dropdown notifiche su mobile */
+            #notificationDropdown {
+                right: 10px !important;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+            
+            /* Fix page content */
+            .sol-main-content {
+                padding: var(--sol-space-md);
+            }
+            
+            /* Fix stats grid */
+            .sol-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--sol-space-md);
+            }
+            
+            /* Fix filters */
+            .sol-filters-card {
+                padding: var(--sol-space-lg);
+            }
+            
+            .sol-filters-grid {
+                grid-template-columns: 1fr;
+                gap: var(--sol-space-md);
+            }
+            
+            /* Fix table */
+            .sol-table-wrapper {
+                margin: 0 -var(--sol-space-md);
+                border-radius: 0;
+            }
+            
+            /* Fix page header */
+            .sol-page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--sol-space-md);
+            }
+            
+            .sol-page-header > div:last-child {
+                width: 100%;
+            }
+            
+            /* Buttons full width on mobile */
+            .sol-page-header .sol-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -377,10 +458,10 @@
         </div>
         
         <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-            <!-- Notification Button Fix -->
-            <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+             <!-- Notification Button Fix -->
+            <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
                 <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
-                <span style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+                 <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
             </button>
             
             <!-- User Menu Button -->
