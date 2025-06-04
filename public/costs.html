@@ -95,7 +95,7 @@
         .sol-main-content { margin-top: 80px; padding: var(--sol-space-xl); max-width: 1600px; margin-left: auto; margin-right: auto; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
         .kpi-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); transition: all 0.3s ease; position: relative; }
-        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 12px; /* Spazio per la drag bar */ }
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 15px; /* Aumentato padding per la drag bar più alta */ }
         .kpi-title { font-size: 0.875rem; color: var(--sol-text-secondary); font-weight: 500; flex-grow: 1; }
         .kpi-icon-wrapper { display: flex; align-items: center; }
         .kpi-icon { width: 40px; height: 40px; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; }
@@ -106,15 +106,15 @@
 
         .card-drag-handle { 
             position: absolute;
-            top: -14px; /* Ancora più in alto, quasi a filo con il bordo superiore della card */
+            top: -16px; /* Sollevata ancora di più */
             left: 50%;
             transform: translateX(-50%);
             color: var(--sol-text-tertiary);
             background-color: rgba(255,255,255,0.08); 
-            padding: 3px var(--sol-space-lg); /* Padding orizzontale ridotto (era var(--sol-space-xl)) */
-            border-radius: var(--sol-radius-sm); /* Raggio più piccolo per una barra più sottile */
+            padding: 4px var(--sol-space-xl); /* Padding orizzontale aumentato per allargare */
+            border-radius: var(--sol-radius-md); /* Raggio leggermente più grande per la barra più larga */
             line-height: 1;
-            font-size: 0.9rem; /* Icona leggermente più piccola per adattarsi */
+            font-size: 1rem; 
             cursor: grab; 
             opacity: 0.7; 
             transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
@@ -133,7 +133,7 @@
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
         .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column;}
         .chart-card.full-width { grid-column: 1 / -1; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; padding-top: 12px; /* Spazio per la drag bar */ }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; padding-top: 15px; /* Aumentato padding per la drag bar più alta */ }
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
         .chart-actions { display: flex; gap: var(--sol-space-sm); }
