@@ -477,6 +477,11 @@
             color: #FF3B30;
         }
         
+        .notification.info .notification-icon {
+            background: rgba(0, 122, 255, 0.2);
+            color: #007AFF;
+        }
+        
         .notification-text {
             flex: 1;
         }
@@ -848,8 +853,8 @@
                         </div>
 
                         <div class="form-group full-width">
-                            <label class="form-label required" for="email">Email</label>
-                            <input type="email" id="email" class="form-control" placeholder="email@esempio.com" required>
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" class="form-control" placeholder="email@esempio.com" disabled>
                         </div>
 
                         <div class="form-group">
@@ -1049,31 +1054,41 @@
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
             
-            userMenuBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-            });
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
 
-            // Previeni la chiusura del dropdown quando si clicca su un link
-            userDropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
+                // Previeni la chiusura del dropdown quando si clicca su un link
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
 
-            document.addEventListener('click', function() {
-                userDropdown.style.display = 'none';
-            });
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
 
             // Notification dropdown
             const notificationBtn = document.getElementById('notificationBtn');
             const notificationDropdown = document.getElementById('notificationDropdown');
             
-            notificationBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                userDropdown.style.display = 'none';
-                notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
-            });
+            if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (userDropdown) userDropdown.style.display = 'none';
+                    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                        notificationDropdown.style.display = 'none';
+                    }
+                });
+            }
 
             // Logout
             document.getElementById('logoutBtn').addEventListener('click', function(e) {
@@ -1126,7 +1141,43 @@
                 if (currentUser.user_metadata) {
                     document.getElementById('profileCompany').textContent = 
                         currentUser.user_metadata.company_name || 'Azienda Demo SpA';
+                    
+                    // Load other fields if available
+                    if (currentUser.user_metadata.phone) {
+                        document.getElementById('phone').value = currentUser.user_metadata.phone;
+                    }
+                    if (currentUser.user_metadata.job_title) {
+                        document.getElementById('jobTitle').value = currentUser.user_metadata.job_title;
+                    }
+                    if (currentUser.user_metadata.bio) {
+                        document.getElementById('bio').value = currentUser.user_metadata.bio;
+                    }
+                    
+                    // Load preferences
+                    if (currentUser.user_metadata.preferences) {
+                        const prefs = currentUser.user_metadata.preferences;
+                        document.getElementById('emailNotifications').checked = prefs.email_notifications ?? true;
+                        document.getElementById('desktopNotifications').checked = prefs.desktop_notifications ?? false;
+                        document.getElementById('weeklyReports').checked = prefs.weekly_reports ?? true;
+                        document.getElementById('darkMode').checked = prefs.dark_mode ?? true;
+                    }
                 }
+                
+                // Load avatar
+                loadUserAvatar();
+            }
+        }
+
+        // Load user avatar
+        function loadUserAvatar() {
+            if (currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url) {
+                const avatarPreview = document.getElementById('avatarPreview');
+                avatarPreview.innerHTML = `<img src="${currentUser.user_metadata.avatar_url}" alt="Avatar">`;
+            } else {
+                // Show initials
+                const name = formatUserName(currentUser);
+                const initials = getUserInitials(name);
+                document.getElementById('avatarPreview').innerHTML = `<span id="avatarInitials">${initials}</span>`;
             }
         }
 
@@ -1187,22 +1238,76 @@
         }
 
         // Handle avatar upload
-        function handleAvatarUpload(e) {
+        async function handleAvatarUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Validate file
             if (file.size > 5 * 1024 * 1024) {
                 showNotification('Errore', 'L\'immagine non può superare i 5MB', 'error');
                 return;
             }
 
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showNotification('Errore', 'Formato non supportato. Usa JPG, PNG o WebP', 'error');
+                return;
+            }
+
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(event) {
+                // Show preview immediately
                 const avatarPreview = document.getElementById('avatarPreview');
-                avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar">`;
+                avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
                 
-                // Here you would upload to server
-                showNotification('Successo', 'Avatar aggiornato con successo', 'success');
+                // Upload to server
+                try {
+                    const token = localStorage.getItem('sb-access-token') || 
+                                 sessionStorage.getItem('sb-access-token');
+                    
+                    if (!token) {
+                        throw new Error('Non autenticato');
+                    }
+
+                    showNotification('Caricamento', 'Caricamento avatar in corso...', 'info');
+
+                    const response = await fetch('/.netlify/functions/update-profile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            action: 'upload_avatar',
+                            data: {
+                                avatarBase64: event.target.result,
+                                fileName: file.name
+                            }
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Errore durante il caricamento');
+                    }
+
+                    // Update user metadata
+                    if (currentUser && result.avatar_url) {
+                        currentUser.user_metadata = {
+                            ...currentUser.user_metadata,
+                            avatar_url: result.avatar_url
+                        };
+                        localStorage.setItem('user', JSON.stringify(currentUser));
+                    }
+
+                    showNotification('Successo', 'Avatar aggiornato con successo', 'success');
+                    
+                } catch (error) {
+                    // Revert preview on error
+                    loadUserAvatar();
+                    showNotification('Errore', error.message || 'Errore durante il caricamento', 'error');
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -1212,40 +1317,60 @@
             e.preventDefault();
             
             const formData = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                jobTitle: document.getElementById('jobTitle').value,
-                bio: document.getElementById('bio').value
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                jobTitle: document.getElementById('jobTitle').value.trim(),
+                bio: document.getElementById('bio').value.trim()
             };
 
-            // Show loading
+            // Validation
+            if (!formData.firstName || !formData.lastName) {
+                showNotification('Errore', 'Nome e cognome sono obbligatori', 'error');
+                return;
+            }
+
             showLoading(e.target);
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                const token = localStorage.getItem('sb-access-token') || 
+                             sessionStorage.getItem('sb-access-token');
                 
-                // Update local data
-                if (currentUser) {
-                    currentUser.user_metadata = {
-                        ...currentUser.user_metadata,
-                        full_name: `${formData.firstName} ${formData.lastName}`,
-                        phone: formData.phone,
-                        job_title: formData.jobTitle,
-                        bio: formData.bio
-                    };
-                    
-                    localStorage.setItem('user', JSON.stringify(currentUser));
+                if (!token) {
+                    throw new Error('Non autenticato');
+                }
+
+                const response = await fetch('/.netlify/functions/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'update_profile',
+                        data: formData
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                }
+
+                // Update local user data
+                if (result.user) {
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    currentUser = result.user;
                 }
 
                 hideLoading(e.target);
-                showNotification('Successo', 'Dati personali aggiornati con successo', 'success');
+                showNotification('Successo', 'Profilo aggiornato con successo', 'success');
                 updateUserUI();
+                
             } catch (error) {
                 hideLoading(e.target);
-                showNotification('Errore', 'Errore durante l\'aggiornamento dei dati', 'error');
+                showNotification('Errore', error.message || 'Errore durante l\'aggiornamento', 'error');
             }
         }
 
@@ -1257,6 +1382,7 @@
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
+            // Validation
             if (newPassword !== confirmPassword) {
                 showNotification('Errore', 'Le password non coincidono', 'error');
                 return;
@@ -1270,16 +1396,42 @@
             showLoading(e.target);
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                const token = localStorage.getItem('sb-access-token') || 
+                             sessionStorage.getItem('sb-access-token');
                 
+                if (!token) {
+                    throw new Error('Non autenticato');
+                }
+
+                const response = await fetch('/.netlify/functions/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'change_password',
+                        data: {
+                            currentPassword,
+                            newPassword
+                        }
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                }
+
                 hideLoading(e.target);
                 showNotification('Successo', 'Password aggiornata con successo', 'success');
                 e.target.reset();
                 resetPasswordValidation();
+                
             } catch (error) {
                 hideLoading(e.target);
-                showNotification('Errore', 'Errore durante l\'aggiornamento della password', 'error');
+                showNotification('Errore', error.message || 'Errore durante l\'aggiornamento', 'error');
             }
         }
 
@@ -1332,19 +1484,60 @@
         }
 
         // Handle preference changes
-        function handlePreferenceChange(e) {
+        async function handlePreferenceChange(e) {
             const preference = e.target.id;
             const value = e.target.checked;
             
-            // Save preference
-            localStorage.setItem(`pref_${preference}`, value);
-            
-            // Apply changes
-            if (preference === 'darkMode') {
-                // Theme is always dark in this design
+            // Collect all preferences
+            const preferences = {
+                emailNotifications: document.getElementById('emailNotifications').checked,
+                desktopNotifications: document.getElementById('desktopNotifications').checked,
+                weeklyReports: document.getElementById('weeklyReports').checked,
+                darkMode: document.getElementById('darkMode').checked
+            };
+
+            try {
+                const token = localStorage.getItem('sb-access-token') || 
+                             sessionStorage.getItem('sb-access-token');
+                
+                if (!token) {
+                    throw new Error('Non autenticato');
+                }
+
+                const response = await fetch('/.netlify/functions/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'update_preferences',
+                        data: preferences
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                }
+
+                // Update local storage
+                if (currentUser && result.preferences) {
+                    currentUser.user_metadata = {
+                        ...currentUser.user_metadata,
+                        preferences: result.preferences
+                    };
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
+
+                showNotification('Preferenze', 'Preferenze aggiornate', 'success');
+                
+            } catch (error) {
+                // Revert toggle on error
+                e.target.checked = !value;
+                showNotification('Errore', error.message || 'Errore durante l\'aggiornamento', 'error');
             }
-            
-            showNotification('Preferenze', 'Preferenze aggiornate', 'success');
         }
 
         // Reset form
