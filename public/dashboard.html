@@ -124,7 +124,7 @@
             margin-bottom: var(--sol-space-2xl);
         }
         
-        .widget {
+        .widget { /* MODIFICATO - Change 7 */
             background: var(--sol-glass-light);
             backdrop-filter: var(--sol-blur-lg);
             -webkit-backdrop-filter: var(--sol-blur-lg);
@@ -134,6 +134,17 @@
             box-shadow: var(--sol-shadow-md);
             transition: all 0.3s ease;
             position: relative;
+            animation: sol-fade-in 0.6s ease-out backwards;
+        }
+        @keyframes sol-fade-in { /* AGGIUNTO - Change 7 */
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .widget.kpi-widget {
@@ -466,42 +477,8 @@
             font-weight: 600;
         }
         
-        .sol-kpi-card {
+        .sol-kpi-card { /* MODIFICATO - Change 1 & KPI styles */
             animation-delay: calc(var(--index) * 0.1s);
-        }
-        
-        .sol-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: var(--sol-blur-sm);
-            z-index: 998;
-            opacity: 0;
-            visibility: hidden;
-            transition: var(--sol-transition-base);
-        }
-        
-        .sol-backdrop.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        @media (max-width: 768px) {
-            .widget.chart-widget,
-            .widget.table-widget {
-                grid-column: span 1;
-            }
-            
-            .customize-fab {
-                bottom: var(--sol-space-lg);
-                right: var(--sol-space-lg);
-            }
-        }
-        
-        .sol-kpi-card {
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -511,9 +488,39 @@
         .sol-kpi-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center; /* Modificato da flex-start */
             margin-bottom: var(--sol-space-md);
         }
+        /* AGGIUNTO - Change 1 */
+        .sol-kpi-icon-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .sol-kpi-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--sol-gradient-primary);
+            border-radius: var(--sol-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .sol-kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .sol-kpi-change.positive {
+            color: #34C759;
+        }
+        .sol-kpi-change.negative {
+            color: #FF3B30;
+        }
+        /* Fine AGGIUNTO - Change 1 */
         
         .sol-kpi-title {
             font-size: 0.875rem;
@@ -548,6 +555,37 @@
         .sol-kpi-subtitle {
             font-size: 0.75rem;
             color: var(--sol-text-tertiary);
+        }
+        
+        .sol-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: var(--sol-blur-sm);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--sol-transition-base);
+        }
+        
+        .sol-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        @media (max-width: 768px) {
+            .widget.chart-widget,
+            .widget.table-widget {
+                grid-column: span 1;
+            }
+            
+            .customize-fab {
+                bottom: var(--sol-space-lg);
+                right: var(--sol-space-lg);
+            }
         }
         
         .sol-badge {
@@ -1013,7 +1051,7 @@
             // Widget disponibili
             availableWidgets: {
                 // KPI Widgets
-                totalCost: {
+                totalCost: { // MODIFICATO - Change 2
                     id: 'totalCost',
                     type: 'kpi',
                     title: 'Costo Totale Trasporto',
@@ -1023,75 +1061,92 @@
                         <div class="sol-kpi-card sol-animate-in">
                             <div class="sol-kpi-header">
                                 <h3 class="sol-kpi-title">Costo Totale Trasporto</h3>
-                                <div class="sol-kpi-trend ${data.costs?.costGrowth >= 0 ? 'negative' : 'positive'}">
-                                    <i class="fas fa-arrow-${data.costs?.costGrowth >= 0 ? 'up' : 'down'}"></i>
-                                    ${formatNumber(Math.abs(data.costs?.costGrowth || 0), 1)}%
+                                <div class="sol-kpi-icon-wrapper">
+                                    <div class="sol-kpi-icon">
+                                        <i class="fas fa-euro-sign"></i>
+                                    </div>
                                 </div>
                             </div>
                             <div class="sol-kpi-value">${formatCurrency(data.costs?.totalTransportCost || 0)}</div>
-                            <div class="sol-kpi-subtitle">Ultimo periodo</div>
+                            <div class="sol-kpi-change ${data.costs?.costGrowth >= 0 ? 'negative' : 'positive'}">
+                                <i class="fas fa-arrow-${data.costs?.costGrowth >= 0 ? 'up' : 'down'}"></i>
+                                <span>${formatNumber(Math.abs(data.costs?.costGrowth || 0), 1)}%</span>
+                                vs mese precedente
+                            </div>
                         </div>
                     `
                 },
-                totalShipments: {
+                totalShipments: { // MODIFICATO - Change 3
                     id: 'totalShipments',
                     type: 'kpi',
                     title: 'Spedizioni Totali',
                     description: 'Numero totale spedizioni',
                     icon: 'fa-box',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Spedizioni Totali</h3>
-                                <div class="sol-kpi-trend ${data.shipmentsGrowth >= 0 ? 'positive' : 'negative'}">
-                                    <i class="fas fa-arrow-${data.shipmentsGrowth >= 0 ? 'up' : 'down'}"></i>
-                                    ${formatNumber(Math.abs(data.shipmentsGrowth || 0), 1)}%
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Spedizioni Totali</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #5856D6 0%, #7C7AED 100%);">
+                                    <i class="fas fa-box"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
-                            <div class="sol-kpi-subtitle">Ultimo periodo</div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
+                        <div class="sol-kpi-change ${data.shipmentsGrowth >= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.shipmentsGrowth >= 0 ? 'up' : 'down'}"></i>
+                            <span>${formatNumber(Math.abs(data.shipmentsGrowth || 0), 1)}%</span>
+                            vs mese precedente
+                        </div>
+                    </div>`
                 },
-                avgDeliveryTime: {
+                avgDeliveryTime: { // MODIFICATO - Change 4
                     id: 'avgDeliveryTime',
                     type: 'kpi',
                     title: 'Tempo Medio Consegna',
                     description: 'Giorni medi per consegna',
                     icon: 'fa-clock',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Tempo Medio Consegna</h3>
-                                <div class="sol-kpi-trend ${data.deliveryTimeChange <= 0 ? 'positive' : 'negative'}">
-                                    <i class="fas fa-arrow-${data.deliveryTimeChange <= 0 ? 'down' : 'up'}"></i>
-                                    ${formatNumber(Math.abs(data.deliveryTimeChange || 0), 1)}%
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Tempo Medio Consegna</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #FF9500 0%, #FFAB00 100%);">
+                                    <i class="fas fa-clock"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.avgDeliveryTime || 0, 1)}</div>
-                            <div class="sol-kpi-subtitle">giorni</div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.avgDeliveryTime || 0, 1)}</div>
+                        <div class="sol-kpi-change ${data.deliveryTimeChange <= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.deliveryTimeChange <= 0 ? 'down' : 'up'}"></i>
+                            <span>${formatNumber(Math.abs(data.deliveryTimeChange || 0), 1)}%</span>
+                            giorni
+                        </div>
+                    </div>`
                 },
-                onTimeDelivery: {
+                onTimeDelivery: { // MODIFICATO - Change 5
                     id: 'onTimeDelivery',
                     type: 'kpi', 
                     title: 'Tasso Puntualità',
                     description: 'Percentuale consegne puntuali',
                     icon: 'fa-check-circle',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Tasso Puntualità</h3>
-                                <div class="sol-kpi-trend ${data.onTimeChange >= 0 ? 'positive' : 'negative'}">
-                                    <i class="fas fa-arrow-${data.onTimeChange >= 0 ? 'up' : 'down'}"></i>
-                                    ${formatNumber(Math.abs(data.onTimeChange || 0), 1)}%
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Tasso Puntualità</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #34C759 0%, #30D158 100%);">
+                                    <i class="fas fa-check-circle"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.onTimeDelivery || 0, 1)}%</div>
-                            <div class="sol-kpi-subtitle">consegne puntuali</div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.onTimeDelivery || 0, 1)}%</div>
+                        <div class="sol-kpi-change ${data.onTimeChange >= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.onTimeChange >= 0 ? 'up' : 'down'}"></i>
+                            <span>${formatNumber(Math.abs(data.onTimeChange || 0), 1)}%</span>
+                            consegne puntuali
+                        </div>
+                    </div>`
                 }, 
                 budgetStatus: {
                     id: 'budgetStatus',
@@ -1594,18 +1649,21 @@
                 });
                 this.chartInstances = {};
                 
-                this.activeWidgets.forEach(widgetId => {
+                this.activeWidgets.forEach((widgetId, index) => { // MODIFICATO - Change 6
                     const widgetConfig = this.availableWidgets[widgetId];
                     if (!widgetConfig) return;
                     
                     const widget = document.createElement('div');
                     widget.className = `widget ${widgetConfig.type}-widget`;
                     widget.dataset.widgetId = widgetId;
+                    widget.style.animationDelay = `${index * 0.1}s`; // AGGIUNTO - Change 6
                     
                     widget.innerHTML = `
+                        <div class="widget-grip">
+                            <i class="fas fa-grip-lines" style="color: rgba(255, 255, 255, 0.3);"></i>
+                        </div>
                         <div class="widget-header">
-                             <i class="fas fa-grip-lines card-drag-handle"></i>
-                            <h3 class="widget-title" style="flex-grow: 1;"> 
+                             <h3 class="widget-title" style="flex-grow: 1;"> 
                                 <i class="fas ${widgetConfig.icon}" style="margin-right: 8px;"></i>
                                 ${widgetConfig.title}
                             </h3>
@@ -1637,7 +1695,7 @@
                 this.sortable = new Sortable(container, {
                     animation: 150,
                     ghostClass: 'dragging',
-                    handle: '.card-drag-handle', 
+                    handle: '.widget-grip', 
                     draggable: '.widget',
                     forceFallback: true,
                     onEnd: (evt) => {
