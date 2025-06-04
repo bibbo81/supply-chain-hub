@@ -93,9 +93,9 @@
     <style>
         /* Page Specific Styles */
         .sol-main-content { margin-top: 80px; padding: var(--sol-space-xl); max-width: 1600px; margin-left: auto; margin-right: auto; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); } /* Larghezza minima KPI aumentata */
         .kpi-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); transition: all 0.3s ease; position: relative; }
-        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); cursor: grab; }
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; /* Necessario per posizionamento assoluto handle */ }
         .kpi-title { font-size: 0.875rem; color: var(--sol-text-secondary); font-weight: 500; flex-grow: 1; }
         .kpi-icon-wrapper { display: flex; align-items: center; }
         .kpi-icon { width: 40px; height: 40px; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; }
@@ -104,7 +104,21 @@
         .kpi-change.positive { color: #34C759; }
         .kpi-change.negative { color: #FF3B30; }
 
-        .card-drag-handle { color: var(--sol-text-tertiary); margin-right: var(--sol-space-sm); padding: var(--sol-space-xs); cursor: grab; opacity: 0.5; transition: opacity var(--sol-transition-fast); }
+        .card-drag-handle { 
+            position: absolute;
+            top: -5px; /* Posiziona leggermente sopra l'header per un look "barra" */
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--sol-text-tertiary);
+            background-color: rgba(255,255,255,0.05); /* Leggero background per la barra */
+            padding: 2px var(--sol-space-sm); /* Padding orizzontale per larghezza barra */
+            border-radius: var(--sol-radius-sm);
+            line-height: 1;
+            cursor: grab; 
+            opacity: 0.6; 
+            transition: opacity var(--sol-transition-fast);
+            z-index: 1;
+        }
         .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; }
         
         .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
@@ -115,14 +129,14 @@
         .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); flex: 1; min-width: 200px; }
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); } /* Larghezza minima chart aumentata */
         .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column;}
         .chart-card.full-width { grid-column: 1 / -1; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); cursor: grab; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; /* Necessario per posizionamento assoluto handle */ }
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
         .chart-actions { display: flex; gap: var(--sol-space-sm); }
-        .chart-container { width: 100%; height: 350px; flex-grow: 1; /* Ensure container has explicit height */ }
+        .chart-container { width: 100%; height: 350px; flex-grow: 1; }
         
         .comparison-section { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); margin-bottom: var(--sol-space-2xl); }
         .budget-bar { display: flex; align-items: center; gap: var(--sol-space-md); margin-bottom: var(--sol-space-lg); }
@@ -279,9 +293,9 @@
         <div class="kpi-grid" id="kpiGridContainer">
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.1s;" data-id="totalCostCard">
                 <div class="kpi-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Costo Totale</h3>
                     <div class="kpi-icon-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div class="kpi-icon"><i class="fas fa-euro-sign"></i></div>
                     </div>
                 </div>
@@ -290,9 +304,9 @@
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.2s;" data-id="avgShipmentCostCard">
                 <div class="kpi-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Costo Medio Spedizione</h3>
                      <div class="kpi-icon-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div class="kpi-icon"><i class="fas fa-box"></i></div>
                     </div>
                 </div>
@@ -301,9 +315,9 @@
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.3s;" data-id="budgetUsedCard">
                 <div class="kpi-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Budget Utilizzato</h3>
                     <div class="kpi-icon-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div class="kpi-icon"><i class="fas fa-chart-pie"></i></div>
                     </div>
                 </div>
@@ -312,9 +326,9 @@
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.4s;" data-id="potentialSavingsCard">
                 <div class="kpi-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Risparmio Potenziale</h3>
                     <div class="kpi-icon-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div class="kpi-icon"><i class="fas fa-piggy-bank"></i></div>
                     </div>
                 </div>
@@ -345,9 +359,9 @@
         <div class="charts-grid" id="chartsGridContainer">
             <div class="chart-card full-width" data-id="costTrendChartCard">
                 <div class="chart-header">
+                     <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Trend Costi nel Tempo</h3>
                     <div class="chart-actions-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div class="chart-actions"><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('daily')">Giornaliero</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('weekly')">Settimanale</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('monthly')">Mensile</button></div>
                     </div>
                 </div>
@@ -355,9 +369,9 @@
             </div>
             <div class="chart-card" data-id="carrierCostChartCard">
                 <div class="chart-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Costi per Spedizioniere</h3>
                      <div class="chart-actions-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <button class="sol-btn sol-btn-glass" onclick="toggleChartType('carrier')"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
@@ -365,9 +379,9 @@
             </div>
             <div class="chart-card" data-id="typeCostChartCard">
                 <div class="chart-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Costi per Tipo Spedizione</h3>
                      <div class="chart-actions-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <button class="sol-btn sol-btn-glass" onclick="toggleChartType('type')"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
@@ -375,9 +389,9 @@
             </div>
             <div class="chart-card" data-id="supplierCostChartCard">
                 <div class="chart-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Top 10 Fornitori per Costo</h3>
                     <div class="chart-actions-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <button class="sol-btn sol-btn-glass" onclick="refreshSupplierChart()"><i class="fas fa-sync-alt"></i></button>
                     </div>
                 </div>
@@ -385,9 +399,9 @@
             </div>
             <div class="chart-card" data-id="costDistributionChartCard">
                 <div class="chart-header">
+                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Distribuzione Costi</h3>
                     <div class="chart-actions-wrapper">
-                        <i class="fas fa-grip-lines card-drag-handle"></i>
                         <div style="position: relative;"><button class="sol-btn sol-btn-primary" onclick="toggleExportMenu(event)"><i class="fas fa-download"></i> Export</button><div class="export-menu" id="exportMenu"><button class="export-option" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button><button class="export-option" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button><button class="export-option" onclick="exportToCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div></div>
                     </div>
                 </div>
@@ -474,9 +488,9 @@
         
         function setupDraggableCards() {
             const kpiGrid = document.getElementById('kpiGridContainer');
-            if (kpiGrid && window.Sortable) { new Sortable(kpiGrid, { group: 'kpiCards', animation: 150, ghostClass: 'dragging', draggable: '.kpi-card', handle: '.kpi-header', forceFallback: true }); }
+            if (kpiGrid && window.Sortable) { new Sortable(kpiGrid, { group: 'kpiCards', animation: 150, ghostClass: 'dragging', draggable: '.kpi-card', handle: '.card-drag-handle', forceFallback: true }); }
             const chartsGrid = document.getElementById('chartsGridContainer');
-            if (chartsGrid && window.Sortable) { new Sortable(chartsGrid, { group: 'chartCards', animation: 150, ghostClass: 'dragging', draggable: '.chart-card', handle: '.chart-header', forceFallback: true }); }
+            if (chartsGrid && window.Sortable) { new Sortable(chartsGrid, { group: 'chartCards', animation: 150, ghostClass: 'dragging', draggable: '.chart-card', handle: '.card-drag-handle', forceFallback: true }); }
         }
 
         async function loadCostsData() {
@@ -533,16 +547,15 @@
         function updateKPIs(kpis) { if(!kpis) return; document.getElementById('totalCost').textContent = formatCurrency(kpis.totalCost); const tcCE=document.getElementById('totalCostChange'),tcCIP=tcCE?.parentElement; if(tcCE&&tcCIP){tcCE.textContent=Math.abs(kpis.totalCostChange||0).toFixed(1)+'%';tcCIP.className=(kpis.totalCostChange||0)<0?'kpi-change positive':'kpi-change negative';tcCIP.querySelector('i').className=`fas fa-arrow-${(kpis.totalCostChange||0)<0?'down':'up'}`;} document.getElementById('avgShipmentCost').textContent=formatCurrency(kpis.avgShipmentCost); const acCE=document.getElementById('avgCostChange'),acCIP=acCE?.parentElement; if(acCE&&acCIP){acCE.textContent=Math.abs(kpis.avgCostChange||0).toFixed(1)+'%';acCIP.className=(kpis.avgCostChange||0)<0?'kpi-change positive':'kpi-change negative';acCIP.querySelector('i').className=`fas fa-arrow-${(kpis.avgCostChange||0)<0?'down':'up'}`;} document.getElementById('budgetUsed').textContent=(kpis.budgetUsed||0)+'%'; document.getElementById('budgetRemaining').textContent=formatCurrency(kpis.budgetRemaining||0); document.getElementById('potentialSavings').textContent=formatCurrency(kpis.potentialSavings||0); }
         function updateBudgetComparison(budget) { if(!budget) return; const p=budget.percentage||0,bB=document.getElementById('budgetBar'),bL=document.getElementById('budgetLabel'); if(bB)bB.style.width=p+'%'; if(bL)bL.textContent=p+'%'; if(bB){if(p>90)bB.className='budget-fill danger';else if(p>75)bB.className='budget-fill warning';else bB.className='budget-fill';} document.getElementById('monthlyBudget').textContent=formatCurrency(budget.monthly); document.getElementById('spentAmount').textContent=formatCurrency(budget.spent); document.getElementById('projectedAmount').textContent=formatCurrency(budget.projected); const sE=document.getElementById('budgetStatus'); if(sE){if(p>90)sE.innerHTML='<span class="cost-badge high">Oltre budget</span>';else if(p>75)sE.innerHTML='<span class="cost-badge medium">Attenzione</span>';else sE.innerHTML='<span class="cost-badge low">Sotto controllo</span>';} document.getElementById('budgetAmount').textContent=formatCurrency(budget.monthly); }
 
-        // START OF USER PROVIDED CHART FUNCTIONS
+        // START OF USER PROVIDED CHART FUNCTIONS (MODIFIED)
         function updateCharts() { 
-            // Add a small delay to ensure DOM is ready
             setTimeout(() => {
                 updateCostTrendChart(); 
                 updateCarrierCostChart(); 
                 updateTypeCostChart(); 
                 updateSupplierCostChart(); 
                 updateCostDistributionChart();
-            }, 100);
+            }, 100); // Delay generale per tutte le chiamate di update
         }
         
         function updateCostTrendChart(period = 'daily') { const data = prepareTrendData(period); const opts = {...chartTheme, series:[{name:'Costo Trasporto',data}], chart:{...chartTheme.chart,type:'area',height:350}, xaxis:{...chartTheme.xaxis,type:'datetime'}, fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.7,opacityTo:0.2,stops:[0,90,100]}}}; renderOrUpdateChart('costTrend',"#costTrendChart",opts); }
@@ -555,53 +568,44 @@
             const el=document.querySelector(sel); 
             if(!el) { console.warn(`Chart element ${sel} not found for chart: ${key}`); return; }
             
-            // Wait for container to be visible and have valid dimensions
             if (el.offsetParent === null || el.offsetHeight <= 0 || el.offsetWidth <= 0) { 
-                console.warn(`Chart container ${sel} for ${key} is not visible yet. Retrying...`);
-                setTimeout(() => renderOrUpdateChart(key, sel, opts, recreate), 100);
+                console.warn(`Chart container ${sel} for ${key} is not visible or has invalid dimensions (H:${el.offsetHeight}, W:${el.offsetWidth}). Retrying...`);
+                setTimeout(() => renderOrUpdateChart(key, sel, opts, recreate), 250); // Aumentato il delay per il retry
                 return;
             }
             
-            // Ensure valid dimensions
-            const containerHeight = el.offsetHeight || 350;
-            const containerWidth = el.offsetWidth || el.parentElement.offsetWidth || 400;
+            const containerHeight = el.offsetHeight > 50 ? el.offsetHeight : 350; // Usa un default se l'altezza è troppo piccola
             
-            // Update chart options with valid dimensions
             opts.chart = { 
                 ...opts.chart, 
-                height: containerHeight > 50 ? containerHeight : 350,
+                height: containerHeight, // Applica l'altezza calcolata o di default
                 width: '100%'
             };
 
             try {
                 if(chartInstances[key] && typeof chartInstances[key].updateOptions === 'function' && !recreate){
-                    chartInstances[key].updateOptions(opts, true, true, true);
+                    chartInstances[key].updateOptions(opts, true, true, true).catch(e => console.error(`Error updating chart ${key}:`, e));
                 } else {
-                    // Destroy existing chart
                     if(chartInstances[key] && typeof chartInstances[key].destroy === 'function') {
                         chartInstances[key].destroy();
                         delete chartInstances[key];
                     }
-                    
-                    // Clear container
-                    el.innerHTML = '';
-                    
-                    // Create new chart
+                    el.innerHTML = ''; // Pulisci il contenitore prima di un nuovo render
                     chartInstances[key] = new ApexCharts(el, opts); 
-                    chartInstances[key].render();
+                    chartInstances[key].render().catch(e => console.error(`Error rendering new chart ${key}:`, e));
                 }
             } catch(e) {
-                console.error(`Error in renderOrUpdateChart for ${key}:`, e);
-                // Try again after a delay
+                console.error(`General error in renderOrUpdateChart for ${key}:`, e);
+                // Fallback attempt if initial render/update fails catastrophically
                 setTimeout(() => {
                     try {
                         if(chartInstances[key]) chartInstances[key].destroy();
                         delete chartInstances[key];
                         el.innerHTML = '';
                         chartInstances[key] = new ApexCharts(el, opts);
-                        chartInstances[key].render();
+                        chartInstances[key].render().catch(e2 => console.error(`Failed to render chart ${key} after retry:`, e2));
                     } catch(e2) {
-                        console.error(`Failed to render chart ${key} after retry:`, e2);
+                        console.error(`Catastrophic failure rendering chart ${key} after retry:`, e2);
                     }
                 }, 500);
             }
@@ -654,9 +658,9 @@
                              chartInstance.updateOptions({ 
                                  chart: { 
                                      width: '100%', 
-                                     height: currentConfig.chart.height 
+                                     height: currentConfig.chart.height // Riapplica l'altezza originale o quella calcolata
                                  } 
-                             }, false, false, false); 
+                             }, false, false, false); // redrawAnnotations, animate, updateSyncedCharts
                         }
                     } catch (e) {
                         console.warn("Could not update chart on resize:", chartInstance.w.globals.chartID, e);
