@@ -26,14 +26,12 @@
         (function() {
             console.log('[Dashboard] Checking authentication...');
             
-            // Aspetta auth.js
             function checkAuth() {
                 if (!window.auth) {
                     setTimeout(checkAuth, 100);
                     return;
                 }
                 
-                // Se non autenticato, redirect a login
                 if (!window.auth.isAuthenticated()) {
                     console.log('[Dashboard] Not authenticated, redirecting...');
                     window.location.replace('/login.html');
@@ -42,43 +40,54 @@
                 
                 console.log('[Dashboard] User authenticated');
                 
-                // Update UI con i dati utente corretti
                 const user = window.auth.getCurrentUser();
                 if (user) {
-                    // Funzione per aggiornare UI
                     const updateUserUI = () => {
                         const userNameEl = document.getElementById('userName');
                         const userEmailEl = document.getElementById('userEmail');
                         const userInitialEl = document.getElementById('userInitial');
+                        const userFullNameEl = document.getElementById('userFullName');
                         
-                        // Estrai il nome corretto
                         let displayName = 'Utente';
                         let initial = 'U';
                         
-                        // Prima prova con user_metadata
-                        if (user.user_metadata && user.user_metadata.full_name) {
+                        if (user.user_metadata && user.user_metadata.display_name) {
+                            displayName = user.user_metadata.display_name;
+                        } else if (user.user_metadata && user.user_metadata.full_name) {
                             displayName = user.user_metadata.full_name;
-                            initial = displayName.charAt(0).toUpperCase();
                         } else if (user.user_metadata && user.user_metadata.name) {
                             displayName = user.user_metadata.name;
-                            initial = displayName.charAt(0).toUpperCase();
                         } else if (user.email) {
-                            // Fallback: usa la parte prima della @ nell'email
-                            displayName = user.email.split('@')[0];
-                            // Capitalizza la prima lettera
-                            displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-                            initial = displayName.charAt(0);
+                            const emailName = user.email.split('@')[0];
+                            displayName = emailName
+                                .replace(/[._-]/g, ' ')
+                                .split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                .join(' ');
+                        }
+                        if (displayName && (displayName.includes('.') || displayName.includes('_') || displayName.includes('-'))) {
+                             displayName = displayName
+                                .replace(/[._-]/g, ' ')
+                                .split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                .join(' ');
+                        }
+                                        
+                        const words = displayName.split(' ').filter(w => w.length > 0);
+                        if (words.length >= 2) {
+                            initial = words[0][0].toUpperCase() + words[1][0].toUpperCase();
+                        } else if (words.length === 1) {
+                            initial = words[0][0].toUpperCase();
                         }
                         
-                        // Aggiorna elementi DOM
                         if (userNameEl) userNameEl.textContent = displayName;
-                        if (userEmailEl) userEmailEl.textContent = user.email || '';
                         if (userInitialEl) userInitialEl.textContent = initial;
+                        if (userFullNameEl) userFullNameEl.textContent = displayName;
+                        if (userEmailEl) userEmailEl.textContent = user.email || '';
                         
                         console.log('[Dashboard] User UI updated:', { displayName, email: user.email });
                     };
                     
-                    // Esegui update quando DOM è pronto
                     if (document.readyState === 'loading') {
                         document.addEventListener('DOMContentLoaded', updateUserUI);
                     } else {
@@ -140,17 +149,22 @@
             grid-column: span 2;
         }
         
-        .widget.dragging { /* Stile per l'anteprima (ghost element) */
-            opacity: 0.5;
-            transform: scale(0.95);
+        .widget.dragging { 
+            opacity: 0.6; 
+            transform: scale(0.97); 
+            box-shadow: var(--sol-shadow-lg); 
+            border: 1px solid var(--sol-text-accent);
         }
 
+        .widget.sortable-chosen { 
+            /* Stile per l'elemento originale mentre viene trascinato */
+        }
         .widget.dragging,
-        .widget.sortable-chosen { /* Applica a entrambi: l'anteprima e l'elemento sorgente durante il drag */
+        .widget.sortable-chosen { 
             user-select: none;
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none;    /* Firefox */
-            -ms-user-select: none;     /* IE/Edge */
+            -webkit-user-select: none; 
+            -moz-user-select: none;    
+            -ms-user-select: none;     
         }
         
         .widget-header {
@@ -159,47 +173,28 @@
             align-items: center;
             margin-bottom: var(--sol-space-md);
             position: relative;
-            padding-top: var(--sol-space-sm);
+            padding-top: 20px; /* Aumentato per drag bar */
             padding-bottom: var(--sol-space-sm);
         }
         
-        /* Drag handle grip icon */
-        .widget-grip {
+        /* Drag handle (allineato con costs.html) */
+        .card-drag-handle { 
             position: absolute;
+            top: -10px; 
             left: 50%;
-            top: 0;
             transform: translateX(-50%);
-            width: 40px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: move;
-            opacity: 0.3;
-            transition: opacity 0.2s;
+            color: var(--sol-text-tertiary);
+            background-color: rgba(255,255,255,0.12); 
+            padding: 2px var(--sol-space-xl); 
+            border-radius: 4px; 
+            line-height: 1;
+            font-size: 0.8rem; 
+            cursor: grab; 
+            opacity: 0.6; 
+            transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
+            z-index: 10; 
         }
-        
-        .widget-grip::before,
-        .widget-grip::after {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-        }
-        
-        .widget-grip::before {
-            left: 14px;
-        }
-        
-        .widget-grip::after {
-            right: 14px;
-        }
-        
-        .widget:hover .widget-grip {
-            opacity: 0.6;
-        }
+        .widget:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
         
         .widget-actions {
             display: flex;
@@ -232,7 +227,6 @@
             transform: scale(1.1);
         }
         
-        /* Fix per grafici donut */
         .widget.chart-widget .widget-content {
             display: flex;
             align-items: center;
@@ -248,7 +242,6 @@
             justify-content: center;
         }
         
-        /* Customize Button */
         .customize-fab {
             position: fixed;
             bottom: var(--sol-space-2xl);
@@ -273,7 +266,6 @@
             box-shadow: 0 8px 32px rgba(0, 122, 255, 0.4);
         }
         
-        /* Customize Modal */
         .widget-selector {
             display: grid;
             gap: var(--sol-space-md);
@@ -318,7 +310,6 @@
             color: var(--sol-text-secondary);
         }
         
-        /* Original styles preserved */
         .sol-kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -358,7 +349,6 @@
             color: var(--sol-text-tertiary);
         }
         
-        /* Modal Styles */
         .sol-modal {
             position: fixed;
             top: 0;
@@ -440,7 +430,6 @@
             max-height: calc(90vh - 200px);
         }
         
-        /* Action Bar */
         .sol-action-bar {
             display: flex;
             gap: var(--sol-space-md);
@@ -456,7 +445,6 @@
             align-items: center;
         }
         
-        /* Table Styles */
         .sol-table-container {
             background: var(--sol-glass-light);
             backdrop-filter: var(--sol-blur-lg);
@@ -478,12 +466,10 @@
             font-weight: 600;
         }
         
-        /* Animations */
         .sol-kpi-card {
             animation-delay: calc(var(--index) * 0.1s);
         }
         
-        /* Backdrop */
         .sol-backdrop {
             position: fixed;
             top: 0;
@@ -503,7 +489,6 @@
             visibility: visible;
         }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .widget.chart-widget,
             .widget.table-widget {
@@ -516,7 +501,6 @@
             }
         }
         
-        /* KPI Card Styles */
         .sol-kpi-card {
             height: 100%;
             display: flex;
@@ -566,7 +550,6 @@
             color: var(--sol-text-tertiary);
         }
         
-        /* Badge Styles */
         .sol-badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -590,7 +573,6 @@
             color: #007AFF;
         }
         
-        /* Table Styles */
         .sol-table {
             width: 100%;
             border-collapse: collapse;
@@ -617,12 +599,10 @@
             background: rgba(255, 255, 255, 0.02);
         }
         
-        /* Dropdown styles */
         .sol-dropdown-item:hover {
             background: rgba(255, 255, 255, 0.05);
         }
 
-        /* Budget Progress Bar for Cost Widget */
         .budget-progress {
             width: 100%;
             height: 8px;
@@ -647,7 +627,6 @@
             background: linear-gradient(135deg, #FF3B30 0%, #FF1744 100%);
         }
 
-        /* Cost Alert Badge */
         .cost-alert {
             display: inline-flex;
             align-items: center;
@@ -660,7 +639,6 @@
             font-weight: 600;
         }
 
-        /* Deep Link Styles */
         .widget-link {
             display: inline-flex;
             align-items: center;
@@ -676,6 +654,21 @@
             color: #007AFF;
             transform: translateX(2px);
         }
+        /* Stili per dropdown header (da dashboard.html) */
+        .sol-dropdown { position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95) !important; backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); }
+        .sol-dropdown-item { display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer; }
+        .sol-dropdown-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .notification-item { padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base); }
+        .notification-item:hover { background: rgba(255,255,255,0.03); }
+        .noti-icon-wrap { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .noti-icon-wrap.error { background: rgba(255,59,48,0.15); color: #FF3B30; }
+        .noti-icon-wrap.info { background: rgba(0,122,255,0.15); color: #007AFF; }
+        .noti-content-wrap .noti-title { margin: 0; font-weight: 500; font-size: 0.875rem; }
+        .noti-content-wrap .noti-desc { margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary); }
+        .noti-content-wrap .noti-time { margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary); }
+        .sol-link { color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500; }
+        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg); }
+
     </style>
 </head>
 <body>
@@ -712,289 +705,38 @@
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                <div class="sol-dropdown" id="userDropdown" >
                     <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                         <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
                         <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
                     </div>
-                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-user"></i> Profilo
-                    </a>
-                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-cog"></i> Impostazioni
-                    </a>
+                    <a href="/profile.html" class="sol-dropdown-item"><i class="fas fa-user"></i> Profilo</a>
+                    <a href="/settings.html" class="sol-dropdown-item"><i class="fas fa-cog"></i> Impostazioni</a>
                     <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
-                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
-                        <i class="fas fa-sign-out-alt"></i> Esci
-                    </button>
+                    <button class="sol-dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Esci</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <div class="sol-dropdown" id="notificationDropdown">
         <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
             <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
         </div>
         <div style="max-height: 400px; overflow-y: auto;">
-            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
-                <div style="display: flex; gap: var(--sol-space-md);">
-                    <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
-                    </div>
-                    <div style="flex: 1;">
-                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Spedizione in Ritardo</p>
-                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Container MRKU4252004 - 3 giorni di ritardo</p>
-                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
-                    </div>
-                </div>
-            </div>
-            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
-                <div style="display: flex; gap: var(--sol-space-md);">
-                    <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <i class="fas fa-check-circle" style="color: #34C759;"></i>
-                    </div>
-                    <div style="flex: 1;">
-                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Consegna Completata</p>
-                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">Ordine #12345 consegnato con successo</p>
-                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">5 ore fa</p>
-                    </div>
-                </div>
-            </div>
-            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
-                <div style="display: flex; gap: var(--sol-space-md);">
-                    <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <i class="fas fa-info-circle" style="color: #007AFF;"></i>
-                    </div>
-                    <div style="flex: 1;">
-                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Nuovo Import Completato</p>
-                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">150 spedizioni importate con successo</p>
-                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">Ieri</p>
-                    </div>
-                </div>
-            </div>
+            <div class="notification-item"><div style="display: flex; gap: var(--sol-space-md);"><div class="noti-icon-wrap error"><i class="fas fa-exclamation-triangle"></i></div><div class="noti-content-wrap"><p class="noti-title">Alert Costo Elevato</p><p class="noti-desc">Spedizione ODA-123 supera budget.</p><p class="noti-time">1 ora fa</p></div></div></div>
+            <div class="notification-item"><div style="display: flex; gap: var(--sol-space-md);"><div class="noti-icon-wrap info"><i class="fas fa-info-circle"></i></div><div class="noti-content-wrap"><p class="noti-title">Nuovo Report Disponibile</p><p class="noti-desc">Report costi Q2 pronto.</p><p class="noti-time">Ieri</p></div></div></div>
         </div>
         <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
-            <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
+            <a href="/notifications.html" class="sol-link">Vedi tutte le notifiche</a>
         </div>
     </div>
-
-    <style>
-        .notification-item:hover {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        /* Fix per icona notifiche più visibile */
-        #notificationBtn {
-            position: relative;
-            transition: var(--sol-transition-base);
-        }
-
-        #notificationBtn:hover {
-            transform: translateY(-1px);
-        }
-
-        #notificationBtn:active {
-            transform: translateY(0);
-        }
-
-        /* Assicuriamoci che il dropdown sia dello stesso colore in tutte le pagine */
-        .sol-dropdown {
-            background: rgba(20, 20, 30, 0.95) !important;
-        }
-
-        /* Responsive notification button */
-        #notificationBtn {
-            width: 44px;
-            height: 44px;
-        }
-
-        @media (min-width: 768px) {
-            #notificationBtn {
-                width: 60px;
-                height: 60px;
-            }
-        }
-
-        /* Adjust badge position for mobile */
-        @media (max-width: 767px) {
-            #notificationBtn span {
-                width: 16px !important;
-                height: 16px !important;
-                font-size: 0.625rem !important;
-                top: 6px !important;
-                right: 4px !important;
-            }
-        }
-
-        /* Nascondi sempre upload area - meglio usare /import.html */
-        #uploadArea {
-            display: none !important;
-        }
-        
-        /* Mobile specific fixes */
-        @media (max-width: 768px) {
-            /* Nascondi nome utente su mobile per risparmiare spazio */
-            #userName {
-                display: none;
-            }
-            
-            /* Riduci padding header su mobile */
-            .sol-header-content {
-                padding: 0 var(--sol-space-md);
-            }
-            
-            /* Nascondi testo logo su mobile */
-            .sol-logo-text {
-                display: none;
-            }
-            
-            /* Riduci gap elementi header */
-            .sol-header-right {
-                gap: var(--sol-space-xs) !important;
-            }
-            
-            /* Nascondi chevron su mobile */
-            #userMenuBtn .fa-chevron-down {
-                display: none;
-            }
-            
-            /* Più spazio per l'action bar */
-            .sol-action-bar {
-                margin-top: var(--sol-space-lg);
-            }
-            
-            /* Fix posizione dropdown su mobile */
-            #notificationDropdown {
-                right: 10px !important;
-                left: 10px;
-                width: auto;
-                max-width: calc(100vw - 20px);
-            }
-            
-            /* Nascondi campo ricerca su mobile */
-            .sol-header-center {
-                display: none;
-            }
-        }
-    </style>
-
-    <script>
-    (function() {
-        // Funzione per formattare il nome
-        function formatUserName(user) {
-            // Prima controlla se c'è un display_name personalizzato nel profilo
-            if (user.user_metadata && user.user_metadata.display_name) {
-                return user.user_metadata.display_name;
-            }
-            
-            // Altrimenti usa full_name o name
-            let fullName = '';
-            if (user.user_metadata) {
-                fullName = user.user_metadata.full_name || user.user_metadata.name || '';
-            }
-            
-            // Se abbiamo un nome completo, formattiamolo
-            if (fullName) {
-                // Rimuovi punteggiatura e formatta correttamente
-                fullName = fullName.replace(/[._-]/g, ' ');
-                // Capitalizza ogni parola
-                return fullName.split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-            }
-            
-            // Fallback: usa l'email
-            if (user.email) {
-                const emailName = user.email.split('@')[0];
-                // Trasforma email in nome (es: fabrizio.cagnucci -> Fabrizio Cagnucci)
-                return emailName
-                    .replace(/[._-]/g, ' ')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-            }
-            
-            return 'Utente';
-        }
-        
-        // Funzione per ottenere le iniziali
-        function getUserInitials(name) {
-            const words = name.split(' ').filter(w => w.length > 0);
-            if (words.length >= 2) {
-                return words[0][0].toUpperCase() + words[1][0].toUpperCase();
-            } else if (words.length === 1) {
-                return words[0][0].toUpperCase();
-            }
-            return 'U';
-        }
-        
-        // Aggiorna UI quando DOM è pronto
-        function updateUserUI() {
-            const user = window.auth ? window.auth.getCurrentUser() : null;
-            if (!user) return;
-            
-            const displayName = formatUserName(user);
-            const initials = getUserInitials(displayName);
-            
-            // Aggiorna elementi header
-            const userNameEl = document.getElementById('userName');
-            const userInitialEl = document.getElementById('userInitial');
-            const userFullNameEl = document.getElementById('userFullName');
-            const userEmailEl = document.getElementById('userEmail');
-            
-            if (userNameEl) userNameEl.textContent = displayName;
-            if (userInitialEl) userInitialEl.textContent = initials;
-            if (userFullNameEl) userFullNameEl.textContent = displayName;
-            if (userEmailEl) userEmailEl.textContent = user.email || '';
-        }
-        
-        // Aspetta che auth.js sia caricato
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(updateUserUI, 100);
-            });
-        } else {
-            setTimeout(updateUserUI, 100);
-        }
-    })();
-    </script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const notificationBtn = document.getElementById('notificationBtn');
-        const notificationDropdown = document.getElementById('notificationDropdown');
-        
-        if (notificationBtn && notificationDropdown) {
-            notificationBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Chiudi user dropdown se aperto
-                const userDropdown = document.getElementById('userDropdown');
-                if (userDropdown) userDropdown.style.display = 'none';
-                
-                // Toggle notification dropdown
-                notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
-            });
-            
-            // Chiudi dropdown quando si clicca fuori
-            document.addEventListener('click', function(e) {
-                if (notificationDropdown && notificationDropdown.style.display !== 'none' && 
-                    notificationBtn && !notificationBtn.contains(e.target) && 
-                    !notificationDropdown.contains(e.target)) {
-                    notificationDropdown.style.display = 'none';
-                }
-            });
-        }
-    });
-    </script>
 
     <aside class="sol-sidebar" id="sidebar">
         <nav style="padding: var(--sol-space-lg) 0;">
             <div style="margin-bottom: var(--sol-space-xl);">
-                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
-                <a href="/" class="sol-nav-item active">
+                <div class="sidebar-section-title">PRINCIPALE</div>
+                <a href="/dashboard.html" class="sol-nav-item active">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
@@ -1013,7 +755,7 @@
             </div>
             
             <div style="margin-bottom: var(--sol-space-xl);">
-                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
+                <div class="sidebar-section-title">STRUMENTI</div>
                 <a href="/import.html" class="sol-nav-item">
                     <i class="fas fa-upload"></i>
                     <span>Importa Dati</span>
@@ -1029,7 +771,7 @@
             </div>
             
             <div>
-                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
+                <div class="sidebar-section-title">CONFIGURAZIONE</div>
                 <a href="/team.html" class="sol-nav-item">
                     <i class="fas fa-users"></i>
                     <span>Team</span>
@@ -1350,8 +1092,7 @@
                             <div class="sol-kpi-subtitle">consegne puntuali</div>
                         </div>
                     `
-                }, // CORREZIONE: Rimossa parentesi graffa extra da qui
-                // NUOVI WIDGET COSTI - Aggiungi qui dopo onTimeDelivery
+                }, 
                 budgetStatus: {
                     id: 'budgetStatus',
                     type: 'kpi',
@@ -1359,165 +1100,162 @@
                     description: 'Budget utilizzato vs disponibile',
                     icon: 'fa-chart-pie',
                     render: (data) => {
-    // Calcola budget (mock per ora, poi verrà da settings)
-    const monthlyBudget = 150000;
-    const spent = data.costs?.totalTransportCost || 0;
-    const percentage = Math.round((spent / monthlyBudget) * 100);
-    const remaining = monthlyBudget - spent;
-    
-    let barClass = 'budget-fill';
-    let statusText = 'Sotto controllo';
-    let statusColor = '#34C759';
-    
-    if (percentage > 90) {
-        barClass += ' danger';
-        statusText = 'Budget quasi esaurito!';
-        statusColor = '#FF3B30';
-    } else if (percentage > 75) {
-        barClass += ' warning';
-        statusText = 'Attenzione al budget';
-        statusColor = '#FF9500';
-    }
-    
-    return `
-        <div class="sol-kpi-card sol-animate-in">
-            <div class="sol-kpi-header">
-                <h3 class="sol-kpi-title">Budget Mensile</h3>
-                <div style="color: ${statusColor}; font-size: 0.875rem; font-weight: 600;">
-                    ${statusText}
-                </div>
-            </div>
-            <div class="sol-kpi-value">${percentage}%</div>
-            <div class="budget-progress">
-                <div class="${barClass}" style="width: ${percentage}%;"></div>
-            </div>
-            <div class="sol-kpi-subtitle">${formatCurrency(remaining)} rimanenti</div>
-            <a href="/costs.html?alert=over-budget" class="widget-link">
-                Vedi dettagli <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-    `;
-}
+                        const monthlyBudget = 150000;
+                        const spent = data.costs?.totalTransportCost || 0;
+                        const percentage = Math.round((spent / monthlyBudget) * 100);
+                        const remaining = monthlyBudget - spent;
+                        
+                        let barClass = 'budget-fill';
+                        let statusText = 'Sotto controllo';
+                        let statusColor = '#34C759';
+                        
+                        if (percentage > 90) {
+                            barClass += ' danger';
+                            statusText = 'Budget quasi esaurito!';
+                            statusColor = '#FF3B30';
+                        } else if (percentage > 75) {
+                            barClass += ' warning';
+                            statusText = 'Attenzione al budget';
+                            statusColor = '#FF9500';
+                        }
+                        
+                        return `
+                            <div class="sol-kpi-card sol-animate-in">
+                                <div class="sol-kpi-header">
+                                    <h3 class="sol-kpi-title">Budget Mensile</h3>
+                                    <div style="color: ${statusColor}; font-size: 0.875rem; font-weight: 600;">
+                                        ${statusText}
+                                    </div>
+                                </div>
+                                <div class="sol-kpi-value">${percentage}%</div>
+                                <div class="budget-progress">
+                                    <div class="${barClass}" style="width: ${percentage}%;"></div>
+                                </div>
+                                <div class="sol-kpi-subtitle">${formatCurrency(remaining)} rimanenti</div>
+                                <a href="/costs.html?alert=over-budget" class="widget-link">
+                                    Vedi dettagli <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        `;
+                    }
                 },
                 costAlerts: {
-    id: 'costAlerts',
-    type: 'kpi',
-    title: 'Alert Costi',
-    description: 'Spedizioni con costi anomali',
-    icon: 'fa-exclamation-triangle',
-    render: (data) => {
-        const highCostCount = data.alerts?.highCostShipments || 0;
-        const avgCost = data.costs?.avgCostPerShipment || 0;
-        
-        return `
-            <div class="sol-kpi-card sol-animate-in">
-                <div class="sol-kpi-header">
-                    <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
-                    ${highCostCount > 0 ? `
-                        <span class="cost-alert">
-                            <i class="fas fa-exclamation-circle"></i>
-                            Attenzione
-                        </span>
-                    ` : `
-                        <span style="color: #34C759; font-size: 0.875rem;">
-                            <i class="fas fa-check-circle"></i>
-                            OK
-                        </span>
-                    `}
-                </div>
-                <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
-                <div class="sol-kpi-subtitle">spedizioni sopra €1.000</div>
-                <div style="margin-top: var(--sol-space-md); font-size: 0.875rem; color: var(--sol-text-secondary);">
-                    Costo medio: ${formatCurrency(avgCost)}
-                </div>
-                ${highCostCount > 0 ? `
-                    <a href="/costs.html?alert=high-cost" class="widget-link">
-                        Analizza spedizioni <i class="fas fa-arrow-right"></i>
-                    </a>
-                ` : ''}
-            </div>
-        `;
-    }
-},
-costsByType: {
-    id: 'costsByType',
-    type: 'chart',
-    title: 'Costi per Tipo Spedizione',
-    description: 'Distribuzione costi MARE/AEREO/STRADA',
-    icon: 'fa-ship',
-    render: (data) => {
-        const widgetId = 'costsByType';
-        setTimeout(() => {
-            const chartElement = document.querySelector(`#chart-${widgetId}`);
-            if (!chartElement || !data.shipments) return;
-            
-            // Aggregazione per tipo
-            const typeData = {};
-            data.shipments.forEach(s => {
-                const type = s.tipo_spedizione || 'ALTRO';
-                if (!typeData[type]) {
-                    typeData[type] = 0;
-                }
-                typeData[type] += s.costo_trasporto || 0;
-            });
-            
-            const colors = {
-                'MARE': '#007AFF',
-                'AEREO': '#FF9500',
-                'STRADA': '#34C759'
-            };
-            
-            const chart = new ApexCharts(chartElement, {
-                ...chartTheme,
-                series: Object.values(typeData),
-                chart: { 
-                    ...chartTheme.chart, 
-                    type: 'pie', 
-                    height: 350
-                },
-                labels: Object.keys(typeData),
-                colors: Object.keys(typeData).map(type => colors[type] || '#5856D6'),
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        colors: 'rgba(255, 255, 255, 0.7)'
+                    id: 'costAlerts',
+                    type: 'kpi',
+                    title: 'Alert Costi',
+                    description: 'Spedizioni con costi anomali',
+                    icon: 'fa-exclamation-triangle',
+                    render: (data) => {
+                        const highCostCount = data.alerts?.highCostShipments || 0;
+                        const avgCost = data.costs?.avgCostPerShipment || 0;
+                        
+                        return `
+                            <div class="sol-kpi-card sol-animate-in">
+                                <div class="sol-kpi-header">
+                                    <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
+                                    ${highCostCount > 0 ? `
+                                        <span class="cost-alert">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                            Attenzione
+                                        </span>
+                                    ` : `
+                                        <span style="color: #34C759; font-size: 0.875rem;">
+                                            <i class="fas fa-check-circle"></i>
+                                            OK
+                                        </span>
+                                    `}
+                                </div>
+                                <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
+                                <div class="sol-kpi-subtitle">spedizioni sopra €1.000</div>
+                                <div style="margin-top: var(--sol-space-md); font-size: 0.875rem; color: var(--sol-text-secondary);">
+                                    Costo medio: ${formatCurrency(avgCost)}
+                                </div>
+                                ${highCostCount > 0 ? `
+                                    <a href="/costs.html?alert=high-cost" class="widget-link">
+                                        Analizza spedizioni <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                ` : ''}
+                            </div>
+                        `;
                     }
                 },
-                dataLabels: {
-                    enabled: true,
-                    formatter: function(val, opts) {
-                        return formatCurrency(opts.w.globals.series[opts.seriesIndex]);
-                    },
-                    style: {
-                        fontSize: '14px',
-                        fontWeight: 600
+                costsByType: {
+                    id: 'costsByType',
+                    type: 'chart',
+                    title: 'Costi per Tipo Spedizione',
+                    description: 'Distribuzione costi MARE/AEREO/STRADA',
+                    icon: 'fa-ship',
+                    render: (data) => {
+                        const widgetId = 'costsByType';
+                        setTimeout(() => {
+                            const chartElement = document.querySelector(`#chart-${widgetId}`);
+                            if (!chartElement || !data.shipments) return;
+                            
+                            const typeData = {};
+                            data.shipments.forEach(s => {
+                                const type = s.tipo_spedizione || 'ALTRO';
+                                if (!typeData[type]) {
+                                    typeData[type] = 0;
+                                }
+                                typeData[type] += s.costo_trasporto || 0;
+                            });
+                            
+                            const colors = {
+                                'MARE': '#007AFF',
+                                'AEREO': '#FF9500',
+                                'STRADA': '#34C759'
+                            };
+                            
+                            const chart = new ApexCharts(chartElement, {
+                                ...chartTheme,
+                                series: Object.values(typeData),
+                                chart: { 
+                                    ...chartTheme.chart, 
+                                    type: 'pie', 
+                                    height: 350
+                                },
+                                labels: Object.keys(typeData),
+                                colors: Object.keys(typeData).map(type => colors[type] || '#5856D6'),
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        colors: 'rgba(255, 255, 255, 0.7)'
+                                    }
+                                },
+                                dataLabels: {
+                                    enabled: true,
+                                    formatter: function(val, opts) {
+                                        return formatCurrency(opts.w.globals.series[opts.seriesIndex]);
+                                    },
+                                    style: {
+                                        fontSize: '14px',
+                                        fontWeight: 600
+                                    }
+                                },
+                                tooltip: {
+                                    y: {
+                                        formatter: (val) => formatCurrency(val)
+                                    }
+                                }
+                            });
+                            chart.render();
+                            dashboardManager.chartInstances[widgetId] = chart;
+                        }, 100);
+                        
+                        return `
+                            <div class="sol-chart-card">
+                                <div class="sol-chart-header">
+                                    <h3 class="sol-chart-title">Costi per Tipo Spedizione</h3>
+                                    <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
+                                </div>
+                                <div class="sol-chart-container" id="chart-${widgetId}"></div>
+                                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">
+                                    Analisi dettagliata <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        `;
                     }
                 },
-                tooltip: {
-                    y: {
-                        formatter: (val) => formatCurrency(val)
-                    }
-                }
-            });
-            chart.render();
-            dashboardManager.chartInstances[widgetId] = chart;
-        }, 100);
-        
-        return `
-            <div class="sol-chart-card">
-                <div class="sol-chart-header">
-                    <h3 class="sol-chart-title">Costi per Tipo Spedizione</h3>
-                    <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
-                </div>
-                <div class="sol-chart-container" id="chart-${widgetId}"></div>
-                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">
-                    Analisi dettagliata <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        `;
-    }
-},
-                // Chart Widgets
                 costTrend: {
                     id: 'costTrend',
                     type: 'chart',
@@ -1652,7 +1390,6 @@ costsByType: {
                         `;
                     }
                 },
-                // Table Widgets
                 topSuppliers: {
                     id: 'topSuppliers',
                     type: 'table',
@@ -1691,50 +1428,50 @@ costsByType: {
                     }
                 },
                 topCostShipments: {
-    id: 'topCostShipments',
-    type: 'table',
-    title: 'Top 5 Spedizioni per Costo',
-    description: 'Spedizioni più costose del periodo',
-    icon: 'fa-sort-amount-down',
-    render: (data) => {
-        const shipments = (data.shipments || [])
-            .sort((a, b) => (b.costo_trasporto || 0) - (a.costo_trasporto || 0))
-            .slice(0, 5);
-        
-        return `
-            <div class="sol-table-container">
-                <div class="sol-table-header">
-                    <h3 class="sol-table-title">Top 5 Costi Maggiori</h3>
-                </div>
-                <table class="sol-table">
-                    <thead>
-                        <tr>
-                            <th>N. ODA</th>
-                            <th>Fornitore</th>
-                            <th>Tipo</th>
-                            <th>Costo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${shipments.map(s => `
-                            <tr>
-                                <td>${s.n_oda || '-'}</td>
-                                <td>${s.fornitore || '-'}</td>
-                                <td>${s.tipo_spedizione || '-'}</td>
-                                <td style="font-weight: 600; color: #FF3B30;">
-                                    ${formatCurrency(s.costo_trasporto || 0)}
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <a href="/costs.html?sort=cost_desc" class="widget-link" style="display: block; text-align: center; margin-top: var(--sol-space-md);">
-                    Vedi tutte <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        `;
-    }
-},
+                    id: 'topCostShipments',
+                    type: 'table',
+                    title: 'Top 5 Spedizioni per Costo',
+                    description: 'Spedizioni più costose del periodo',
+                    icon: 'fa-sort-amount-down',
+                    render: (data) => {
+                        const shipments = (data.shipments || [])
+                            .sort((a, b) => (b.costo_trasporto || 0) - (a.costo_trasporto || 0))
+                            .slice(0, 5);
+                        
+                        return `
+                            <div class="sol-table-container">
+                                <div class="sol-table-header">
+                                    <h3 class="sol-table-title">Top 5 Costi Maggiori</h3>
+                                </div>
+                                <table class="sol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>N. ODA</th>
+                                            <th>Fornitore</th>
+                                            <th>Tipo</th>
+                                            <th>Costo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${shipments.map(s => `
+                                            <tr>
+                                                <td>${s.n_oda || '-'}</td>
+                                                <td>${s.fornitore || '-'}</td>
+                                                <td>${s.tipo_spedizione || '-'}</td>
+                                                <td style="font-weight: 600; color: #FF3B30;">
+                                                    ${formatCurrency(s.costo_trasporto || 0)}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                                <a href="/costs.html?sort=cost_desc" class="widget-link" style="display: block; text-align: center; margin-top: var(--sol-space-md);">
+                                    Vedi tutte <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        `;
+                    }
+                },
                 alerts: {
                     id: 'alerts',
                     type: 'table',
@@ -1780,49 +1517,35 @@ costsByType: {
                 }
             },
 
-            // Stato
             activeWidgets: [],
             dashboardData: null,
             chartInstances: {},
             sortable: null,
 
-            // Inizializza
             init() {
                 this.loadConfiguration();
                 this.loadDashboardData();
-                this.setupEventListeners(); // Chiama il setupEventListeners interno a dashboardManager
+                this.setupEventListeners();
             },
 
-            // Carica configurazione
             loadConfiguration() {
                 const saved = localStorage.getItem('dashboardConfig');
                 if (saved) {
                     this.activeWidgets = JSON.parse(saved);
                 } else {
-                    // Default configuration
                     this.activeWidgets = [
-                        'totalCost',
-                        'totalShipments', 
-                        'avgDeliveryTime',
-                        'onTimeDelivery',
-                        'budgetStatus',      // NUOVO
-                        'costAlerts',        // NUOVO
-                        'costTrend',
-                        'carrierDistribution',
-                        'costsByType',       // NUOVO
-                        'topSuppliers',
-                        'topCostShipments',  // NUOVO
-                        'alerts'
+                        'totalCost', 'totalShipments', 'avgDeliveryTime', 'onTimeDelivery',
+                        'budgetStatus', 'costAlerts', 'costTrend', 'carrierDistribution',
+                        'costsByType', 'topSuppliers', 'topCostShipments', 'alerts'
                     ];
                 }
             },
 
-            // Carica dati dashboard
             async loadDashboardData() {
                 try {
                     const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
                     const periodSelect = document.getElementById('periodSelect');
-                    const period = periodSelect ? periodSelect.value : '30'; // Default period if element not found
+                    const period = periodSelect ? periodSelect.value : '30';
                     
                     if (!token) {
                         console.log('No token found, using mock data');
@@ -1832,9 +1555,7 @@ costsByType: {
                     }
                     
                     const response = await fetch(`/.netlify/functions/dashboard-stats?period=${period}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
                     
                     if (!response.ok) {
@@ -1843,9 +1564,7 @@ costsByType: {
                     } else {
                         this.dashboardData = await response.json();
                     }
-                    
                     this.renderDashboard();
-                    
                 } catch (error) {
                     console.error('Error loading dashboard:', error);
                     this.dashboardData = this.getMockData();
@@ -1853,60 +1572,21 @@ costsByType: {
                 }
             },
 
-            // Mock data per test
             getMockData() {
                 return {
-                    totalShipments: 15420,
-                    shipmentsGrowth: 8.3,
-                    avgDeliveryTime: 3.2,
-                    deliveryTimeChange: -0.3,
-                    onTimeDelivery: 94.5,
-                    onTimeChange: 2.1,
-                    costs: {
-                        totalTransportCost: 125000,
-                        totalCustomsDuty: 35000,
-                        totalCost: 160000,
-                        costGrowth: 12.5,
-                        avgCostPerShipment: (125000 / 15420) || 0
-                    },
-                    topCarriers: [
-                        { name: 'DHL', cost: 45000, shipments: 4850 },
-                        { name: 'FedEx', cost: 35000, shipments: 3920 },
-                        { name: 'UPS', cost: 25000, shipments: 3140 },
-                        { name: 'TNT', cost: 15000, shipments: 2180 },
-                        { name: 'GLS', cost: 5000, shipments: 1330 }
-                    ],
-                    topSuppliers: [
-                        { name: 'Supplier A', quantity: 15000, cost: 25000, shipments: 120 },
-                        { name: 'Supplier B', quantity: 12000, cost: 20000, shipments: 95 },
-                        { name: 'Supplier C', quantity: 8000, cost: 15000, shipments: 78 },
-                        { name: 'Supplier D', quantity: 5000, cost: 10000, shipments: 45 },
-                        { name: 'Supplier E', quantity: 3000, cost: 5000, shipments: 30 }
-                    ],
-                    alerts: {
-                        highCostShipments: 23,
-                        delayedShipments: 45,
-                        missingTracking: 12
-                    },
-                    dailyTrend: Array.from({length: 30}, (_, i) => ({
-                        date: new Date(Date.now() - (29-i) * 24*60*60*1000).toISOString(),
-                        cost: Math.floor(Math.random() * 5000) + 3000
-                    })),
-                    shipments: [
-                        { n_oda: 'ODA-2024-00123', fornitore: 'Supplier Milano', tipo_spedizione: 'MARE', costo_trasporto: 2500, spedizioniere: 'DHL' },
-                        { n_oda: 'ODA-2024-00124', fornitore: 'Fornitore Roma', tipo_spedizione: 'AEREO', costo_trasporto: 4200, spedizioniere: 'FedEx' },
-                        { n_oda: 'ODA-2024-00125', fornitore: 'Import Napoli', tipo_spedizione: 'STRADA', costo_trasporto: 1800, spedizioniere: 'UPS' },
-                        { n_oda: 'ODA-2024-00126', fornitore: 'Export Genova', tipo_spedizione: 'MARE', costo_trasporto: 3200, spedizioniere: 'TNT' },
-                        { n_oda: 'ODA-2024-00127', fornitore: 'Logistics Torino', tipo_spedizione: 'AEREO', costo_trasporto: 5100, spedizioniere: 'GLS' },
-                        { n_oda: 'ODA-2024-00128', fornitore: 'Supplier Milano', tipo_spedizione: 'STRADA', costo_trasporto: 900, spedizioniere: 'DHL' }
-                    ]
+                    totalShipments: 15420, shipmentsGrowth: 8.3, avgDeliveryTime: 3.2, deliveryTimeChange: -0.3, onTimeDelivery: 94.5, onTimeChange: 2.1,
+                    costs: { totalTransportCost: 125000, totalCustomsDuty: 35000, totalCost: 160000, costGrowth: 12.5, avgCostPerShipment: (125000 / 15420) || 0 },
+                    topCarriers: [ { name: 'DHL', cost: 45000, shipments: 4850 }, { name: 'FedEx', cost: 35000, shipments: 3920 }, { name: 'UPS', cost: 25000, shipments: 3140 }, { name: 'TNT', cost: 15000, shipments: 2180 }, { name: 'GLS', cost: 5000, shipments: 1330 } ],
+                    topSuppliers: [ { name: 'Supplier A', quantity: 15000, cost: 25000, shipments: 120 }, { name: 'Supplier B', quantity: 12000, cost: 20000, shipments: 95 }, { name: 'Supplier C', quantity: 8000, cost: 15000, shipments: 78 }, { name: 'Supplier D', quantity: 5000, cost: 10000, shipments: 45 }, { name: 'Supplier E', quantity: 3000, cost: 5000, shipments: 30 } ],
+                    alerts: { highCostShipments: 23, delayedShipments: 45, missingTracking: 12 },
+                    dailyTrend: Array.from({length: 30}, (_, i) => ({ date: new Date(Date.now() - (29-i) * 24*60*60*1000).toISOString(), cost: Math.floor(Math.random() * 5000) + 3000 })),
+                    shipments: [ { n_oda: 'ODA-2024-00123', fornitore: 'Supplier Milano', tipo_spedizione: 'MARE', costo_trasporto: 2500, spedizioniere: 'DHL' }, { n_oda: 'ODA-2024-00124', fornitore: 'Fornitore Roma', tipo_spedizione: 'AEREO', costo_trasporto: 4200, spedizioniere: 'FedEx' }, { n_oda: 'ODA-2024-00125', fornitore: 'Import Napoli', tipo_spedizione: 'STRADA', costo_trasporto: 1800, spedizioniere: 'UPS' }, { n_oda: 'ODA-2024-00126', fornitore: 'Export Genova', tipo_spedizione: 'MARE', costo_trasporto: 3200, spedizioniere: 'TNT' }, { n_oda: 'ODA-2024-00127', fornitore: 'Logistics Torino', tipo_spedizione: 'AEREO', costo_trasporto: 5100, spedizioniere: 'GLS' }, { n_oda: 'ODA-2024-00128', fornitore: 'Supplier Milano', tipo_spedizione: 'STRADA', costo_trasporto: 900, spedizioniere: 'DHL' } ]
                 };
             },
 
-            // Render dashboard
             renderDashboard() {
                 const container = document.getElementById('widgetsContainer');
-                if (!container) return;
+                if(!container) return;
                 container.innerHTML = '';
                 
                 Object.values(this.chartInstances).forEach(chart => {
@@ -1923,11 +1603,9 @@ costsByType: {
                     widget.dataset.widgetId = widgetId;
                     
                     widget.innerHTML = `
-                        <div class="widget-grip">
-                            <i class="fas fa-grip-lines" style="color: rgba(255, 255, 255, 0.3);"></i>
-                        </div>
                         <div class="widget-header">
-                            <h3 class="widget-title">
+                             <i class="fas fa-grip-lines card-drag-handle"></i>
+                            <h3 class="widget-title" style="flex-grow: 1;"> 
                                 <i class="fas ${widgetConfig.icon}" style="margin-right: 8px;"></i>
                                 ${widgetConfig.title}
                             </h3>
@@ -1951,7 +1629,6 @@ costsByType: {
                 this.setupSortable();
             },
 
-            // Setup drag & drop
             setupSortable() {
                 if (this.sortable) this.sortable.destroy();
                 
@@ -1960,7 +1637,7 @@ costsByType: {
                 this.sortable = new Sortable(container, {
                     animation: 150,
                     ghostClass: 'dragging',
-                    handle: '.widget-grip',
+                    handle: '.card-drag-handle', 
                     draggable: '.widget',
                     forceFallback: true,
                     onEnd: (evt) => {
@@ -1971,7 +1648,6 @@ costsByType: {
                 });
             },
 
-            // Refresh widget
             refreshWidget(widgetId) {
                 const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
                 if (!widget) return;
@@ -1992,7 +1668,6 @@ costsByType: {
                 }, 300);
             },
 
-            // Remove widget
             removeWidget(widgetId) {
                 const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
                 if (!widget) return;
@@ -2012,7 +1687,6 @@ costsByType: {
                 }, 300);
             },
 
-            // Open customizer
             openCustomizer() {
                 const modal = document.getElementById('customizeModal');
                 const selector = document.getElementById('widgetSelector');
@@ -2041,13 +1715,11 @@ costsByType: {
                 modal.classList.add('active');
             },
 
-            // Close customizer
             closeCustomizer() {
                 const modal = document.getElementById('customizeModal');
                 if (modal) modal.classList.remove('active');
             },
 
-            // Save configuration (FIXED)
             saveConfiguration() {
                 const checkboxes = document.querySelectorAll('#widgetSelector input[type="checkbox"]:checked');
                 const newActiveWidgets = Array.from(checkboxes).map(cb => cb.value);
@@ -2064,21 +1736,11 @@ costsByType: {
                 window.showNotification('Configurazione salvata!', 'success');
             },
 
-            // Reset to default
             resetToDefault() {
                 this.activeWidgets = [
-                    'totalCost',
-                    'totalShipments',
-                    'avgDeliveryTime', 
-                    'onTimeDelivery',
-                    'budgetStatus',
-                    'costAlerts',
-                    'costTrend',
-                    'carrierDistribution',
-                    'costsByType',
-                    'topSuppliers',
-                    'topCostShipments',
-                    'alerts'
+                    'totalCost', 'totalShipments', 'avgDeliveryTime', 'onTimeDelivery',
+                    'budgetStatus', 'costAlerts', 'costTrend', 'carrierDistribution',
+                    'costsByType', 'topSuppliers', 'topCostShipments', 'alerts'
                 ];
                 
                 const checkboxes = document.querySelectorAll('#widgetSelector input[type="checkbox"]');
@@ -2089,7 +1751,6 @@ costsByType: {
                 window.showNotification('Ripristinata configurazione default', 'info');
             },
 
-            // Setup event listeners per il dashboard manager (es. periodSelect)
             setupEventListeners() {
                 const periodSelect = document.getElementById('periodSelect');
                 if (periodSelect) {
@@ -2100,51 +1761,29 @@ costsByType: {
             }
         };
 
-        // Global variables (manteniamo compatibilità)
         let currentFileData = null;
         let currentFileName = '';
 
         // Chart theme
         const chartTheme = {
             theme: { mode: 'dark' },
-            chart: {
-                background: 'transparent',
-                toolbar: { show: false },
-                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
-            },
-            grid: {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                strokeDashArray: 0
-            },
+            chart: { background: 'transparent', toolbar: { show: false }, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' },
+            grid: { borderColor: 'rgba(255, 255, 255, 0.1)', strokeDashArray: 0 },
             colors: ['#007AFF', '#5856D6', '#34C759', '#FF9500', '#FF3B30', '#AF52DE'],
             dataLabels: { enabled: false },
             stroke: { curve: 'smooth', width: 3 },
-            xaxis: {
-                labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } },
-                axisBorder: { show: false },
-                axisTicks: { show: false }
-            },
-            yaxis: {
-                labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } }
-            },
-            legend: {
-                labels: { colors: 'rgba(255, 255, 255, 0.7)' }
-            },
-            tooltip: {
-                theme: 'dark',
-                style: { fontSize: '12px' }
-            }
+            xaxis: { labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } } },
+            legend: { labels: { colors: 'rgba(255, 255, 255, 0.7)' } },
+            tooltip: { theme: 'dark', style: { fontSize: '12px' } }
         };
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            setupGlobalEventListeners(); 
-            dashboardManager.init(); 
+            setupGlobalEventListeners();
+            dashboardManager.init();
         });
 
-        // Event Listeners GLOBALI (per elementi come menu, dropdown utente, logout)
-        function setupGlobalEventListeners() { 
-            // Menu toggle
+        function setupGlobalEventListeners() {
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
@@ -2165,34 +1804,37 @@ costsByType: {
                 });
             }
 
-            // User dropdown
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
 
             if (userMenuBtn && userDropdown) {
                 userMenuBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    const notificationDropdown = document.getElementById('notificationDropdown');
                     if (notificationDropdown) notificationDropdown.style.display = 'none';
-
                     userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
                 });
-                
-                userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation(); 
-                });
-                
-                document.addEventListener('click', function(e) {
-                    if (userDropdown && userDropdown.style.display !== 'none' && 
-                        userMenuBtn && !userMenuBtn.contains(e.target) && 
-                        !userDropdown.contains(e.target)) {
-                        userDropdown.style.display = 'none';
-                    }
+                userDropdown.addEventListener('click', function(e) { e.stopPropagation(); });
+            }
+             if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (userDropdown) userDropdown.style.display = 'none';
+                    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
                 });
             }
+            document.addEventListener('click', function(e) {
+                if (userDropdown && userDropdown.style.display !== 'none' && userMenuBtn && !userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.style.display = 'none';
+                }
+                if (notificationDropdown && notificationDropdown.style.display !== 'none' && notificationBtn && !notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
 
-            // Logout
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', function(e) {
@@ -2209,7 +1851,6 @@ costsByType: {
             }
         }
 
-        // File upload handler
         function handleFileUpload(file) {
             currentFileName = file.name;
             const fileSize = (file.size / 1024).toFixed(2) + ' KB';
@@ -2240,160 +1881,87 @@ costsByType: {
             }
         }
 
-        // Process CSV for preview
         function processCSVForPreview(csvData) {
-            const results = Papa.parse(csvData, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true
-            });
-            
+            const results = Papa.parse(csvData, { header: true, dynamicTyping: true, skipEmptyLines: true });
             currentFileData = results.data;
-            
             const fileRowsEl = document.getElementById('fileRows');
             const fileColumnsEl = document.getElementById('fileColumns');
             if(fileRowsEl) fileRowsEl.textContent = formatNumber(results.data.length) + ' righe';
             if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(results.data[0] || {}).length + ' colonne';
-            
             showImportModal(results.data.slice(0, 5), Object.keys(results.data[0] || {}));
         }
 
-        // Process Excel for preview
         function processExcelForPreview(excelData) {
             const workbook = XLSX.read(excelData, { type: 'array' });
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-            
             currentFileData = jsonData;
-            
             const fileRowsEl = document.getElementById('fileRows');
             const fileColumnsEl = document.getElementById('fileColumns');
             if(fileRowsEl) fileRowsEl.textContent = formatNumber(jsonData.length) + ' righe';
             if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
-            
             showImportModal(jsonData.slice(0, 5), Object.keys(jsonData[0] || {}));
         }
 
-        // Show import modal
         function showImportModal(previewData, columns) {
             const importModal = document.getElementById('importModal');
             const previewTable = document.getElementById('previewTable');
             if (!importModal || !previewTable) return;
-
             const thead = previewTable.querySelector('thead');
             const tbody = previewTable.querySelector('tbody');
-            
             if(!thead || !tbody) return;
-            thead.innerHTML = '';
-            tbody.innerHTML = '';
-            
+            thead.innerHTML = ''; tbody.innerHTML = '';
             const headerRow = document.createElement('tr');
-            columns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                headerRow.appendChild(th);
-            });
+            columns.forEach(col => { const th = document.createElement('th'); th.textContent = col; headerRow.appendChild(th); });
             thead.appendChild(headerRow);
-            
-            previewData.forEach(row => {
-                const tr = document.createElement('tr');
-                columns.forEach(col => {
-                    const td = document.createElement('td');
-                    td.textContent = row[col] || '';
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            });
-            
+            previewData.forEach(row => { const tr = document.createElement('tr'); columns.forEach(col => { const td = document.createElement('td'); td.textContent = row[col] || ''; tr.appendChild(td); }); tbody.appendChild(tr); });
             importModal.classList.add('active');
         }
 
-        // Close import modal
         window.closeImportModal = function() {
             const importModal = document.getElementById('importModal');
             if(importModal) importModal.classList.remove('active');
-            currentFileData = null;
-            currentFileName = '';
+            currentFileData = null; currentFileName = '';
         }
 
-        // Confirm import
         window.confirmImport = async function() {
-            if (!currentFileData || currentFileData.length === 0) {
-                window.showNotification('Nessun dato da importare', 'error');
-                return;
-            }
-            
+            if (!currentFileData || currentFileData.length === 0) { window.showNotification('Nessun dato da importare', 'error'); return; }
             const importStatusEl = document.getElementById('importStatus');
             const confirmImportBtnEl = document.getElementById('confirmImportBtn');
-
             if(importStatusEl) importStatusEl.style.display = 'block';
             if(confirmImportBtnEl) confirmImportBtnEl.disabled = true;
-            
             try {
                 const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
-                
                 const formData = new FormData();
                 const csvContent = Papa.unparse(currentFileData);
                 const blob = new Blob([csvContent], { type: 'text/csv' });
                 formData.append('file', blob, currentFileName);
-                
                 const skipDuplicatesEl = document.getElementById('skipDuplicates');
                 const validateDataEl = document.getElementById('validateData');
                 const updateExistingEl = document.getElementById('updateExisting');
-
                 formData.append('skipDuplicates', skipDuplicatesEl ? skipDuplicatesEl.checked : true);
                 formData.append('validateData', validateDataEl ? validateDataEl.checked : true);
                 formData.append('updateExisting', updateExistingEl ? updateExistingEl.checked : false);
-                
-                const response = await fetch('/.netlify/functions/import-file', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-                
+                const response = await fetch('/.netlify/functions/import-file', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
                 const result = await response.json();
-                
                 if (response.ok) {
                     window.showNotification(`Import completato: ${formatNumber(result.imported)} record importati`, 'success');
-                    setTimeout(() => {
-                        closeImportModal();
-                        window.refreshDashboard();
-                    }, 1500);
-                } else {
-                    throw new Error(result.error || 'Errore durante l\'import');
-                }
-                
-            } catch (error) {
-                console.error('Import error:', error);
-                window.showNotification(error.message || 'Errore durante l\'import', 'error');
-            } finally {
-                if(importStatusEl) importStatusEl.style.display = 'none';
-                if(confirmImportBtnEl) confirmImportBtnEl.disabled = false;
-            }
+                    setTimeout(() => { closeImportModal(); window.refreshDashboard(); }, 1500);
+                } else { throw new Error(result.error || 'Errore durante l\'import'); }
+            } catch (error) { console.error('Import error:', error); window.showNotification(error.message || 'Errore durante l\'import', 'error');
+            } finally { if(importStatusEl) importStatusEl.style.display = 'none'; if(confirmImportBtnEl) confirmImportBtnEl.disabled = false; }
         }
 
-        // Refresh dashboard
         window.refreshDashboard = function() {
             dashboardManager.loadDashboardData();
             window.showNotification('Dashboard aggiornata', 'success');
         }
 
-        // Export to PDF
         window.exportToPDF = async function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(20);
-            doc.text('Supply Chain Hub - Dashboard Report', 20, 20);
-            
-            doc.setFontSize(10);
-            doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
-            
-            doc.setFontSize(14);
-            doc.text('KPI Principali', 20, 45);
-            
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFontSize(20); doc.text('Supply Chain Hub - Dashboard Report', 20, 20);
+            doc.setFontSize(10); doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
+            doc.setFontSize(14); doc.text('KPI Principali', 20, 45);
             const data = dashboardManager.dashboardData;
             if (data) {
                 doc.setFontSize(10);
@@ -2402,60 +1970,26 @@ costsByType: {
                 doc.text(`Tempo Medio Consegna: ${formatNumber(data.avgDeliveryTime || 0, 1)} giorni`, 20, 75);
                 doc.text(`Tasso Puntualità: ${formatNumber(data.onTimeDelivery || 0, 1)}%`, 20, 85);
             }
-            
-            doc.save('dashboard-report.pdf');
-            window.showNotification('Report PDF generato', 'success');
+            doc.save('dashboard-report.pdf'); window.showNotification('Report PDF generato', 'success');
         }
 
-        // Export to Excel
         window.exportToExcel = async function() {
             const data = dashboardManager.dashboardData;
-            if (!data) {
-                window.showNotification('Nessun dato da esportare', 'error');
-                return;
-            }
-            
+            if (!data) { window.showNotification('Nessun dato da esportare', 'error'); return; }
             const wb = XLSX.utils.book_new();
-            
-            const kpiData = [
-                ['KPI', 'Valore', 'Variazione %'],
-                ['Spedizioni Totali', data.totalShipments || 0, data.shipmentsGrowth || 0],
-                ['Costo Totale Trasporto', data.costs?.totalTransportCost || 0, data.costs?.costGrowth || 0],
-                ['Tempo Medio Consegna (giorni)', data.avgDeliveryTime || 0, data.deliveryTimeChange || 0],
-                ['Tasso Puntualità (%)', data.onTimeDelivery || 0, data.onTimeChange || 0]
-            ];
-            const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
-            XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
-            
-            if (data.topCarriers) {
-                const carriersData = [['Corriere', 'Costo', 'Spedizioni']];
-                data.topCarriers.forEach(c => {
-                    carriersData.push([c.name, c.cost, c.shipments]);
-                });
-                const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData);
-                XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri');
-            }
-            
-            if (data.topSuppliers) {
-                const suppliersData = [['Fornitore', 'Quantità', 'Costo', 'Spedizioni']];
-                data.topSuppliers.forEach(s => {
-                    suppliersData.push([s.name, s.quantity, s.cost, s.shipments]);
-                });
-                const suppliersSheet = XLSX.utils.aoa_to_sheet(suppliersData);
-                XLSX.utils.book_append_sheet(wb, suppliersSheet, 'Fornitori');
-            }
-            
-            XLSX.writeFile(wb, `dashboard-export-${new Date().toISOString().split('T')[0]}.xlsx`);
-            window.showNotification('Export Excel completato', 'success');
+            const kpiData = [ ['KPI', 'Valore', 'Variazione %'], ['Spedizioni Totali', data.totalShipments || 0, data.shipmentsGrowth || 0], ['Costo Totale Trasporto', data.costs?.totalTransportCost || 0, data.costs?.costGrowth || 0], ['Tempo Medio Consegna (giorni)', data.avgDeliveryTime || 0, data.deliveryTimeChange || 0], ['Tasso Puntualità (%)', data.onTimeDelivery || 0, data.onTimeChange || 0] ];
+            const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData); XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
+            if (data.topCarriers) { const carriersData = [['Corriere', 'Costo', 'Spedizioni']]; data.topCarriers.forEach(c => { carriersData.push([c.name, c.cost, c.shipments]); }); const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData); XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri'); }
+            if (data.topSuppliers) { const suppliersData = [['Fornitore', 'Quantità', 'Costo', 'Spedizioni']]; data.topSuppliers.forEach(s => { suppliersData.push([s.name, s.quantity, s.cost, s.shipments]); }); const suppliersSheet = XLSX.utils.aoa_to_sheet(suppliersData); XLSX.utils.book_append_sheet(wb, suppliersSheet, 'Fornitori'); }
+            XLSX.writeFile(wb, `dashboard-export-${new Date().toISOString().split('T')[0]}.xlsx`); window.showNotification('Export Excel completato', 'success');
         }
 
-        // Helper function: Show notification
         window.showNotification = function(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
             notification.style.cssText = `
                 position: fixed;
-                top: 100px;
+                top: 100px; /* Abbassato per non sovrapporsi all'header */
                 right: 20px;
                 padding: 16px 24px;
                 background: var(--sol-glass-heavy);
@@ -2488,6 +2022,7 @@ costsByType: {
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
+        function debounce(fn,delay){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),delay);};}
 
     </script>
 </body>
