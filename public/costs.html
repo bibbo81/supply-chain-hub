@@ -106,19 +106,19 @@
 
         .card-drag-handle { 
             position: absolute;
-            top: -10px; /* Solleva la barra leggermente sopra l'inizio del padding dell'header */
+            top: -14px; /* Ancora più in alto, quasi a filo con il bordo superiore della card */
             left: 50%;
             transform: translateX(-50%);
             color: var(--sol-text-tertiary);
             background-color: rgba(255,255,255,0.08); 
-            padding: 4px var(--sol-space-xl); /* Allargata: var(--sol-space-xl) = 2rem = 32px */
-            border-radius: var(--sol-radius-md); 
+            padding: 3px var(--sol-space-lg); /* Padding orizzontale ridotto (era var(--sol-space-xl)) */
+            border-radius: var(--sol-radius-sm); /* Raggio più piccolo per una barra più sottile */
             line-height: 1;
-            font-size: 1rem; /* Icona leggermente più grande */
+            font-size: 0.9rem; /* Icona leggermente più piccola per adattarsi */
             cursor: grab; 
             opacity: 0.7; 
             transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
-            z-index: 10; /* Assicura che sia sopra */
+            z-index: 10; 
         }
         .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.15); }
         
