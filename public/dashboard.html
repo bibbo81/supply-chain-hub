@@ -125,13 +125,12 @@
         }
         
         .widget {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--sol-glass-light);
             backdrop-filter: var(--sol-blur-lg);
             -webkit-backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-xl);
             padding: var(--sol-space-xl);
-            box-shadow: var(--sol-shadow-md);
             transition: all 0.3s ease;
             position: relative;
             animation: sol-fade-in 0.6s ease-out backwards;
@@ -336,13 +335,12 @@
         }
         
         .sol-chart-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--sol-glass-light);
             backdrop-filter: var(--sol-blur-lg);
             -webkit-backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-xl);
             padding: var(--sol-space-lg);
-            box-shadow: var(--sol-shadow-sm);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -1171,271 +1169,45 @@
                     </div>`
                 },
                 budgetStatus: {
-                    id: 'budgetStatus', 
-                    type: 'kpi', 
-                    title: 'Stato Budget Mensile', 
-                    description: 'Budget utilizzato vs disponibile', 
-                    icon: 'fa-chart-pie',
-                    render: (data) => {
-                        const monthlyBudget = 150000; 
-                        const spent = data.costs?.totalTransportCost || 0; 
-                        const percentage = Math.round((spent / monthlyBudget) * 100); 
-                        const remaining = monthlyBudget - spent;
-                        let barClass = 'budget-fill'; 
-                        let statusText = 'Sotto controllo'; 
-                        let statusColor = '#34C759';
-                        if (percentage > 90) { 
-                            barClass += ' danger'; 
-                            statusText = 'Budget quasi esaurito!'; 
-                            statusColor = '#FF3B30'; 
-                        } 
-                        else if (percentage > 75) { 
-                            barClass += ' warning'; 
-                            statusText = 'Attenzione al budget'; 
-                            statusColor = '#FF9500'; 
-                        }
-                        return `
-                            <div class="sol-kpi-card sol-animate-in">
-                                <div class="sol-kpi-header">
-                                    <h3 class="sol-kpi-title">Budget Mensile</h3>
-                                    <div class="sol-kpi-icon-wrapper">
-                                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-secondary);"><i class="fas fa-chart-pie"></i></div>
-                                    </div>
-                                </div>
-                                <div class="sol-kpi-value">${percentage}%</div>
-                                <div class="budget-progress"><div class="${barClass}" style="width: ${percentage}%;"></div></div>
-                                <div class="sol-kpi-change positive" style="justify-content: space-between; width: 100%;">
-                                     <span>${formatCurrency(remaining)} rim.</span> <span style="color: ${statusColor}; font-weight: normal;">${statusText}</span>
-                                </div>
-                            </div>`;
-                    }
-                },
-                costAlerts: {
-                    id: 'costAlerts', 
-                    type: 'kpi', 
-                    title: 'Alert Costi', 
-                    description: 'Spedizioni con costi anomali', 
-                    icon: 'fa-exclamation-triangle',
-                    render: (data) => {
-                        const highCostCount = data.alerts?.highCostShipments || 0;
-                        return `
-                            <div class="sol-kpi-card sol-animate-in">
-                                <div class="sol-kpi-header">
-                                    <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
-                                     <div class="sol-kpi-icon-wrapper">
-                                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-error);"><i class="fas fa-exclamation-triangle"></i></div>
-                                    </div>
-                                </div>
-                                <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
-                                <div class="sol-kpi-change ${highCostCount > 0 ? 'negative' : 'positive'}">
-                                     <i class="fas fa-arrow-${highCostCount > 0 ? 'up' : 'down'}"></i>
-                                    <span>${highCostCount > 0 ? 'Attenzione Richiesta' : 'Nessun Alert'}</span>                                   
-                                </div>
-                            </div>`;
-                    }
-                },
-                costsByType: {
-                    id: 'costsByType', 
-                    type: 'chart', 
-                    title: 'Costi per Tipo Spedizione', 
-                    description: 'Distribuzione costi MARE/AEREO/STRADA', 
-                    icon: 'fa-ship',
-                    render: (data) => {
-                        const widgetId = 'costsByType';
-                        setTimeout(() => {
-                            const chartElement = document.querySelector(`#chart-${widgetId}`);
-                            if (!chartElement || !data.shipments) return;
-                            
-                            const typeData = {}; 
-                            data.shipments.forEach(s => { 
-                                const type = s.tipo_spedizione || 'ALTRO'; 
-                                if (!typeData[type]) typeData[type] = 0; 
-                                typeData[type] += s.costo_trasporto || 0; 
-                            });
-                            
-                            const colors = { 'MARE': '#007AFF', 'AEREO': '#FF9500', 'STRADA': '#34C759' };
-                            
-                            const options = {
-                                ...chartTheme,
-                                series: Object.values(typeData),
-                                labels: Object.keys(typeData),
-                                colors: Object.keys(typeData).map(t => colors[t] || '#5856D6'),
-                                chart: { ...chartTheme.chart, type: 'donut', height: 250 },
-                                plotOptions: {
-                                    pie: {
-                                        donut: {
-                                            size: '65%',
-                                            labels: {
-                                                show: true,
-                                                total: {
-                                                    show: true,
-                                                    label: 'Totale',
-                                                    formatter: () => formatCurrency(Object.values(typeData).reduce((a, b) => a + b, 0))
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-                            
-                            const chart = new ApexCharts(chartElement, options); 
-                            chart.render(); 
-                            dashboardManager.chartInstances[widgetId] = chart;
-                        }, 100);
-                        
-                        return `
-                            <div class="sol-chart-card">
-                                <div class="sol-chart-header">
-                                    <h3 class="sol-chart-title">Costi per Tipo Spedizione</h3>
-                                    <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
-                                </div>
-                                <div class="chart-container" id="chart-${widgetId}"></div>
-                                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">Analisi dettagliata <i class="fas fa-arrow-right"></i></a>
-                            </div>`;
-                    }
-                },
-                costTrend: {
-                    id: 'costTrend', 
-                    type: 'chart', 
-                    title: 'Trend Costi Trasporto', 
-                    description: 'Andamento costi nel tempo', 
-                    icon: 'fa-chart-line',
-                    render: (data) => {
-                        const widgetId = 'costTrend';
-                        setTimeout(() => {
-                            const chartElement = document.querySelector(`#chart-${widgetId}`);
-                            if (!chartElement || !data.dailyTrend) return;
-                            
-                            const options = {
-                                ...chartTheme,
-                                series: [{
-                                    name: 'Costo Giornaliero',
-                                    data: data.dailyTrend.map(d => d.cost)
-                                }],
-                                chart: { ...chartTheme.chart, type: 'area', height: 250 },
-                                xaxis: {
-                                    ...chartTheme.xaxis,
-                                    categories: data.dailyTrend.map(d => new Date(d.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
-                                },
-                                yaxis: {
-                                    ...chartTheme.yaxis,
-                                    labels: {
-                                        ...chartTheme.yaxis.labels,
-                                        formatter: (val) => formatCurrency(val)
-                                    }
-                                },
-                                fill: {
-                                    type: 'gradient',
-                                    gradient: {
-                                        shadeIntensity: 1,
-                                        opacityFrom: 0.7,
-                                        opacityTo: 0.2
-                                    }
-                                }
-                            };
-                            
-                            const chart = new ApexCharts(chartElement, options); 
-                            chart.render(); 
-                            dashboardManager.chartInstances[widgetId] = chart;
-                        }, 100);
-                        
-                        return `
-                            <div class="sol-chart-card">
-                                <div class="sol-chart-header">
-                                    <h3 class="sol-chart-title">Trend Costi Trasporto</h3>
-                                    <p class="sol-chart-subtitle">Andamento giornaliero</p>
-                                </div>
-                                <div class="chart-container" id="chart-${widgetId}"></div>
-                            </div>`;
-                    }
-                },
-                carrierDistribution: {
-                    id: 'carrierDistribution', 
-                    type: 'chart', 
-                    title: 'Distribuzione Spedizionieri', 
-                    description: 'Costi per spedizioniere', 
-                    icon: 'fa-truck',
-                    render: (data) => {
-                        const widgetId = 'carrierDistribution';
-                        setTimeout(() => {
-                            const chartElement = document.querySelector(`#chart-${widgetId}`);
-                            if (!chartElement || !data.topCarriers) return;
-                            
-                            const options = {
-                                ...chartTheme,
-                                series: [{
-                                    name: 'Costo',
-                                    data: data.topCarriers.map(c => c.cost)
-                                }],
-                                chart: { ...chartTheme.chart, type: 'bar', height: 250 },
-                                plotOptions: {
-                                    bar: {
-                                        horizontal: true,
-                                        borderRadius: 4,
-                                        dataLabels: { position: 'top' }
-                                    }
-                                },
-                                xaxis: {
-                                    ...chartTheme.xaxis,
-                                    categories: data.topCarriers.map(c => c.name),
-                                    labels: {
-                                        ...chartTheme.xaxis.labels,
-                                        formatter: (val) => formatCurrency(val)
-                                    }
-                                }
-                            };
-                            
-                            const chart = new ApexCharts(chartElement, options); 
-                            chart.render(); 
-                            dashboardManager.chartInstances[widgetId] = chart;
-                        }, 100);
-                        
-                        return `
-                            <div class="sol-chart-card">
-                                <div class="sol-chart-header">
-                                    <h3 class="sol-chart-title">Distribuzione Spedizionieri</h3>
-                                    <p class="sol-chart-subtitle">Top 5 per costo</p>
-                                </div>
-                                <div class="chart-container" id="chart-${widgetId}"></div>
-                            </div>`;
-                    }
-                },
-                topSuppliers: {
-                    id: 'topSuppliers',
-                    type: 'table',
-                    title: 'Top Fornitori',
-                    description: 'Fornitori principali per volume',
-                    icon: 'fa-industry',
-                    render: (data) => {
-                        if (!data.topSuppliers || data.topSuppliers.length === 0) {
-                            return '<p style="text-align: center; color: var(--sol-text-secondary);">Nessun dato disponibile</p>';
-                        }
-                        return `
-                            <div class="sol-table-container">
-                                <table class="sol-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Fornitore</th>
-                                            <th>Quantità</th>
-                                            <th>Costo</th>
-                                            <th>Spedizioni</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${data.topSuppliers.map(s => `
-                                            <tr>
-                                                <td>${s.name}</td>
-                                                <td>${formatNumber(s.quantity)}</td>
-                                                <td>${formatCurrency(s.cost)}</td>
-                                                <td>${formatNumber(s.shipments)}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                    }
-                },
+    id: 'budgetStatus', 
+    type: 'kpi', 
+    title: 'Stato Budget Mensile', 
+    description: 'Budget utilizzato vs disponibile', 
+    icon: 'fa-chart-pie',
+    render: (data) => {
+        const monthlyBudget = 150000; 
+        const spent = data.costs?.totalTransportCost || 0; 
+        const percentage = Math.round((spent / monthlyBudget) * 100); 
+        const remaining = monthlyBudget - spent;
+        let barClass = 'budget-fill'; 
+        let statusText = 'Sotto controllo'; 
+        let statusColor = '#34C759';
+        if (percentage > 90) { 
+            barClass += ' danger'; 
+            statusText = 'Budget quasi esaurito!'; 
+            statusColor = '#FF3B30'; 
+        } 
+        else if (percentage > 75) { 
+            barClass += ' warning'; 
+            statusText = 'Attenzione al budget'; 
+            statusColor = '#FF9500'; 
+        }
+        return `
+            <div class="sol-kpi-card sol-animate-in">
+                <div class="sol-kpi-header">
+                    <h3 class="sol-kpi-title">Budget Mensile</h3>
+                    <div class="sol-kpi-icon-wrapper">
+                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-secondary);"><i class="fas fa-chart-pie"></i></div>
+                    </div>
+                </div>
+                <div class="sol-kpi-value">${percentage}%</div>
+                <div class="budget-progress"><div class="${barClass}" style="width: ${percentage}%;"></div></div>
+                <div class="sol-kpi-change positive" style="justify-content: space-between; width: 100%;">
+                     <span>${formatCurrency(remaining)} rim.</span> <span style="color: ${statusColor}; font-weight: normal;">${statusText}</span>
+                </div>
+            </div>`;
+    }
+},
                 topCostShipments: {
                     id: 'topCostShipments',
                     type: 'table',
@@ -1509,7 +1281,232 @@
                     }
                 }
             },
-
+costAlerts: {
+    id: 'costAlerts', 
+    type: 'kpi', 
+    title: 'Alert Costi', 
+    description: 'Spedizioni con costi anomali', 
+    icon: 'fa-exclamation-triangle',
+    render: (data) => {
+        const highCostCount = data.alerts?.highCostShipments || 0;
+        return `
+            <div class="sol-kpi-card sol-animate-in">
+                <div class="sol-kpi-header">
+                    <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
+                     <div class="sol-kpi-icon-wrapper">
+                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-error);"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                </div>
+                <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
+                <div class="sol-kpi-change ${highCostCount > 0 ? 'negative' : 'positive'}">
+                     <i class="fas fa-arrow-${highCostCount > 0 ? 'up' : 'down'}"></i>
+                    <span>${highCostCount > 0 ? 'Attenzione Richiesta' : 'Nessun Alert'}</span>                                   
+                </div>
+            </div>`;
+    }
+},
+costsByType: {
+    id: 'costsByType', 
+    type: 'chart', 
+    title: 'Costi per Tipo Spedizione', 
+    description: 'Distribuzione costi MARE/AEREO/STRADA', 
+    icon: 'fa-ship',
+    render: (data) => {
+        const widgetId = 'costsByType';
+        setTimeout(() => {
+            const chartElement = document.querySelector(`#chart-${widgetId}`);
+            if (!chartElement || !data.shipments) return;
+            
+            const typeData = {}; 
+            data.shipments.forEach(s => { 
+                const type = s.tipo_spedizione || 'ALTRO'; 
+                if (!typeData[type]) typeData[type] = 0; 
+                typeData[type] += s.costo_trasporto || 0; 
+            });
+            
+            const colors = { 'MARE': '#007AFF', 'AEREO': '#FF9500', 'STRADA': '#34C759' };
+            
+            const options = {
+                ...chartTheme,
+                series: Object.values(typeData),
+                labels: Object.keys(typeData),
+                colors: Object.keys(typeData).map(t => colors[t] || '#5856D6'),
+                chart: { ...chartTheme.chart, type: 'donut', height: 250 },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Totale',
+                                    formatter: () => formatCurrency(Object.values(typeData).reduce((a, b) => a + b, 0))
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const chart = new ApexCharts(chartElement, options); 
+            chart.render(); 
+            dashboardManager.chartInstances[widgetId] = chart;
+        }, 100);
+        
+        return `
+            <div class="sol-chart-card">
+                <div class="sol-chart-header">
+                    <h3 class="sol-chart-title">Costi per Tipo Spedizione</h3>
+                    <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
+                </div>
+                <div class="chart-container" id="chart-${widgetId}"></div>
+                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">Analisi dettagliata <i class="fas fa-arrow-right"></i></a>
+            </div>`;
+    }
+},
+costTrend: {
+    id: 'costTrend', 
+    type: 'chart', 
+    title: 'Trend Costi Trasporto', 
+    description: 'Andamento costi nel tempo', 
+    icon: 'fa-chart-line',
+    render: (data) => {
+        const widgetId = 'costTrend';
+        setTimeout(() => {
+            const chartElement = document.querySelector(`#chart-${widgetId}`);
+            if (!chartElement || !data.dailyTrend) return;
+            
+            const options = {
+                ...chartTheme,
+                series: [{
+                    name: 'Costo Giornaliero',
+                    data: data.dailyTrend.map(d => d.cost)
+                }],
+                chart: { ...chartTheme.chart, type: 'area', height: 250 },
+                xaxis: {
+                    ...chartTheme.xaxis,
+                    categories: data.dailyTrend.map(d => new Date(d.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
+                },
+                yaxis: {
+                    ...chartTheme.yaxis,
+                    labels: {
+                        ...chartTheme.yaxis.labels,
+                        formatter: (val) => formatCurrency(val)
+                    }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.2
+                    }
+                }
+            };
+            
+            const chart = new ApexCharts(chartElement, options); 
+            chart.render(); 
+            dashboardManager.chartInstances[widgetId] = chart;
+        }, 100);
+        
+        return `
+            <div class="sol-chart-card">
+                <div class="sol-chart-header">
+                    <h3 class="sol-chart-title">Trend Costi Trasporto</h3>
+                    <p class="sol-chart-subtitle">Andamento giornaliero</p>
+                </div>
+                <div class="chart-container" id="chart-${widgetId}"></div>
+            </div>`;
+    }
+},
+carrierDistribution: {
+    id: 'carrierDistribution', 
+    type: 'chart', 
+    title: 'Distribuzione Spedizionieri', 
+    description: 'Costi per spedizioniere', 
+    icon: 'fa-truck',
+    render: (data) => {
+        const widgetId = 'carrierDistribution';
+        setTimeout(() => {
+            const chartElement = document.querySelector(`#chart-${widgetId}`);
+            if (!chartElement || !data.topCarriers) return;
+            
+            const options = {
+                ...chartTheme,
+                series: [{
+                    name: 'Costo',
+                    data: data.topCarriers.map(c => c.cost)
+                }],
+                chart: { ...chartTheme.chart, type: 'bar', height: 250 },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4,
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                xaxis: {
+                    ...chartTheme.xaxis,
+                    categories: data.topCarriers.map(c => c.name),
+                    labels: {
+                        ...chartTheme.xaxis.labels,
+                        formatter: (val) => formatCurrency(val)
+                    }
+                }
+            };
+            
+            const chart = new ApexCharts(chartElement, options); 
+            chart.render(); 
+            dashboardManager.chartInstances[widgetId] = chart;
+        }, 100);
+        
+        return `
+            <div class="sol-chart-card">
+                <div class="sol-chart-header">
+                    <h3 class="sol-chart-title">Distribuzione Spedizionieri</h3>
+                    <p class="sol-chart-subtitle">Top 5 per costo</p>
+                </div>
+                <div class="chart-container" id="chart-${widgetId}"></div>
+            </div>`;
+    }
+},
+topSuppliers: {
+    id: 'topSuppliers',
+    type: 'table',
+    title: 'Top Fornitori',
+    description: 'Fornitori principali per volume',
+    icon: 'fa-industry',
+    render: (data) => {
+        if (!data.topSuppliers || data.topSuppliers.length === 0) {
+            return '<p style="text-align: center; color: var(--sol-text-secondary);">Nessun dato disponibile</p>';
+        }
+        return `
+            <div class="sol-table-container">
+                <table class="sol-table">
+                    <thead>
+                        <tr>
+                            <th>Fornitore</th>
+                            <th>Quantità</th>
+                            <th>Costo</th>
+                            <th>Spedizioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.topSuppliers.map(s => `
+                            <tr>
+                                <td>${s.name}</td>
+                                <td>${formatNumber(s.quantity)}</td>
+                                <td>${formatCurrency(s.cost)}</td>
+                                <td>${formatNumber(s.shipments)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+},
             activeWidgets: [],
             dashboardData: null,
             chartInstances: {},
