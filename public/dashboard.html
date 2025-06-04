@@ -140,9 +140,17 @@
             grid-column: span 2;
         }
         
-        .widget.dragging {
+        .widget.dragging { /* Stile per l'anteprima (ghost element) */
             opacity: 0.5;
             transform: scale(0.95);
+        }
+
+        .widget.dragging,
+        .widget.sortable-chosen { /* Applica a entrambi: l'anteprima e l'elemento sorgente durante il drag */
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE/Edge */
         }
         
         .widget-header {
@@ -1784,7 +1792,7 @@ costsByType: {
             init() {
                 this.loadConfiguration();
                 this.loadDashboardData();
-                this.setupEventListeners(); // Chiamata a setupEventListeners() globale
+                this.setupEventListeners(); // Chiama il setupEventListeners interno a dashboardManager
             },
 
             // Carica configurazione
@@ -1815,9 +1823,9 @@ costsByType: {
             async loadDashboardData() {
                 try {
                     const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
-                    const period = document.getElementById('periodSelect').value;
+                    const periodSelect = document.getElementById('periodSelect');
+                    const period = periodSelect ? periodSelect.value : '30'; // Default period if element not found
                     
-                    // Se non c'è token, usa solo mock data
                     if (!token) {
                         console.log('No token found, using mock data');
                         this.dashboardData = this.getMockData();
@@ -1842,7 +1850,6 @@ costsByType: {
                     
                 } catch (error) {
                     console.error('Error loading dashboard:', error);
-                    // Use mock data on any error
                     this.dashboardData = this.getMockData();
                     this.renderDashboard();
                 }
@@ -1901,15 +1908,14 @@ costsByType: {
             // Render dashboard
             renderDashboard() {
                 const container = document.getElementById('widgetsContainer');
+                if (!container) return;
                 container.innerHTML = '';
                 
-                // Destroy existing charts
                 Object.values(this.chartInstances).forEach(chart => {
                     if (chart && chart.destroy) chart.destroy();
                 });
                 this.chartInstances = {};
                 
-                // Render active widgets
                 this.activeWidgets.forEach(widgetId => {
                     const widgetConfig = this.availableWidgets[widgetId];
                     if (!widgetConfig) return;
@@ -1918,7 +1924,6 @@ costsByType: {
                     widget.className = `widget ${widgetConfig.type}-widget`;
                     widget.dataset.widgetId = widgetId;
                     
-                    // Header con grip icon e azioni
                     widget.innerHTML = `
                         <div class="widget-grip">
                             <i class="fas fa-grip-lines" style="color: rgba(255, 255, 255, 0.3);"></i>
@@ -1945,7 +1950,6 @@ costsByType: {
                     container.appendChild(widget);
                 });
                 
-                // Setup drag & drop
                 this.setupSortable();
             },
 
@@ -1954,6 +1958,7 @@ costsByType: {
                 if (this.sortable) this.sortable.destroy();
                 
                 const container = document.getElementById('widgetsContainer');
+                if (!container) return;
                 this.sortable = new Sortable(container, {
                     animation: 150,
                     ghostClass: 'dragging',
@@ -1961,7 +1966,6 @@ costsByType: {
                     draggable: '.widget',
                     forceFallback: true,
                     onEnd: (evt) => {
-                        // Update order based on DOM
                         const widgets = container.querySelectorAll('.widget');
                         this.activeWidgets = Array.from(widgets).map(w => w.dataset.widgetId);
                         localStorage.setItem('dashboardConfig', JSON.stringify(this.activeWidgets));
@@ -1975,9 +1979,9 @@ costsByType: {
                 if (!widget) return;
                 
                 const content = widget.querySelector('.widget-content');
+                if (!content) return;
                 content.style.opacity = '0.5';
                 
-                // Destroy existing chart if any
                 if (this.chartInstances[widgetId]) {
                     this.chartInstances[widgetId].destroy();
                     delete this.chartInstances[widgetId];
@@ -1995,7 +1999,6 @@ costsByType: {
                 const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
                 if (!widget) return;
                 
-                // Destroy chart if any
                 if (this.chartInstances[widgetId]) {
                     this.chartInstances[widgetId].destroy();
                     delete this.chartInstances[widgetId];
@@ -2015,8 +2018,8 @@ costsByType: {
             openCustomizer() {
                 const modal = document.getElementById('customizeModal');
                 const selector = document.getElementById('widgetSelector');
+                if(!modal || !selector) return;
                 
-                // Populate widget list
                 selector.innerHTML = '';
                 
                 Object.entries(this.availableWidgets).forEach(([id, config]) => {
@@ -2042,7 +2045,8 @@ costsByType: {
 
             // Close customizer
             closeCustomizer() {
-                document.getElementById('customizeModal').classList.remove('active');
+                const modal = document.getElementById('customizeModal');
+                if (modal) modal.classList.remove('active');
             },
 
             // Save configuration (FIXED)
@@ -2051,7 +2055,7 @@ costsByType: {
                 const newActiveWidgets = Array.from(checkboxes).map(cb => cb.value);
                 
                 if (newActiveWidgets.length === 0) {
-                    showNotification('Seleziona almeno un widget', 'error');
+                    window.showNotification('Seleziona almeno un widget', 'error');
                     return;
                 }
                 
@@ -2059,7 +2063,7 @@ costsByType: {
                 localStorage.setItem('dashboardConfig', JSON.stringify(this.activeWidgets));
                 this.renderDashboard();
                 this.closeCustomizer();
-                showNotification('Configurazione salvata!', 'success');
+                window.showNotification('Configurazione salvata!', 'success');
             },
 
             // Reset to default
@@ -2069,24 +2073,26 @@ costsByType: {
                     'totalShipments',
                     'avgDeliveryTime', 
                     'onTimeDelivery',
+                    'budgetStatus',
+                    'costAlerts',
                     'costTrend',
                     'carrierDistribution',
+                    'costsByType',
                     'topSuppliers',
+                    'topCostShipments',
                     'alerts'
                 ];
                 
-                // Update checkboxes
                 const checkboxes = document.querySelectorAll('#widgetSelector input[type="checkbox"]');
                 checkboxes.forEach(cb => {
                     cb.checked = this.activeWidgets.includes(cb.value);
                 });
                 
-                showNotification('Ripristinata configurazione default', 'info');
+                window.showNotification('Ripristinata configurazione default', 'info');
             },
 
             // Setup event listeners per il dashboard manager (es. periodSelect)
             setupEventListeners() {
-                // Period select
                 const periodSelect = document.getElementById('periodSelect');
                 if (periodSelect) {
                     periodSelect.addEventListener('change', () => {
@@ -2099,7 +2105,6 @@ costsByType: {
         // Global variables (manteniamo compatibilità)
         let currentFileData = null;
         let currentFileName = '';
-        // chartInstances è ora parte di dashboardManager
 
         // Chart theme
         const chartTheme = {
@@ -2135,15 +2140,12 @@ costsByType: {
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Auth check è già stato fatto nel blocco script in alto
-            // Qui ci occupiamo solo di inizializzare la dashboard e gli event listener globali
-            
-            setupGlobalEventListeners(); // Rinominata per chiarezza
-            dashboardManager.init(); // Inizializza il dashboard manager (che chiama il suo setupEventListeners interno)
+            setupGlobalEventListeners(); 
+            dashboardManager.init(); 
         });
 
         // Event Listeners GLOBALI (per elementi come menu, dropdown utente, logout)
-        function setupGlobalEventListeners() { // Rinominata da setupEventListeners
+        function setupGlobalEventListeners() { 
             // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
@@ -2173,7 +2175,6 @@ costsByType: {
                 userMenuBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                     // Chiudi notification dropdown se aperto
                     const notificationDropdown = document.getElementById('notificationDropdown');
                     if (notificationDropdown) notificationDropdown.style.display = 'none';
 
@@ -2181,10 +2182,9 @@ costsByType: {
                 });
                 
                 userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Previeni la chiusura del dropdown quando si clicca all'interno
+                    e.stopPropagation(); 
                 });
                 
-                // Chiudi dropdown utente quando si clicca fuori
                 document.addEventListener('click', function(e) {
                     if (userDropdown && userDropdown.style.display !== 'none' && 
                         userMenuBtn && !userMenuBtn.contains(e.target) && 
@@ -2210,57 +2210,27 @@ costsByType: {
                 });
             }
         }
-            // File upload - RIMOSSO perché abbiamo eliminato l'upload area
-            /*
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFileUpload(files[0]);
-                }
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFileUpload(e.target.files[0]);
-                }
-            });
-            */
 
         // File upload handler
         function handleFileUpload(file) {
             currentFileName = file.name;
             const fileSize = (file.size / 1024).toFixed(2) + ' KB';
             
-            // Update modal info
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = fileSize;
+            const fileNameEl = document.getElementById('fileName');
+            const fileSizeEl = document.getElementById('fileSize');
+            const fileTypeIconEl = document.getElementById('fileTypeIcon');
+
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            if (fileSizeEl) fileSizeEl.textContent = fileSize;
             
-            // Update icon based on file type
-            const fileTypeIcon = document.getElementById('fileTypeIcon');
-            if (file.name.endsWith('.csv')) {
-                fileTypeIcon.className = 'fas fa-file-csv';
-            } else {
-                fileTypeIcon.className = 'fas fa-file-excel';
+            if (fileTypeIconEl) {
+                if (file.name.endsWith('.csv')) {
+                    fileTypeIconEl.className = 'fas fa-file-csv';
+                } else {
+                    fileTypeIconEl.className = 'fas fa-file-excel';
+                }
             }
             
-            // Process file
             const reader = new FileReader();
             
             if (file.name.endsWith('.csv')) {
@@ -2282,11 +2252,11 @@ costsByType: {
             
             currentFileData = results.data;
             
-            // Update modal info
-            document.getElementById('fileRows').textContent = formatNumber(results.data.length) + ' righe';
-            document.getElementById('fileColumns').textContent = Object.keys(results.data[0] || {}).length + ' colonne';
+            const fileRowsEl = document.getElementById('fileRows');
+            const fileColumnsEl = document.getElementById('fileColumns');
+            if(fileRowsEl) fileRowsEl.textContent = formatNumber(results.data.length) + ' righe';
+            if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(results.data[0] || {}).length + ' colonne';
             
-            // Show preview
             showImportModal(results.data.slice(0, 5), Object.keys(results.data[0] || {}));
         }
 
@@ -2298,26 +2268,27 @@ costsByType: {
             
             currentFileData = jsonData;
             
-            // Update modal info
-            document.getElementById('fileRows').textContent = formatNumber(jsonData.length) + ' righe';
-            document.getElementById('fileColumns').textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
+            const fileRowsEl = document.getElementById('fileRows');
+            const fileColumnsEl = document.getElementById('fileColumns');
+            if(fileRowsEl) fileRowsEl.textContent = formatNumber(jsonData.length) + ' righe';
+            if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
             
-            // Show preview
             showImportModal(jsonData.slice(0, 5), Object.keys(jsonData[0] || {}));
         }
 
         // Show import modal
         function showImportModal(previewData, columns) {
-            // Build preview table
+            const importModal = document.getElementById('importModal');
             const previewTable = document.getElementById('previewTable');
+            if (!importModal || !previewTable) return;
+
             const thead = previewTable.querySelector('thead');
             const tbody = previewTable.querySelector('tbody');
             
-            // Clear existing content
+            if(!thead || !tbody) return;
             thead.innerHTML = '';
             tbody.innerHTML = '';
             
-            // Add headers
             const headerRow = document.createElement('tr');
             columns.forEach(col => {
                 const th = document.createElement('th');
@@ -2326,7 +2297,6 @@ costsByType: {
             });
             thead.appendChild(headerRow);
             
-            // Add preview rows
             previewData.forEach(row => {
                 const tr = document.createElement('tr');
                 columns.forEach(col => {
@@ -2337,13 +2307,13 @@ costsByType: {
                 tbody.appendChild(tr);
             });
             
-            // Show modal
-            document.getElementById('importModal').classList.add('active');
+            importModal.classList.add('active');
         }
 
         // Close import modal
         window.closeImportModal = function() {
-            document.getElementById('importModal').classList.remove('active');
+            const importModal = document.getElementById('importModal');
+            if(importModal) importModal.classList.remove('active');
             currentFileData = null;
             currentFileName = '';
         }
@@ -2351,28 +2321,32 @@ costsByType: {
         // Confirm import
         window.confirmImport = async function() {
             if (!currentFileData || currentFileData.length === 0) {
-                showNotification('Nessun dato da importare', 'error');
+                window.showNotification('Nessun dato da importare', 'error');
                 return;
             }
             
-            // Show loading state
-            document.getElementById('importStatus').style.display = 'block';
-            document.getElementById('confirmImportBtn').disabled = true;
+            const importStatusEl = document.getElementById('importStatus');
+            const confirmImportBtnEl = document.getElementById('confirmImportBtn');
+
+            if(importStatusEl) importStatusEl.style.display = 'block';
+            if(confirmImportBtnEl) confirmImportBtnEl.disabled = true;
             
             try {
-                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token'); // Aggiunto fallback
-                // const user = JSON.parse(localStorage.getItem('user') || '{}'); // user non è usato
+                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
                 
-                // Prepare data
                 const formData = new FormData();
                 const csvContent = Papa.unparse(currentFileData);
                 const blob = new Blob([csvContent], { type: 'text/csv' });
                 formData.append('file', blob, currentFileName);
-                formData.append('skipDuplicates', document.getElementById('skipDuplicates').checked);
-                formData.append('validateData', document.getElementById('validateData').checked);
-                formData.append('updateExisting', document.getElementById('updateExisting').checked);
                 
-                // Send to server
+                const skipDuplicatesEl = document.getElementById('skipDuplicates');
+                const validateDataEl = document.getElementById('validateData');
+                const updateExistingEl = document.getElementById('updateExisting');
+
+                formData.append('skipDuplicates', skipDuplicatesEl ? skipDuplicatesEl.checked : true);
+                formData.append('validateData', validateDataEl ? validateDataEl.checked : true);
+                formData.append('updateExisting', updateExistingEl ? updateExistingEl.checked : false);
+                
                 const response = await fetch('/.netlify/functions/import-file', {
                     method: 'POST',
                     headers: {
@@ -2384,10 +2358,10 @@ costsByType: {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showNotification(`Import completato: ${formatNumber(result.imported)} record importati`, 'success');
+                    window.showNotification(`Import completato: ${formatNumber(result.imported)} record importati`, 'success');
                     setTimeout(() => {
                         closeImportModal();
-                        refreshDashboard();
+                        window.refreshDashboard();
                     }, 1500);
                 } else {
                     throw new Error(result.error || 'Errore durante l\'import');
@@ -2395,17 +2369,17 @@ costsByType: {
                 
             } catch (error) {
                 console.error('Import error:', error);
-                showNotification(error.message || 'Errore durante l\'import', 'error');
+                window.showNotification(error.message || 'Errore durante l\'import', 'error');
             } finally {
-                document.getElementById('importStatus').style.display = 'none';
-                document.getElementById('confirmImportBtn').disabled = false;
+                if(importStatusEl) importStatusEl.style.display = 'none';
+                if(confirmImportBtnEl) confirmImportBtnEl.disabled = false;
             }
         }
 
         // Refresh dashboard
         window.refreshDashboard = function() {
             dashboardManager.loadDashboardData();
-            showNotification('Dashboard aggiornata', 'success');
+            window.showNotification('Dashboard aggiornata', 'success');
         }
 
         // Export to PDF
@@ -2413,15 +2387,12 @@ costsByType: {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Add title
             doc.setFontSize(20);
             doc.text('Supply Chain Hub - Dashboard Report', 20, 20);
             
-            // Add date
             doc.setFontSize(10);
             doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
             
-            // Add KPIs
             doc.setFontSize(14);
             doc.text('KPI Principali', 20, 45);
             
@@ -2434,23 +2405,20 @@ costsByType: {
                 doc.text(`Tasso Puntualità: ${formatNumber(data.onTimeDelivery || 0, 1)}%`, 20, 85);
             }
             
-            // Save PDF
             doc.save('dashboard-report.pdf');
-            showNotification('Report PDF generato', 'success');
+            window.showNotification('Report PDF generato', 'success');
         }
 
         // Export to Excel
         window.exportToExcel = async function() {
             const data = dashboardManager.dashboardData;
             if (!data) {
-                showNotification('Nessun dato da esportare', 'error');
+                window.showNotification('Nessun dato da esportare', 'error');
                 return;
             }
             
-            // Create workbook
             const wb = XLSX.utils.book_new();
             
-            // KPI Sheet
             const kpiData = [
                 ['KPI', 'Valore', 'Variazione %'],
                 ['Spedizioni Totali', data.totalShipments || 0, data.shipmentsGrowth || 0],
@@ -2461,7 +2429,6 @@ costsByType: {
             const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData);
             XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
             
-            // Carriers Sheet
             if (data.topCarriers) {
                 const carriersData = [['Corriere', 'Costo', 'Spedizioni']];
                 data.topCarriers.forEach(c => {
@@ -2471,7 +2438,6 @@ costsByType: {
                 XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri');
             }
             
-            // Suppliers Sheet
             if (data.topSuppliers) {
                 const suppliersData = [['Fornitore', 'Quantità', 'Costo', 'Spedizioni']];
                 data.topSuppliers.forEach(s => {
@@ -2481,14 +2447,12 @@ costsByType: {
                 XLSX.utils.book_append_sheet(wb, suppliersSheet, 'Fornitori');
             }
             
-            // Save file
             XLSX.writeFile(wb, `dashboard-export-${new Date().toISOString().split('T')[0]}.xlsx`);
-            showNotification('Export Excel completato', 'success');
+            window.showNotification('Export Excel completato', 'success');
         }
 
         // Helper function: Show notification
         window.showNotification = function(message, type = 'info') {
-            // Create notification element
             const notification = document.createElement('div');
             notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
             notification.style.cssText = `
@@ -2508,22 +2472,18 @@ costsByType: {
                 max-width: 400px;
             `;
             
-            // Add icon
             const icon = document.createElement('i');
             icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
             icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
             
-            // Add message
             const text = document.createElement('span');
             text.textContent = message;
             
             notification.appendChild(icon);
             notification.appendChild(text);
             
-            // Add to page
             document.body.appendChild(notification);
             
-            // Remove after 3 seconds
             setTimeout(() => {
                 notification.style.opacity = '0';
                 notification.style.transform = 'translateX(100px)';
