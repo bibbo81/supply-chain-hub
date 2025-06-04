@@ -8,7 +8,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
     "papaparse": "^5.5.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "pdfkit": "^0.14.0",
+    "exceljs": "^4.4.0"
   },
   "main": "index.js",
   "repository": {
