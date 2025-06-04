@@ -30,64 +30,86 @@
     <!-- Auth System -->
     <script src="/auth.js"></script>
     
-    <!-- Page Protection & User Info Update -->
+    <!-- Page Protection -->
     <script>
-        // Funzione per aggiornare le informazioni dell'utente nell'header
-        function updateHeaderUserInfo() {
-            const user = window.auth ? window.auth.getCurrentUser() : null;
+    (function() {
+        console.log('[Costs] Checking authentication...');
+                
+        function checkAuth() {
+            if (!window.auth) {
+                setTimeout(checkAuth, 100);
+                return;
+            }
+                        
+            if (!window.auth.isAuthenticated()) {
+                console.log('[Costs] Not authenticated, redirecting...');
+                window.location.replace('/login.html');
+                return;
+            }
+                        
+            console.log('[Costs] User authenticated');
+                        
+            const user = window.auth.getCurrentUser();
             if (user) {
-                const userNameEl = document.getElementById('userName');
-                const userEmailEl = document.getElementById('userEmail');
-                const userInitialEl = document.getElementById('userInitial');
-                const userFullNameEl = document.getElementById('userFullName');
-
                 let displayName = 'Utente';
                 let initial = 'U';
-
-                if (user.user_metadata && user.user_metadata.full_name) {
+                
+                // Prima controlla se c'è un display_name personalizzato nel profilo
+                if (user.user_metadata && user.user_metadata.display_name) {
+                    displayName = user.user_metadata.display_name;
+                } else if (user.user_metadata && user.user_metadata.full_name) {
                     displayName = user.user_metadata.full_name;
                 } else if (user.user_metadata && user.user_metadata.name) {
                     displayName = user.user_metadata.name;
                 } else if (user.email) {
-                    displayName = user.email.split('@')[0];
-                    displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                    const emailName = user.email.split('@')[0];
+                    // Trasforma email in nome (es: fabrizio.cagnucci -> Fabrizio Cagnucci)
+                    displayName = emailName
+                        .replace(/[._-]/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
                 }
-                
+                // Formatta correttamente il nome se contiene punteggiatura
+                if (displayName && displayName.includes('.')) { // O altri caratteri se necessario
+                    displayName = displayName
+                        .replace(/[._-]/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                }
+                                
                 const words = displayName.split(' ').filter(w => w.length > 0);
                 if (words.length >= 2) {
                     initial = words[0][0].toUpperCase() + words[1][0].toUpperCase();
                 } else if (words.length === 1) {
                     initial = words[0][0].toUpperCase();
                 }
-
-                if (userNameEl) userNameEl.textContent = displayName;
-                if (userInitialEl) userInitialEl.textContent = initial;
-                if (userFullNameEl) userFullNameEl.textContent = displayName;
-                if (userEmailEl) userEmailEl.textContent = user.email || '';
+                                
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        updateUserUI(displayName, initial, user.email);
+                    });
+                } else {
+                    updateUserUI(displayName, initial, user.email);
+                }
             }
         }
-
-        (function() {
-            console.log('[Costs] Checking authentication...');
-            function checkAuth() {
-                if (!window.auth) {
-                    setTimeout(checkAuth, 100);
-                    return;
-                }
-                if (!window.auth.isAuthenticated()) {
-                    console.log('[Costs] Not authenticated, redirecting...');
-                    window.location.replace('/login.html');
-                    return;
-                }
-                console.log('[Costs] User authenticated');
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', updateHeaderUserInfo);
-                } else {
-                    updateHeaderUserInfo();
-                }
-            }
-            checkAuth();
-        })();
+                
+        function updateUserUI(displayName, initial, email) {
+            const userNameEl = document.getElementById('userName');
+            const userInitialEl = document.getElementById('userInitial');
+            const userFullNameEl = document.getElementById('userFullName');
+            const userEmailEl = document.getElementById('userEmail');
+                        
+            if (userNameEl) userNameEl.textContent = displayName;
+            if (userInitialEl) userInitialEl.textContent = initial;
+            if (userFullNameEl) userFullNameEl.textContent = displayName;
+            if (userEmailEl) userEmailEl.textContent = email || '';
+        }
+                
+        checkAuth();
+    })();
     </script>
     
     <style>
@@ -95,7 +117,7 @@
         .sol-main-content { margin-top: 80px; padding: var(--sol-space-xl); max-width: 1600px; margin-left: auto; margin-right: auto; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
         .kpi-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); transition: all 0.3s ease; position: relative; }
-        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 20px; /* Aumentato per drag bar */ }
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 20px; /* Spazio per la drag bar */ }
         .kpi-title { font-size: 0.875rem; color: var(--sol-text-secondary); font-weight: 500; flex-grow: 1; }
         .kpi-icon-wrapper { display: flex; align-items: center; }
         .kpi-icon { width: 40px; height: 40px; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; }
@@ -106,12 +128,12 @@
 
         .card-drag-handle { 
             position: absolute;
-            top: -10px; /* Posizionata 10px sopra l'inizio del contenuto dell'header */
+            top: -10px; 
             left: 50%;
             transform: translateX(-50%);
             color: var(--sol-text-tertiary);
             background-color: rgba(255,255,255,0.12); 
-            padding: 2px var(--sol-space-xl); /* Sottile verticalmente, larga orizzontalmente */
+            padding: 2px var(--sol-space-xl); 
             border-radius: 4px; 
             line-height: 1;
             font-size: 0.8rem; 
@@ -131,13 +153,13 @@
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(470px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
-        .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column;}
+        .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column; min-height: 400px;}
         .chart-card.full-width { grid-column: 1 / -1; }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; padding-top: 20px; /* Aumentato per drag bar */ }
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
         .chart-actions { display: flex; gap: var(--sol-space-sm); }
-        .chart-container { width: 100%; height: 350px; flex-grow: 1; }
+        .chart-container { width: 100%; min-height:350px; height: 350px; flex-grow: 1; overflow: hidden; }
         
         .comparison-section { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); margin-bottom: var(--sol-space-2xl); }
         .budget-bar { display: flex; align-items: center; gap: var(--sol-space-md); margin-bottom: var(--sol-space-lg); }
