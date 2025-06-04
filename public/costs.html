@@ -33,14 +33,13 @@
     <!-- Page Protection & User Info Update -->
     <script>
         // Funzione per aggiornare le informazioni dell'utente nell'header
-        // Deve essere globale o accessibile prima che auth.js la chiami potenzialmente
         function updateHeaderUserInfo() {
             const user = window.auth ? window.auth.getCurrentUser() : null;
             if (user) {
                 const userNameEl = document.getElementById('userName');
-                const userEmailEl = document.getElementById('userEmail'); // Per dropdown
+                const userEmailEl = document.getElementById('userEmail');
                 const userInitialEl = document.getElementById('userInitial');
-                const userFullNameEl = document.getElementById('userFullName'); // Per dropdown
+                const userFullNameEl = document.getElementById('userFullName');
 
                 let displayName = 'Utente';
                 let initial = 'U';
@@ -81,7 +80,6 @@
                     return;
                 }
                 console.log('[Costs] User authenticated');
-                // Update user UI after authentication check
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', updateHeaderUserInfo);
                 } else {
@@ -110,7 +108,7 @@
         .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; }
         
         .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
-        .kpi-card.sortable-chosen, .chart-card.sortable-chosen { /* Stile per l'elemento originale mentre viene trascinato */  }
+        .kpi-card.sortable-chosen, .chart-card.sortable-chosen { /* Style for the original element while dragging */  }
         .kpi-card.dragging, .kpi-card.sortable-chosen, .chart-card.dragging, .chart-card.sortable-chosen { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
 
         .filter-bar { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); display: flex; gap: var(--sol-space-md); flex-wrap: wrap; align-items: center; }
@@ -124,7 +122,7 @@
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
         .chart-actions { display: flex; gap: var(--sol-space-sm); }
-        .chart-container { width: 100%; height: 350px; flex-grow: 1; }
+        .chart-container { width: 100%; height: 350px; flex-grow: 1; } /* Ensure container has explicit height */
         
         .comparison-section { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); margin-bottom: var(--sol-space-2xl); }
         .budget-bar { display: flex; align-items: center; gap: var(--sol-space-md); margin-bottom: var(--sol-space-lg); }
@@ -545,17 +543,30 @@
         function renderOrUpdateChart(key, sel, opts, recreate=false) { 
             const el=document.querySelector(sel); 
             if(!el) { console.warn(`Chart element ${sel} not found`); return; }
+            
+            if (el.offsetHeight <= 0 && key !== 'costTrend') { // costTrend might be initially hidden if data isn't ready
+                console.warn(`Chart container ${sel} has no height, delaying render/update for ${key}.`);
+                setTimeout(() => renderOrUpdateChart(key, sel, opts, recreate), 200); // Increased delay
+                return;
+            }
+
             if(chartInstances[key] && typeof chartInstances[key].updateOptions === 'function' && !recreate){
                 chartInstances[key].updateOptions(opts,true,true,true).catch(e=>console.error("Chart update err:",key,e));
             } else {
                 if(chartInstances[key] && typeof chartInstances[key].destroy === 'function') chartInstances[key].destroy();
                 setTimeout(()=>{ 
                     const currentEl = document.querySelector(sel); 
-                    if(currentEl){
-                        chartInstances[key]=new ApexCharts(currentEl,opts); 
-                        chartInstances[key].render().catch(e=>console.error("Chart render err:",key,e));
+                    if(currentEl && currentEl.offsetHeight > 0){ // Re-check height before final render
+                        try {
+                             chartInstances[key]=new ApexCharts(currentEl,opts); 
+                             chartInstances[key].render().catch(e=>console.error("Chart render err:",key,e));
+                        } catch (e) {
+                            console.error(`Error initializing ApexChart ${key}:`, e, "Options:", opts, "Element:", currentEl);
+                        }
+                    } else if (currentEl) {
+                        console.error(`Chart container ${sel} still has no/invalid height after delay for chart: ${key}. OffsetHeight: ${currentEl.offsetHeight}`);
                     }
-                },50);
+                },100); // Slightly increased delay
             }
         }
 
@@ -601,10 +612,16 @@
                     try {
                         const chartElement = chartInstance.w.globals.dom.el;
                         if (chartElement && chartElement.offsetParent !== null) { 
-                             chartInstance.updateOptions({ chart: { width: '100%', height: '100%' /* o un'altezza specifica se preferisci */ } }, false, false, true);
+                             const currentConfig = chartInstance.w.config;
+                             chartInstance.updateOptions({ 
+                                 chart: { 
+                                     width: '100%', // Lascia che ApexCharts gestisca la larghezza
+                                     height: currentConfig.chart.height // Riapplica l'altezza originale
+                                 } 
+                             }, false, false, false); // redrawAnnotations, animate, updateSyncedCharts
                         }
                     } catch (e) {
-                        console.warn("Could not update chart on resize:", e);
+                        console.warn("Could not update chart on resize:", chartInstance.w.globals.chartID, e);
                     }
                 }
             });
