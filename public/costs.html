@@ -93,7 +93,7 @@
     <style>
         /* Page Specific Styles */
         .sol-main-content { margin-top: 80px; padding: var(--sol-space-xl); max-width: 1600px; margin-left: auto; margin-right: auto; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); } /* Larghezza minima KPI aumentata */
         .kpi-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); transition: all 0.3s ease; position: relative; }
         .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 15px; /* Spazio per la drag bar */ }
         .kpi-title { font-size: 0.875rem; color: var(--sol-text-secondary); font-weight: 500; flex-grow: 1; }
@@ -106,21 +106,21 @@
 
         .card-drag-handle { 
             position: absolute;
-            top: -20px; /* Alzata ulteriormente per essere più vicina al bordo superiore */
+            top: -24px; /* Alzata ulteriormente */
             left: 50%;
             transform: translateX(-50%);
             color: var(--sol-text-tertiary);
-            background-color: rgba(255,255,255,0.08); 
-            padding: 4px var(--sol-space-xl); /* Ripristinato padding orizzontale per allargare */
-            border-radius: var(--sol-radius-md); 
+            background-color: rgba(255,255,255,0.1); /* Sfondo leggermente più visibile */
+            padding: 3px var(--sol-space-md); /* Padding orizzontale ridotto per una barra più stretta */
+            border-radius: 6px; /* Raggio bordo più piccolo */
             line-height: 1;
-            font-size: 1rem; 
+            font-size: 0.9rem; /* Icona leggermente più piccola */
             cursor: grab; 
             opacity: 0.7; 
             transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
             z-index: 10; 
         }
-        .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.15); }
+        .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
         
         .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
         .kpi-card.sortable-chosen, .chart-card.sortable-chosen { /* Style for the original element while dragging */  }
@@ -130,7 +130,7 @@
         .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); flex: 1; min-width: 200px; }
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(470px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); } /* Larghezza minima chart aumentata */
         .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column;}
         .chart-card.full-width { grid-column: 1 / -1; }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; padding-top: 15px; /* Aumentato padding per la drag bar più alta */ }

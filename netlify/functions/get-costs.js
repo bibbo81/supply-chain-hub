@@ -4,6 +4,11 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Verifica che le variabili d'ambiente siano impostate
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing required environment variables');
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 exports.handler = async (event, context) => {
@@ -36,6 +41,7 @@ exports.handler = async (event, context) => {
         // Get auth token
         const token = event.headers.authorization?.replace('Bearer ', '');
         if (!token) {
+            console.log('No authorization token provided');
             return {
                 statusCode: 401,
                 headers,
@@ -46,6 +52,7 @@ exports.handler = async (event, context) => {
         // Verify token and get user
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) {
+            console.log('Invalid token or auth error:', authError);
             return {
                 statusCode: 401,
                 headers,
@@ -56,6 +63,7 @@ exports.handler = async (event, context) => {
         // Get organization_id from user metadata
         const organizationId = user.user_metadata?.organization_id;
         if (!organizationId) {
+            console.log('No organization_id found for user:', user.id);
             return {
                 statusCode: 403,
                 headers,
@@ -79,6 +87,8 @@ exports.handler = async (event, context) => {
             const days = parseInt(period) || 30;
             startDate.setDate(startDate.getDate() - days);
         }
+
+        console.log('Fetching shipments for period:', { start: startDate.toISOString(), end: endDate.toISOString() });
 
         // Get shipments data with costs
         const { data: shipments, error: shipmentsError } = await supabase
@@ -107,7 +117,8 @@ exports.handler = async (event, context) => {
         }
 
         // Ensure shipments is an array
-        const shipmentsData = shipments || [];
+        const shipmentsData = Array.isArray(shipments) ? shipments : [];
+        console.log(`Found ${shipmentsData.length} shipments`);
 
         // Calculate KPIs
         const totalCost = shipmentsData.reduce((sum, s) => sum + (parseFloat(s.costo_trasporto) || 0), 0);
@@ -127,7 +138,7 @@ exports.handler = async (event, context) => {
             .lt('data_partenza', prevEndDate.toISOString())
             .not('costo_trasporto', 'is', null);
 
-        const prevShipmentsData = prevShipments || [];
+        const prevShipmentsData = Array.isArray(prevShipments) ? prevShipments : [];
         const prevTotalCost = prevShipmentsData.reduce((sum, s) => sum + (parseFloat(s.costo_trasporto) || 0), 0);
         const prevAvgCost = prevShipmentsData.length > 0 ? prevTotalCost / prevShipmentsData.length : 0;
 
@@ -186,6 +197,7 @@ exports.handler = async (event, context) => {
 
     } catch (error) {
         console.error('Error in get-costs function:', error);
+        console.error('Error stack:', error.stack);
         
         // Return mock data for demo purposes
         const mockData = generateMockData();
@@ -248,7 +260,7 @@ function generateMockData() {
     
     // Calculate KPIs
     const totalCost = shipments.reduce((sum, s) => sum + s.costo_trasporto, 0);
-    const avgShipmentCost = totalCost / shipments.length;
+    const avgShipmentCost = shipments.length > 0 ? totalCost / shipments.length : 0;
     const monthlyBudget = 150000;
     const budgetUsed = Math.round((totalCost / monthlyBudget) * 100);
     
