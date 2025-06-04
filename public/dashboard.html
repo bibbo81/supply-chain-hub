@@ -5,32 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Dashboard</title>
     
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
     
-    <!-- Sortable.js for drag & drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
-    <!-- Papa Parse & SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
-    <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
-    <!-- Solarium Design System -->
     <link rel="stylesheet" href="/solarium.css">
     
-    <!-- Auth System -->
     <script src="/auth.js"></script>
     
-    <!-- PROTEZIONE PAGINA DASHBOARD -->
     <script>
         (function() {
             console.log('[Dashboard] Checking authentication...');
@@ -622,10 +613,64 @@
         .sol-dropdown-item:hover {
             background: rgba(255, 255, 255, 0.05);
         }
+
+        /* Budget Progress Bar for Cost Widget */
+        .budget-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-full);
+            overflow: hidden;
+            margin: var(--sol-space-sm) 0;
+        }
+
+        .budget-fill {
+            height: 100%;
+            background: var(--sol-gradient-primary);
+            border-radius: var(--sol-radius-full);
+            transition: width 0.6s ease;
+        }
+
+        .budget-fill.warning {
+            background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+        }
+
+        .budget-fill.danger {
+            background: linear-gradient(135deg, #FF3B30 0%, #FF1744 100%);
+        }
+
+        /* Cost Alert Badge */
+        .cost-alert {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
+            padding: var(--sol-space-xs) var(--sol-space-md);
+            background: rgba(255, 59, 48, 0.15);
+            color: #FF3B30;
+            border-radius: var(--sol-radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Deep Link Styles */
+        .widget-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
+            color: var(--sol-text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-top: var(--sol-space-md);
+            transition: var(--sol-transition-base);
+        }
+
+        .widget-link:hover {
+            color: #007AFF;
+            transform: translateX(2px);
+        }
     </style>
 </head>
 <body>
-    <!-- HEADER UNIFICATO PER SUPPLY CHAIN HUB -->
     <header class="sol-header" style="overflow: visible;">
         <div class="sol-header-content">
             <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
@@ -646,13 +691,11 @@
             </div>
             
             <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-                <!-- Notification Button Fix -->
                 <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
                     <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
                 </button>
                 
-                <!-- User Menu Button -->
                 <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
                     <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
                         <span id="userInitial">U</span>
@@ -661,7 +704,6 @@
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <!-- User Dropdown -->
                 <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                     <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                         <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
@@ -682,13 +724,11 @@
         </div>
     </header>
 
-    <!-- NOTIFICATION DROPDOWN - POSIZIONE CORRETTA -->
     <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
         <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
             <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
         </div>
         <div style="max-height: 400px; overflow-y: auto;">
-            <!-- Notifica 1 -->
             <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
                 <div style="display: flex; gap: var(--sol-space-md);">
                     <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -701,7 +741,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Notifica 2 -->
             <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
                 <div style="display: flex; gap: var(--sol-space-md);">
                     <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -714,7 +753,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Notifica 3 -->
             <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
                 <div style="display: flex; gap: var(--sol-space-md);">
                     <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -733,7 +771,6 @@
         </div>
     </div>
 
-    <!-- STYLE AGGIUNTIVI PER NOTIFICHE E MOBILE -->
     <style>
         .notification-item:hover {
             background: rgba(255, 255, 255, 0.03);
@@ -834,7 +871,6 @@
         }
     </style>
 
-    <!-- SCRIPT PER GESTIRE IL NOME UTENTE -->
     <script>
     (function() {
         // Funzione per formattare il nome
@@ -916,7 +952,6 @@
     })();
     </script>
 
-    <!-- SCRIPT PER GESTIRE NOTIFICHE -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const notificationBtn = document.getElementById('notificationBtn');
@@ -937,7 +972,9 @@
             
             // Chiudi dropdown quando si clicca fuori
             document.addEventListener('click', function(e) {
-                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                if (notificationDropdown && notificationDropdown.style.display !== 'none' && 
+                    notificationBtn && !notificationBtn.contains(e.target) && 
+                    !notificationDropdown.contains(e.target)) {
                     notificationDropdown.style.display = 'none';
                 }
             });
@@ -945,7 +982,6 @@
     });
     </script>
 
-    <!-- Sidebar -->
     <aside class="sol-sidebar" id="sidebar">
         <nav style="padding: var(--sol-space-lg) 0;">
             <div style="margin-bottom: var(--sol-space-xl);">
@@ -1002,9 +1038,7 @@
         </nav>
     </aside>
 
-    <!-- Main Content -->
     <main class="sol-main-content">
-        <!-- Action Bar -->
         <div class="sol-action-bar">
             <div class="action-group">
                 <select id="periodSelect" class="sol-select">
@@ -1030,15 +1064,9 @@
             </div>
         </div>
 
-        <!-- Upload Section - RIMOSSA -->
-        <!-- Gli utenti devono usare /import.html per importare dati -->
-
-        <!-- Dynamic Widgets Container -->
         <div id="widgetsContainer" class="widgets-container">
-            <!-- I widget vengono caricati dinamicamente qui -->
-        </div>
+            </div>
 
-        <!-- Legacy Tables (manteniamo per compatibilità) -->
         <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); display: none;" id="legacyTables">
             <div class="sol-table-container">
                 <div class="sol-table-header">
@@ -1058,8 +1086,7 @@
                         </tr>
                     </thead>
                     <tbody id="shipmentsTable">
-                        <!-- Dynamic content -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
 
@@ -1081,22 +1108,18 @@
                         </tr>
                     </thead>
                     <tbody id="carriersTable">
-                        <!-- Dynamic content -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Customize FAB -->
     <button class="customize-fab" onclick="dashboardManager.openCustomizer()">
         <i class="fas fa-magic"></i>
     </button>
 
-    <!-- Backdrop -->
     <div class="sol-backdrop" id="backdrop"></div>
 
-    <!-- Customize Modal -->
     <div class="sol-modal" id="customizeModal">
         <div class="sol-modal-content">
             <div class="sol-modal-header">
@@ -1115,8 +1138,7 @@
                 </p>
                 
                 <div class="widget-selector" id="widgetSelector">
-                    <!-- Popolato dinamicamente -->
-                </div>
+                    </div>
             </div>
             
             <div style="padding: var(--sol-space-lg) var(--sol-space-xl); border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; gap: var(--sol-space-md); justify-content: flex-end;">
@@ -1134,7 +1156,6 @@
         </div>
     </div>
 
-    <!-- Import Modal (manteniamo dall'originale) -->
     <div class="sol-modal" id="importModal">
         <div class="sol-modal-content">
             <div class="sol-modal-header">
@@ -1148,7 +1169,6 @@
             </div>
             
             <div class="sol-modal-body">
-                <!-- File Info -->
                 <div class="sol-card" style="margin-bottom: var(--sol-space-lg);">
                     <div style="display: flex; align-items: center; gap: var(--sol-space-lg);">
                         <div style="width: 64px; height: 64px; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-lg); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
@@ -1165,7 +1185,6 @@
                     </div>
                 </div>
 
-                <!-- Data Preview -->
                 <div style="margin-bottom: var(--sol-space-lg);">
                     <h3 style="font-size: 1.125rem; margin-bottom: var(--sol-space-md);">Anteprima Dati</h3>
                     <div class="sol-table-container">
@@ -1176,7 +1195,6 @@
                     </div>
                 </div>
 
-                <!-- Import Options -->
                 <div class="sol-card">
                     <h3 style="font-size: 1rem; margin-bottom: var(--sol-space-md);">Opzioni Import</h3>
                     <div style="display: flex; flex-direction: column; gap: var(--sol-space-sm);">
@@ -1195,7 +1213,6 @@
                     </div>
                 </div>
 
-                <!-- Import Status -->
                 <div id="importStatus" style="display: none; text-align: center; padding: var(--sol-space-2xl) 0;">
                     <div style="width: 48px; height: 48px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #007AFF; border-radius: 50%; margin: 0 auto var(--sol-space-lg); animation: spin 1s linear infinite;"></div>
                     <div style="background: rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-full); height: 8px; margin: var(--sol-space-md) 0; overflow: hidden;">
@@ -1221,7 +1238,6 @@
         </div>
     </div>
 
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
@@ -1327,6 +1343,174 @@
                         </div>
                     `
                 },
+                },
+                // NUOVI WIDGET COSTI - Aggiungi qui dopo onTimeDelivery
+                budgetStatus: {
+                    id: 'budgetStatus',
+                    type: 'kpi',
+                    title: 'Stato Budget Mensile',
+                    description: 'Budget utilizzato vs disponibile',
+                    icon: 'fa-chart-pie',
+                    render: (data) => {
+    // Calcola budget (mock per ora, poi verrà da settings)
+    const monthlyBudget = 150000;
+    const spent = data.costs?.totalTransportCost || 0;
+    const percentage = Math.round((spent / monthlyBudget) * 100);
+    const remaining = monthlyBudget - spent;
+    
+    let barClass = 'budget-fill';
+    let statusText = 'Sotto controllo';
+    let statusColor = '#34C759';
+    
+    if (percentage > 90) {
+        barClass += ' danger';
+        statusText = 'Budget quasi esaurito!';
+        statusColor = '#FF3B30';
+    } else if (percentage > 75) {
+        barClass += ' warning';
+        statusText = 'Attenzione al budget';
+        statusColor = '#FF9500';
+    }
+    
+    return `
+        <div class="sol-kpi-card sol-animate-in">
+            <div class="sol-kpi-header">
+                <h3 class="sol-kpi-title">Budget Mensile</h3>
+                <div style="color: ${statusColor}; font-size: 0.875rem; font-weight: 600;">
+                    ${statusText}
+                </div>
+            </div>
+            <div class="sol-kpi-value">${percentage}%</div>
+            <div class="budget-progress">
+                <div class="${barClass}" style="width: ${percentage}%;"></div>
+            </div>
+            <div class="sol-kpi-subtitle">${formatCurrency(remaining)} rimanenti</div>
+            <a href="/costs.html?alert=over-budget" class="widget-link">
+                Vedi dettagli <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    `;
+}
+                },
+                costAlerts: {
+    id: 'costAlerts',
+    type: 'kpi',
+    title: 'Alert Costi',
+    description: 'Spedizioni con costi anomali',
+    icon: 'fa-exclamation-triangle',
+    render: (data) => {
+        const highCostCount = data.alerts?.highCostShipments || 0;
+        const avgCost = data.costs?.avgCostPerShipment || 0;
+        
+        return `
+            <div class="sol-kpi-card sol-animate-in">
+                <div class="sol-kpi-header">
+                    <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
+                    ${highCostCount > 0 ? `
+                        <span class="cost-alert">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Attenzione
+                        </span>
+                    ` : `
+                        <span style="color: #34C759; font-size: 0.875rem;">
+                            <i class="fas fa-check-circle"></i>
+                            OK
+                        </span>
+                    `}
+                </div>
+                <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
+                <div class="sol-kpi-subtitle">spedizioni sopra €1.000</div>
+                <div style="margin-top: var(--sol-space-md); font-size: 0.875rem; color: var(--sol-text-secondary);">
+                    Costo medio: ${formatCurrency(avgCost)}
+                </div>
+                ${highCostCount > 0 ? `
+                    <a href="/costs.html?alert=high-cost" class="widget-link">
+                        Analizza spedizioni <i class="fas fa-arrow-right"></i>
+                    </a>
+                ` : ''}
+            </div>
+        `;
+    }
+},
+costsByType: {
+    id: 'costsByType',
+    type: 'chart',
+    title: 'Costi per Tipo Spedizione',
+    description: 'Distribuzione costi MARE/AEREO/STRADA',
+    icon: 'fa-ship',
+    render: (data) => {
+        const widgetId = 'costsByType';
+        setTimeout(() => {
+            const chartElement = document.querySelector(`#chart-${widgetId}`);
+            if (!chartElement || !data.shipments) return;
+            
+            // Aggregazione per tipo
+            const typeData = {};
+            data.shipments.forEach(s => {
+                const type = s.tipo_spedizione || 'ALTRO';
+                if (!typeData[type]) {
+                    typeData[type] = 0;
+                }
+                typeData[type] += s.costo_trasporto || 0;
+            });
+            
+            const colors = {
+                'MARE': '#007AFF',
+                'AEREO': '#FF9500',
+                'STRADA': '#34C759'
+            };
+            
+            const chart = new ApexCharts(chartElement, {
+                ...chartTheme,
+                series: Object.values(typeData),
+                chart: { 
+                    ...chartTheme.chart, 
+                    type: 'pie', 
+                    height: 350
+                },
+                labels: Object.keys(typeData),
+                colors: Object.keys(typeData).map(type => colors[type] || '#5856D6'),
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        colors: 'rgba(255, 255, 255, 0.7)'
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        return formatCurrency(opts.w.globals.series[opts.seriesIndex]);
+                    },
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => formatCurrency(val)
+                    }
+                }
+            });
+            chart.render();
+            dashboardManager.chartInstances[widgetId] = chart;
+        }, 100);
+        
+        return `
+            <div class="sol-chart-card">
+                <div class="sol-chart-header">
+                    <h3 class="sol-chart-title">Costi per Tipo Spedizione</h3>
+                    <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
+                </div>
+                <div class="sol-chart-container" id="chart-${widgetId}"></div>
+                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">
+                    Analisi dettagliata <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        `;
+    }
+},
+                // Chart Widgets (questo commento già esiste)
                 // Chart Widgets
                 costTrend: {
                     id: 'costTrend',
@@ -1500,6 +1684,51 @@
                         `;
                     }
                 },
+                topCostShipments: {
+    id: 'topCostShipments',
+    type: 'table',
+    title: 'Top 5 Spedizioni per Costo',
+    description: 'Spedizioni più costose del periodo',
+    icon: 'fa-sort-amount-down',
+    render: (data) => {
+        const shipments = (data.shipments || [])
+            .sort((a, b) => (b.costo_trasporto || 0) - (a.costo_trasporto || 0))
+            .slice(0, 5);
+        
+        return `
+            <div class="sol-table-container">
+                <div class="sol-table-header">
+                    <h3 class="sol-table-title">Top 5 Costi Maggiori</h3>
+                </div>
+                <table class="sol-table">
+                    <thead>
+                        <tr>
+                            <th>N. ODA</th>
+                            <th>Fornitore</th>
+                            <th>Tipo</th>
+                            <th>Costo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${shipments.map(s => `
+                            <tr>
+                                <td>${s.n_oda || '-'}</td>
+                                <td>${s.fornitore || '-'}</td>
+                                <td>${s.tipo_spedizione || '-'}</td>
+                                <td style="font-weight: 600; color: #FF3B30;">
+                                    ${formatCurrency(s.costo_trasporto || 0)}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <a href="/costs.html?sort=cost_desc" class="widget-link" style="display: block; text-align: center; margin-top: var(--sol-space-md);">
+                    Vedi tutte <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        `;
+    }
+},
                 alerts: {
                     id: 'alerts',
                     type: 'table',
@@ -1555,7 +1784,7 @@
             init() {
                 this.loadConfiguration();
                 this.loadDashboardData();
-                this.setupEventListeners();
+                this.setupEventListeners(); // Chiamata a setupEventListeners() globale
             },
 
             // Carica configurazione
@@ -1570,9 +1799,13 @@
                         'totalShipments', 
                         'avgDeliveryTime',
                         'onTimeDelivery',
+                        'budgetStatus',      // NUOVO
+                        'costAlerts',        // NUOVO
                         'costTrend',
                         'carrierDistribution',
+                        'costsByType',       // NUOVO
                         'topSuppliers',
+                        'topCostShipments',  // NUOVO
                         'alerts'
                     ];
                 }
@@ -1628,7 +1861,8 @@
                         totalTransportCost: 125000,
                         totalCustomsDuty: 35000,
                         totalCost: 160000,
-                        costGrowth: 12.5
+                        costGrowth: 12.5,
+                        avgCostPerShipment: (125000 / 15420) || 0
                     },
                     topCarriers: [
                         { name: 'DHL', cost: 45000, shipments: 4850 },
@@ -1652,7 +1886,15 @@
                     dailyTrend: Array.from({length: 30}, (_, i) => ({
                         date: new Date(Date.now() - (29-i) * 24*60*60*1000).toISOString(),
                         cost: Math.floor(Math.random() * 5000) + 3000
-                    }))
+                    })),
+                    shipments: [
+                        { n_oda: 'ODA-2024-00123', fornitore: 'Supplier Milano', tipo_spedizione: 'MARE', costo_trasporto: 2500, spedizioniere: 'DHL' },
+                        { n_oda: 'ODA-2024-00124', fornitore: 'Fornitore Roma', tipo_spedizione: 'AEREO', costo_trasporto: 4200, spedizioniere: 'FedEx' },
+                        { n_oda: 'ODA-2024-00125', fornitore: 'Import Napoli', tipo_spedizione: 'STRADA', costo_trasporto: 1800, spedizioniere: 'UPS' },
+                        { n_oda: 'ODA-2024-00126', fornitore: 'Export Genova', tipo_spedizione: 'MARE', costo_trasporto: 3200, spedizioniere: 'TNT' },
+                        { n_oda: 'ODA-2024-00127', fornitore: 'Logistics Torino', tipo_spedizione: 'AEREO', costo_trasporto: 5100, spedizioniere: 'GLS' },
+                        { n_oda: 'ODA-2024-00128', fornitore: 'Supplier Milano', tipo_spedizione: 'STRADA', costo_trasporto: 900, spedizioniere: 'DHL' }
+                    ]
                 };
             },
 
@@ -1842,19 +2084,22 @@
                 showNotification('Ripristinata configurazione default', 'info');
             },
 
-            // Setup event listeners
+            // Setup event listeners per il dashboard manager (es. periodSelect)
             setupEventListeners() {
                 // Period select
-                document.getElementById('periodSelect').addEventListener('change', () => {
-                    this.loadDashboardData();
-                });
+                const periodSelect = document.getElementById('periodSelect');
+                if (periodSelect) {
+                    periodSelect.addEventListener('change', () => {
+                        this.loadDashboardData();
+                    });
+                }
             }
         };
 
         // Global variables (manteniamo compatibilità)
         let currentFileData = null;
         let currentFileName = '';
-        let chartInstances = {};
+        // chartInstances è ora parte di dashboardManager
 
         // Chart theme
         const chartTheme = {
@@ -1891,69 +2136,80 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // Auth check è già stato fatto nel blocco script in alto
-            // Qui ci occupiamo solo di inizializzare la dashboard
+            // Qui ci occupiamo solo di inizializzare la dashboard e gli event listener globali
             
-            setupEventListeners();
-            dashboardManager.init();
+            setupGlobalEventListeners(); // Rinominata per chiarezza
+            dashboardManager.init(); // Inizializza il dashboard manager (che chiama il suo setupEventListeners interno)
         });
 
-        // Event Listeners (manteniamo dal codice originale)
-        function setupEventListeners() {
+        // Event Listeners GLOBALI (per elementi come menu, dropdown utente, logout)
+        function setupGlobalEventListeners() { // Rinominata da setupEventListeners
             // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
             
-            menuToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('active');
-                backdrop.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
-            });
+            if (menuToggle && sidebar && backdrop) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('active');
+                    backdrop.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                });
 
-            backdrop.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            });
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
 
-// User dropdown
-const userMenuBtn = document.getElementById('userMenuBtn');
-const userDropdown = document.getElementById('userDropdown');
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
 
-if (userMenuBtn && userDropdown) {
-    userMenuBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // Previeni la chiusura del dropdown quando si clicca su un link
-    userDropdown.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-    
-    document.addEventListener('click', function() {
-        userDropdown.style.display = 'none';
-    });
-}  // <-- Questa parentesi mancava
-}
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                     // Chiudi notification dropdown se aperto
+                    const notificationDropdown = document.getElementById('notificationDropdown');
+                    if (notificationDropdown) notificationDropdown.style.display = 'none';
+
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Previeni la chiusura del dropdown quando si clicca all'interno
+                });
+                
+                // Chiudi dropdown utente quando si clicca fuori
+                document.addEventListener('click', function(e) {
+                    if (userDropdown && userDropdown.style.display !== 'none' && 
+                        userMenuBtn && !userMenuBtn.contains(e.target) && 
+                        !userDropdown.contains(e.target)) {
+                        userDropdown.style.display = 'none';
+                    }
+                });
+            }
+
             // Logout
-            document.getElementById('logoutBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                // Usa auth.logout() invece di pulizia manuale
-                if (window.auth && window.auth.logout) {
-                    window.auth.logout();
-                } else {
-                    // Fallback
-                    localStorage.removeItem('sb-access-token');
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login.html';
-                }
-            });
-
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (window.auth && window.auth.logout) {
+                        window.auth.logout();
+                    } else {
+                        localStorage.removeItem('sb-access-token');
+                        localStorage.removeItem('supabase.auth.token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                    }
+                });
+            }
+        }
             // File upload - RIMOSSO perché abbiamo eliminato l'upload area
             /*
             const uploadArea = document.getElementById('uploadArea');
@@ -2104,8 +2360,8 @@ if (userMenuBtn && userDropdown) {
             document.getElementById('confirmImportBtn').disabled = true;
             
             try {
-                const token = localStorage.getItem('sb-access-token');
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token'); // Aggiunto fallback
+                // const user = JSON.parse(localStorage.getItem('user') || '{}'); // user non è usato
                 
                 // Prepare data
                 const formData = new FormData();

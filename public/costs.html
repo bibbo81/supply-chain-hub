@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Hub - Analisi Costi</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
+    
+    <!-- jsPDF & autoTable -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="/solarium.css">
+    
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- Page Protection -->
+    <script>
+    (function() {
+        console.log('[Costs] Checking authentication...');
+        
+        function checkAuth() {
+            if (!window.auth) {
+                setTimeout(checkAuth, 100);
+                return;
+            }
+            
+            if (!window.auth.isAuthenticated()) {
+                console.log('[Costs] Not authenticated, redirecting...');
+                window.location.replace('/login.html');
+                return;
+            }
+            
+            console.log('[Costs] User authenticated');
+        }
+        
+        checkAuth();
+    })();
+    </script>
+    
+    <style>
+        /* Page Specific Styles */
+        .sol-main-content {
+            margin-top: 80px;
+            padding: var(--sol-space-xl);
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-2xl);
+        }
+        
+        .kpi-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-xl);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sol-shadow-lg);
+        }
+        
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sol-space-md);
+        }
+        
+        .kpi-title {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            font-weight: 500;
+        }
+        
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--sol-gradient-primary);
+            border-radius: var(--sol-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--sol-text-primary);
+            margin-bottom: var(--sol-space-sm);
+        }
+        
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .kpi-change.positive {
+            color: #34C759;
+        }
+        
+        .kpi-change.negative {
+            color: #FF3B30;
+        }
+        
+        /* Filter Bar */
+        .filter-bar {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-2xl);
+            display: flex;
+            gap: var(--sol-space-md);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sol-space-xs);
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--sol-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-2xl);
+        }
+        
+        .chart-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-xl);
+            box-shadow: var(--sol-shadow-md);
+        }
+        
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sol-space-lg);
+        }
+        
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--sol-text-primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: var(--sol-space-sm);
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 350px;
+        }
+        
+        /* Comparison Section */
+        .comparison-section {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-xl);
+            margin-bottom: var(--sol-space-2xl);
+        }
+        
+        .budget-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-md);
+            margin-bottom: var(--sol-space-lg);
+        }
+        
+        .budget-progress {
+            flex: 1;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--sol-radius-full);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .budget-fill {
+            height: 100%;
+            background: var(--sol-gradient-primary);
+            border-radius: var(--sol-radius-full);
+            transition: width 0.6s ease;
+            position: relative;
+        }
+        
+        .budget-fill.warning {
+            background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+        }
+        
+        .budget-fill.danger {
+            background: linear-gradient(135deg, #FF3B30 0%, #FF1744 100%);
+        }
+        
+        .budget-label {
+            position: absolute;
+            right: var(--sol-space-md);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        /* Data Table */
+        .table-section {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            padding: var(--sol-space-lg) var(--sol-space-xl);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: var(--sol-space-md);
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .data-table td {
+            padding: var(--sol-space-md);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--sol-text-primary);
+        }
+        
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Cost Badge */
+        .cost-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .cost-badge.high {
+            background: rgba(255, 59, 48, 0.15);
+            color: #FF3B30;
+        }
+        
+        .cost-badge.medium {
+            background: rgba(255, 149, 0, 0.15);
+            color: #FF9500;
+        }
+        
+        .cost-badge.low {
+            background: rgba(52, 199, 89, 0.15);
+            color: #34C759;
+        }
+        
+        /* Export Menu */
+        .export-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: var(--sol-space-sm);
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: var(--sol-blur-xl);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-sm);
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .export-menu.active {
+            display: block;
+        }
+        
+        .export-option {
+            display: block;
+            width: 100%;
+            padding: var(--sol-space-sm) var(--sol-space-md);
+            color: var(--sol-text-primary);
+            text-decoration: none;
+            border-radius: var(--sol-radius-sm);
+            transition: var(--sol-transition-base);
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .export-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+            
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .data-table {
+                min-width: 600px;
+            }
+        }
+        
+        /* Loading State */
+        .loading-skeleton {
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.05) 25%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                rgba(255, 255, 255, 0.05) 75%
+            );
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--sol-radius-md);
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Animations */
+        .sol-animate-in {
+            animation: sol-fade-in 0.6s ease-out;
+        }
+        
+        @keyframes sol-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER STANDARD -->
+    <header class="sol-header" style="overflow: visible;">
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/dashboard.html" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
+                </a>
+            </div>
+            
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca costi, fornitori..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+                </div>
+            </div>
+            
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <!-- Notification Button -->
+                <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                    <span style="position: absolute; top: 6px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);"></span>
+                </button>
+                
+                <!-- User Menu Button -->
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <!-- User Dropdown -->
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                        <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                    </div>
+                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR STANDARD -->
+    <aside class="sol-sidebar" id="sidebar">
+        <nav style="padding: var(--sol-space-lg) 0;">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
+                <a href="/dashboard.html" class="sol-nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/shipments.html" class="sol-nav-item">
+                    <i class="fas fa-box"></i>
+                    <span>Spedizioni</span>
+                </a>
+                <a href="/carriers.html" class="sol-nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Corrieri</span>
+                </a>
+                <a href="/tracking.html" class="sol-nav-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Tracking</span>
+                </a>
+            </div>
+            
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
+                <a href="/import.html" class="sol-nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Importa Dati</span>
+                </a>
+                <a href="/reports.html" class="sol-nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Report</span>
+                </a>
+                <a href="/costs.html" class="sol-nav-item active">
+                    <i class="fas fa-coins"></i>
+                    <span>Analisi Costi</span>
+                </a>
+            </div>
+            
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
+                <a href="/team.html" class="sol-nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Team</span>
+                </a>
+                <a href="/settings.html" class="sol-nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Impostazioni</span>
+                </a>
+                <a href="/billing.html" class="sol-nav-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Fatturazione</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="sol-main-content">
+        <!-- Page Header -->
+        <div style="margin-bottom: var(--sol-space-2xl);">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: var(--sol-space-sm);">Analisi Costi</h1>
+            <p style="color: var(--sol-text-secondary);">Monitora e analizza i costi di trasporto della tua supply chain</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card sol-animate-in" style="animation-delay: 0.1s;">
+                <div class="kpi-header">
+                    <h3 class="kpi-title">Costo Totale</h3>
+                    <div class="kpi-icon">
+                        <i class="fas fa-euro-sign"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="totalCost">€0</div>
+                <div class="kpi-change positive">
+                    <i class="fas fa-arrow-down"></i>
+                    <span id="totalCostChange">0%</span> vs mese precedente
+                </div>
+            </div>
+
+            <div class="kpi-card sol-animate-in" style="animation-delay: 0.2s;">
+                <div class="kpi-header">
+                    <h3 class="kpi-title">Costo Medio Spedizione</h3>
+                    <div class="kpi-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="avgShipmentCost">€0</div>
+                <div class="kpi-change negative">
+                    <i class="fas fa-arrow-up"></i>
+                    <span id="avgCostChange">0%</span> vs mese precedente
+                </div>
+            </div>
+
+            <div class="kpi-card sol-animate-in" style="animation-delay: 0.3s;">
+                <div class="kpi-header">
+                    <h3 class="kpi-title">Budget Utilizzato</h3>
+                    <div class="kpi-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="budgetUsed">0%</div>
+                <div class="kpi-change positive">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="budgetRemaining">€0</span> rimanenti
+                </div>
+            </div>
+
+            <div class="kpi-card sol-animate-in" style="animation-delay: 0.4s;">
+                <div class="kpi-header">
+                    <h3 class="kpi-title">Risparmio Potenziale</h3>
+                    <div class="kpi-icon">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" id="potentialSavings">€0</div>
+                <div class="kpi-change">
+                    <i class="fas fa-info-circle" style="color: #007AFF;"></i>
+                    <span style="color: var(--sol-text-secondary);">Ottimizzando i corrieri</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label class="filter-label">Periodo</label>
+                <select class="sol-select" id="periodFilter">
+                    <option value="7">Ultimi 7 giorni</option>
+                    <option value="30" selected>Ultimi 30 giorni</option>
+                    <option value="90">Ultimi 90 giorni</option>
+                    <option value="365">Ultimo anno</option>
+                    <option value="custom">Personalizzato</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Tipo Spedizione</label>
+                <select class="sol-select" id="typeFilter">
+                    <option value="">Tutti i tipi</option>
+                    <option value="MARE">Mare</option>
+                    <option value="AEREO">Aereo</option>
+                    <option value="STRADA">Strada</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Spedizioniere</label>
+                <select class="sol-select" id="carrierFilter">
+                    <option value="">Tutti</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Fornitore</label>
+                <select class="sol-select" id="supplierFilter">
+                    <option value="">Tutti</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 0; align-self: flex-end;">
+                <button class="sol-btn sol-btn-primary" onclick="applyFilters()">
+                    <i class="fas fa-filter"></i>
+                    Applica Filtri
+                </button>
+            </div>
+        </div>
+
+        <!-- Budget vs Actual Comparison -->
+        <div class="comparison-section">
+            <h2 style="font-size: 1.5rem; margin-bottom: var(--sol-space-lg);">Budget vs Costi Effettivi</h2>
+            
+            <div class="budget-bar">
+                <span style="font-size: 0.875rem; color: var(--sol-text-secondary); min-width: 80px;">Budget:</span>
+                <div class="budget-progress">
+                    <div class="budget-fill" id="budgetBar" style="width: 0%;">
+                        <span class="budget-label" id="budgetLabel">0%</span>
+                    </div>
+                </div>
+                <span style="font-size: 0.875rem; color: var(--sol-text-primary); min-width: 100px; text-align: right;" id="budgetAmount">€0</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sol-space-lg); margin-top: var(--sol-space-xl);">
+                <div>
+                    <p style="font-size: 0.875rem; color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xs);">Budget Mensile</p>
+                    <p style="font-size: 1.5rem; font-weight: 700;" id="monthlyBudget">€0</p>
+                </div>
+                <div>
+                    <p style="font-size: 0.875rem; color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xs);">Speso Finora</p>
+                    <p style="font-size: 1.5rem; font-weight: 700;" id="spentAmount">€0</p>
+                </div>
+                <div>
+                    <p style="font-size: 0.875rem; color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xs);">Proiezione Fine Mese</p>
+                    <p style="font-size: 1.5rem; font-weight: 700;" id="projectedAmount">€0</p>
+                </div>
+                <div>
+                    <p style="font-size: 0.875rem; color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xs);">Stato Budget</p>
+                    <p style="font-size: 1.5rem; font-weight: 700;" id="budgetStatus">
+                        <span class="cost-badge low">Sotto controllo</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Cost Trend Chart -->
+            <div class="chart-card full-width">
+                <div class="chart-header">
+                    <h3 class="chart-title">Trend Costi nel Tempo</h3>
+                    <div class="chart-actions">
+                        <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('daily')">
+                            Giornaliero
+                        </button>
+                        <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('weekly')">
+                            Settimanale
+                        </button>
+                        <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('monthly')">
+                            Mensile
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container" id="costTrendChart"></div>
+            </div>
+
+            <!-- Cost by Carrier -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Costi per Spedizioniere</h3>
+                    <button class="sol-btn sol-btn-glass" onclick="toggleChartType('carrier')">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="chart-container" id="carrierCostChart"></div>
+            </div>
+
+            <!-- Cost by Type -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Costi per Tipo Spedizione</h3>
+                    <button class="sol-btn sol-btn-glass" onclick="toggleChartType('type')">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="chart-container" id="typeCostChart"></div>
+            </div>
+
+            <!-- Top Suppliers by Cost -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Top 10 Fornitori per Costo</h3>
+                    <button class="sol-btn sol-btn-glass" onclick="refreshSupplierChart()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="chart-container" id="supplierCostChart"></div>
+            </div>
+
+            <!-- Cost Distribution -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Distribuzione Costi</h3>
+                    <div style="position: relative;">
+                        <button class="sol-btn sol-btn-primary" onclick="toggleExportMenu(event)">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                        <div class="export-menu" id="exportMenu">
+                            <button class="export-option" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="export-option" onclick="exportToExcel()">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                            <button class="export-option" onclick="exportToCSV()">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container" id="costDistributionChart"></div>
+            </div>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h3 style="font-size: 1.25rem; font-weight: 600;">Dettaglio Costi Spedizioni</h3>
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <input type="search" class="sol-input" placeholder="Cerca..." id="tableSearch" style="width: 250px;">
+                    <button class="sol-btn sol-btn-glass" onclick="refreshTable()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-wrapper">
+                <table class="data-table" id="costsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('n_oda')" style="cursor: pointer;">
+                                N. ODA <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('data_partenza')" style="cursor: pointer;">
+                                Data <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('fornitore')" style="cursor: pointer;">
+                                Fornitore <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('spedizioniere')" style="cursor: pointer;">
+                                Spedizioniere <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('tipo_spedizione')" style="cursor: pointer;">
+                                Tipo <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('quantita')" style="cursor: pointer;">
+                                Quantità <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('costo_trasporto')" style="cursor: pointer;">
+                                Costo Trasporto <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('costo_unitario')" style="cursor: pointer;">
+                                Costo/Unità <i class="fas fa-sort"></i>
+                            </th>
+                            <th>Livello Costo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div style="padding: var(--sol-space-lg); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <div style="color: var(--sol-text-secondary); font-size: 0.875rem;">
+                    Mostrando <span id="showingFrom">0</span>-<span id="showingTo">0</span> di <span id="totalRecords">0</span> righe
+                </div>
+                <div style="display: flex; gap: var(--sol-space-sm);">
+                    <button class="sol-btn sol-btn-glass" onclick="previousPage()" id="prevBtn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span style="padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary);">
+                        Pagina <span id="currentPage">1</span> di <span id="totalPages">1</span>
+                    </span>
+                    <button class="sol-btn sol-btn-glass" onclick="nextPage()" id="nextBtn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Backdrop -->
+    <div class="sol-backdrop" id="backdrop"></div>
+
+    <!-- Scripts -->
+    <script>
+        // Global variables
+        let costsData = [];
+        let filteredData = [];
+        let chartInstances = {};
+        let currentPage = 1;
+        const recordsPerPage = 20;
+        let sortColumn = 'data_partenza';
+        let sortDirection = 'desc';
+
+        // Chart theme
+        const chartTheme = {
+            theme: { mode: 'dark' },
+            chart: {
+                background: 'transparent',
+                toolbar: { show: false },
+                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            grid: {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                strokeDashArray: 0
+            },
+            colors: ['#007AFF', '#5856D6', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#FF2D55', '#00C7BE'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            xaxis: {
+                labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: { 
+                    style: { colors: 'rgba(255, 255, 255, 0.5)' },
+                    formatter: (val) => formatCurrency(val)
+                }
+            },
+            legend: {
+                labels: { colors: 'rgba(255, 255, 255, 0.7)' }
+            },
+            tooltip: {
+                theme: 'dark',
+                style: { fontSize: '12px' }
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadCostsData();
+            updateUserInfo();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            document.getElementById('menuToggle').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('backdrop').classList.toggle('active');
+                document.body.style.overflow = document.getElementById('sidebar').classList.contains('active') ? 'hidden' : '';
+            });
+
+            document.getElementById('backdrop').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('backdrop').classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown
+            document.getElementById('userMenuBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dropdown = document.getElementById('userDropdown');
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            document.addEventListener('click', function() {
+                document.getElementById('userDropdown').style.display = 'none';
+                document.getElementById('exportMenu').classList.remove('active');
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                }
+            });
+
+            // Table search
+            document.getElementById('tableSearch').addEventListener('input', debounce(function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterTableData(searchTerm);
+            }, 300));
+
+            // Period filter custom date
+            document.getElementById('periodFilter').addEventListener('change', function(e) {
+                if (e.target.value === 'custom') {
+                    // Show date picker modal (to be implemented)
+                    showDatePickerModal();
+                } else {
+                    applyFilters();
+                }
+            });
+        }
+
+        // Update user info
+        function updateUserInfo() {
+            const user = window.auth ? window.auth.getCurrentUser() : null;
+            if (user) {
+                const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Utente';
+                const initial = displayName.charAt(0).toUpperCase();
+                
+                document.getElementById('userName').textContent = displayName;
+                document.getElementById('userInitial').textContent = initial;
+                document.getElementById('userFullName').textContent = displayName;
+                document.getElementById('userEmail').textContent = user.email || '';
+            }
+        }
+
+        // Load costs data
+        async function loadCostsData() {
+            try {
+                const token = localStorage.getItem('sb-access-token');
+                const period = document.getElementById('periodFilter').value;
+                
+                const response = await fetch(`/.netlify/functions/get-costs?period=${period}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load costs data');
+                }
+                
+                const data = await response.json();
+                costsData = data.shipments || [];
+                filteredData = [...costsData];
+                
+                // Update all components
+                updateKPIs(data.kpis);
+                updateBudgetComparison(data.budget);
+                updateCharts();
+                updateTable();
+                populateFilters();
+                
+            } catch (error) {
+                console.error('Error loading costs:', error);
+                // Use mock data for demo
+                loadMockData();
+            }
+        }
+
+        // Load mock data
+        function loadMockData() {
+            // Generate mock data
+            const mockData = generateMockCostsData();
+            costsData = mockData.shipments;
+            filteredData = [...costsData];
+            
+            updateKPIs(mockData.kpis);
+            updateBudgetComparison(mockData.budget);
+            updateCharts();
+            updateTable();
+            populateFilters();
+        }
+
+        // Generate mock costs data
+        function generateMockCostsData() {
+            const carriers = ['DHL', 'FedEx', 'UPS', 'TNT', 'GLS'];
+            const types = ['MARE', 'AEREO', 'STRADA'];
+            const suppliers = ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D', 'Supplier E'];
+            const shipments = [];
+            
+            // Generate 100 mock shipments
+            for (let i = 0; i < 100; i++) {
+                const quantity = Math.floor(Math.random() * 1000) + 100;
+                const baseCost = Math.random() * 2000 + 500;
+                const type = types[Math.floor(Math.random() * types.length)];
+                const costMultiplier = type === 'AEREO' ? 2.5 : type === 'MARE' ? 0.8 : 1.2;
+                
+                shipments.push({
+                    n_oda: `ODA-2024-${String(i + 1).padStart(5, '0')}`,
+                    data_partenza: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    fornitore: suppliers[Math.floor(Math.random() * suppliers.length)],
+                    spedizioniere: carriers[Math.floor(Math.random() * carriers.length)],
+                    tipo_spedizione: type,
+                    quantita: quantity,
+                    costo_trasporto: baseCost * costMultiplier,
+                    costo_unitario_trasporto: (baseCost * costMultiplier) / quantity
+                });
+            }
+            
+            // Calculate KPIs
+            const totalCost = shipments.reduce((sum, s) => sum + s.costo_trasporto, 0);
+            const avgCost = totalCost / shipments.length;
+            
+            return {
+                shipments,
+                kpis: {
+                    totalCost,
+                    totalCostChange: -8.5,
+                    avgShipmentCost: avgCost,
+                    avgCostChange: 3.2,
+                    budgetUsed: 73,
+                    budgetRemaining: 35000,
+                    potentialSavings: 12500
+                },
+                budget: {
+                    monthly: 150000,
+                    spent: totalCost,
+                    projected: totalCost * 1.2,
+                    percentage: 73
+                }
+            };
+        }
+
+        // Update KPIs
+        function updateKPIs(kpis) {
+            document.getElementById('totalCost').textContent = formatCurrency(kpis.totalCost);
+            document.getElementById('totalCostChange').textContent = Math.abs(kpis.totalCostChange).toFixed(1) + '%';
+            
+            const totalCostChangeEl = document.querySelector('#totalCost').nextElementSibling;
+            totalCostChangeEl.className = kpis.totalCostChange < 0 ? 'kpi-change positive' : 'kpi-change negative';
+            totalCostChangeEl.innerHTML = `
+                <i class="fas fa-arrow-${kpis.totalCostChange < 0 ? 'down' : 'up'}"></i>
+                <span>${Math.abs(kpis.totalCostChange).toFixed(1)}%</span> vs mese precedente
+            `;
+            
+            document.getElementById('avgShipmentCost').textContent = formatCurrency(kpis.avgShipmentCost);
+            document.getElementById('avgCostChange').textContent = Math.abs(kpis.avgCostChange).toFixed(1) + '%';
+            
+            const avgCostChangeEl = document.querySelector('#avgShipmentCost').nextElementSibling;
+            avgCostChangeEl.className = kpis.avgCostChange < 0 ? 'kpi-change positive' : 'kpi-change negative';
+            avgCostChangeEl.innerHTML = `
+                <i class="fas fa-arrow-${kpis.avgCostChange < 0 ? 'down' : 'up'}"></i>
+                <span>${Math.abs(kpis.avgCostChange).toFixed(1)}%</span> vs mese precedente
+            `;
+            
+            document.getElementById('budgetUsed').textContent = kpis.budgetUsed + '%';
+            document.getElementById('budgetRemaining').textContent = formatCurrency(kpis.budgetRemaining);
+            document.getElementById('potentialSavings').textContent = formatCurrency(kpis.potentialSavings);
+        }
+
+        // Update budget comparison
+        function updateBudgetComparison(budget) {
+            const percentage = budget.percentage;
+            const budgetBar = document.getElementById('budgetBar');
+            const budgetLabel = document.getElementById('budgetLabel');
+            
+            budgetBar.style.width = percentage + '%';
+            budgetLabel.textContent = percentage + '%';
+            
+            // Update bar color based on percentage
+            if (percentage > 90) {
+                budgetBar.className = 'budget-fill danger';
+            } else if (percentage > 75) {
+                budgetBar.className = 'budget-fill warning';
+            } else {
+                budgetBar.className = 'budget-fill';
+            }
+            
+            // Update values
+            document.getElementById('monthlyBudget').textContent = formatCurrency(budget.monthly);
+            document.getElementById('spentAmount').textContent = formatCurrency(budget.spent);
+            document.getElementById('projectedAmount').textContent = formatCurrency(budget.projected);
+            
+            // Update status
+            const statusEl = document.getElementById('budgetStatus');
+            if (percentage > 90) {
+                statusEl.innerHTML = '<span class="cost-badge high">Oltre budget</span>';
+            } else if (percentage > 75) {
+                statusEl.innerHTML = '<span class="cost-badge medium">Attenzione</span>';
+            } else {
+                statusEl.innerHTML = '<span class="cost-badge low">Sotto controllo</span>';
+            }
+            
+            document.getElementById('budgetAmount').textContent = formatCurrency(budget.monthly);
+        }
+
+        // Update all charts
+        function updateCharts() {
+            updateCostTrendChart();
+            updateCarrierCostChart();
+            updateTypeCostChart();
+            updateSupplierCostChart();
+            updateCostDistributionChart();
+        }
+
+        // Update cost trend chart
+        function updateCostTrendChart(period = 'daily') {
+            const chartData = prepareTrendData(period);
+            
+            const options = {
+                ...chartTheme,
+                series: [{
+                    name: 'Costo Trasporto',
+                    data: chartData
+                }],
+                chart: {
+                    ...chartTheme.chart,
+                    type: 'area',
+                    height: 350
+                },
+                xaxis: {
+                    ...chartTheme.xaxis,
+                    type: 'datetime'
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.2,
+                        stops: [0, 90, 100]
+                    }
+                }
+            };
+            
+            if (chartInstances.costTrend) {
+                chartInstances.costTrend.updateOptions(options);
+            } else {
+                chartInstances.costTrend = new ApexCharts(document.querySelector("#costTrendChart"), options);
+                chartInstances.costTrend.render();
+            }
+        }
+
+        // Update carrier cost chart
+        function updateCarrierCostChart() {
+            const carrierData = aggregateByCarrier();
+            
+            const options = {
+                ...chartTheme,
+                series: carrierData.values,
+                labels: carrierData.labels,
+                chart: {
+                    ...chartTheme.chart,
+                    type: 'donut',
+                    height: 350
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%'
+                        }
+                    }
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            width: 300
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }]
+            };
+            
+            if (chartInstances.carrierCost) {
+                chartInstances.carrierCost.destroy();
+            }
+            chartInstances.carrierCost = new ApexCharts(document.querySelector("#carrierCostChart"), options);
+            chartInstances.carrierCost.render();
+        }
+
+        // Update type cost chart
+        function updateTypeCostChart() {
+            const typeData = aggregateByType();
+            
+            const options = {
+                ...chartTheme,
+                series: [{
+                    name: 'Costo',
+                    data: typeData.values
+                }],
+                chart: {
+                    ...chartTheme.chart,
+                    type: 'bar',
+                    height: 350
+                },
+                xaxis: {
+                    ...chartTheme.xaxis,
+                    categories: typeData.labels
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 8,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                }
+            };
+            
+            if (chartInstances.typeCost) {
+                chartInstances.typeCost.destroy();
+            }
+            chartInstances.typeCost = new ApexCharts(document.querySelector("#typeCostChart"), options);
+            chartInstances.typeCost.render();
+        }
+
+        // Update supplier cost chart
+        function updateSupplierCostChart() {
+            const supplierData = aggregateBySupplier();
+            
+            const options = {
+                ...chartTheme,
+                series: [{
+                    name: 'Costo Trasporto',
+                    data: supplierData.values.slice(0, 10)
+                }],
+                chart: {
+                    ...chartTheme.chart,
+                    type: 'bar',
+                    height: 350
+                },
+                xaxis: {
+                    ...chartTheme.xaxis,
+                    categories: supplierData.labels.slice(0, 10)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4
+                    }
+                }
+            };
+            
+            if (chartInstances.supplierCost) {
+                chartInstances.supplierCost.destroy();
+            }
+            chartInstances.supplierCost = new ApexCharts(document.querySelector("#supplierCostChart"), options);
+            chartInstances.supplierCost.render();
+        }
+
+        // Update cost distribution chart
+        function updateCostDistributionChart() {
+            const distribution = calculateCostDistribution();
+            
+            const options = {
+                ...chartTheme,
+                series: distribution.values,
+                labels: distribution.labels,
+                chart: {
+                    ...chartTheme.chart,
+                    type: 'pie',
+                    height: 350
+                },
+                legend: {
+                    position: 'right'
+                }
+            };
+            
+            if (chartInstances.costDistribution) {
+                chartInstances.costDistribution.destroy();
+            }
+            chartInstances.costDistribution = new ApexCharts(document.querySelector("#costDistributionChart"), options);
+            chartInstances.costDistribution.render();
+        }
+
+        // Data aggregation functions
+        function prepareTrendData(period) {
+            const grouped = {};
+            
+            filteredData.forEach(item => {
+                const date = new Date(item.data_partenza);
+                let key;
+                
+                if (period === 'daily') {
+                    key = date.toISOString().split('T')[0];
+                } else if (period === 'weekly') {
+                    const weekStart = new Date(date.setDate(date.getDate() - date.getDay()));
+                    key = weekStart.toISOString().split('T')[0];
+                } else {
+                    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+                
+                if (!grouped[key]) {
+                    grouped[key] = 0;
+                }
+                grouped[key] += item.costo_trasporto;
+            });
+            
+            return Object.entries(grouped)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, value]) => ({
+                    x: new Date(date).getTime(),
+                    y: Math.round(value)
+                }));
+        }
+
+        function aggregateByCarrier() {
+            const grouped = {};
+            
+            filteredData.forEach(item => {
+                if (!grouped[item.spedizioniere]) {
+                    grouped[item.spedizioniere] = 0;
+                }
+                grouped[item.spedizioniere] += item.costo_trasporto;
+            });
+            
+            const sorted = Object.entries(grouped)
+                .sort(([,a], [,b]) => b - a);
+            
+            return {
+                labels: sorted.map(([carrier]) => carrier),
+                values: sorted.map(([, cost]) => Math.round(cost))
+            };
+        }
+
+        function aggregateByType() {
+            const grouped = {};
+            
+            filteredData.forEach(item => {
+                if (!grouped[item.tipo_spedizione]) {
+                    grouped[item.tipo_spedizione] = 0;
+                }
+                grouped[item.tipo_spedizione] += item.costo_trasporto;
+            });
+            
+            return {
+                labels: Object.keys(grouped),
+                values: Object.values(grouped).map(v => Math.round(v))
+            };
+        }
+
+        function aggregateBySupplier() {
+            const grouped = {};
+            
+            filteredData.forEach(item => {
+                if (!grouped[item.fornitore]) {
+                    grouped[item.fornitore] = 0;
+                }
+                grouped[item.fornitore] += item.costo_trasporto;
+            });
+            
+            const sorted = Object.entries(grouped)
+                .sort(([,a], [,b]) => b - a);
+            
+            return {
+                labels: sorted.map(([supplier]) => supplier),
+                values: sorted.map(([, cost]) => Math.round(cost))
+            };
+        }
+
+        function calculateCostDistribution() {
+            const ranges = {
+                '< €500': 0,
+                '€500 - €1000': 0,
+                '€1000 - €2000': 0,
+                '€2000 - €5000': 0,
+                '> €5000': 0
+            };
+            
+            filteredData.forEach(item => {
+                const cost = item.costo_trasporto;
+                if (cost < 500) ranges['< €500']++;
+                else if (cost < 1000) ranges['€500 - €1000']++;
+                else if (cost < 2000) ranges['€1000 - €2000']++;
+                else if (cost < 5000) ranges['€2000 - €5000']++;
+                else ranges['> €5000']++;
+            });
+            
+            return {
+                labels: Object.keys(ranges),
+                values: Object.values(ranges)
+            };
+        }
+
+        // Update table
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // Sort data
+            const sorted = [...filteredData].sort((a, b) => {
+                let aVal = a[sortColumn];
+                let bVal = b[sortColumn];
+                
+                if (typeof aVal === 'string') {
+                    
