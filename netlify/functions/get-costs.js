@@ -66,7 +66,7 @@ exports.handler = async (event, context) => {
         // Get query parameters
         const { period = '30' } = event.queryStringParameters || {};
         
-        // Calculate date range
+        // Calculate date range - FIX: Properly handle date calculations
         const endDate = new Date();
         const startDate = new Date();
         
@@ -76,7 +76,7 @@ exports.handler = async (event, context) => {
             if (start) startDate.setTime(Date.parse(start));
             if (end) endDate.setTime(Date.parse(end));
         } else {
-            const days = parseInt(period);
+            const days = parseInt(period) || 30;
             startDate.setDate(startDate.getDate() - days);
         }
 
@@ -106,14 +106,18 @@ exports.handler = async (event, context) => {
             throw shipmentsError;
         }
 
-        // Calculate KPIs
-        const totalCost = shipments.reduce((sum, s) => sum + (s.costo_trasporto || 0), 0);
-        const avgShipmentCost = shipments.length > 0 ? totalCost / shipments.length : 0;
+        // Ensure shipments is an array
+        const shipmentsData = shipments || [];
 
-        // Get previous period data for comparison
-        const prevStartDate = new Date(startDate);
+        // Calculate KPIs
+        const totalCost = shipmentsData.reduce((sum, s) => sum + (parseFloat(s.costo_trasporto) || 0), 0);
+        const avgShipmentCost = shipmentsData.length > 0 ? totalCost / shipmentsData.length : 0;
+
+        // Get previous period data for comparison - FIX: Proper date calculation
+        const periodDays = parseInt(period) || 30;
         const prevEndDate = new Date(startDate);
-        prevStartDate.setDate(prevStartDate.getDate() - (endDate - startDate) / (1000 * 60 * 60 * 24));
+        const prevStartDate = new Date(startDate);
+        prevStartDate.setDate(prevStartDate.getDate() - periodDays);
         
         const { data: prevShipments } = await supabase
             .from('shipments')
@@ -123,8 +127,9 @@ exports.handler = async (event, context) => {
             .lt('data_partenza', prevEndDate.toISOString())
             .not('costo_trasporto', 'is', null);
 
-        const prevTotalCost = prevShipments?.reduce((sum, s) => sum + (s.costo_trasporto || 0), 0) || 0;
-        const prevAvgCost = prevShipments?.length > 0 ? prevTotalCost / prevShipments.length : 0;
+        const prevShipmentsData = prevShipments || [];
+        const prevTotalCost = prevShipmentsData.reduce((sum, s) => sum + (parseFloat(s.costo_trasporto) || 0), 0);
+        const prevAvgCost = prevShipmentsData.length > 0 ? prevTotalCost / prevShipmentsData.length : 0;
 
         // Calculate changes
         const totalCostChange = prevTotalCost > 0 ? ((totalCost - prevTotalCost) / prevTotalCost) * 100 : 0;
@@ -133,13 +138,15 @@ exports.handler = async (event, context) => {
         // Get budget info (could be from organization settings)
         const monthlyBudget = 150000; // Default, should come from organization settings
         const daysInMonth = 30;
-        const daysElapsed = Math.min((endDate - new Date(endDate.getFullYear(), endDate.getMonth(), 1)) / (1000 * 60 * 60 * 24), daysInMonth);
+        const currentDate = new Date();
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const daysElapsed = Math.min(Math.ceil((currentDate - monthStart) / (1000 * 60 * 60 * 24)), daysInMonth);
         const budgetProrated = (monthlyBudget / daysInMonth) * daysElapsed;
-        const budgetUsed = Math.round((totalCost / budgetProrated) * 100);
+        const budgetUsed = budgetProrated > 0 ? Math.round((totalCost / budgetProrated) * 100) : 0;
         const budgetRemaining = Math.max(monthlyBudget - totalCost, 0);
         
         // Calculate projected month-end cost
-        const dailyAvg = totalCost / daysElapsed;
+        const dailyAvg = daysElapsed > 0 ? totalCost / daysElapsed : 0;
         const projectedMonthTotal = dailyAvg * daysInMonth;
 
         // Calculate potential savings (example: 8% optimization)
@@ -147,7 +154,7 @@ exports.handler = async (event, context) => {
 
         // Prepare response
         const response = {
-            shipments: shipments || [],
+            shipments: shipmentsData,
             kpis: {
                 totalCost,
                 totalCostChange,
@@ -156,7 +163,7 @@ exports.handler = async (event, context) => {
                 budgetUsed,
                 budgetRemaining,
                 potentialSavings,
-                shipmentCount: shipments.length
+                shipmentCount: shipmentsData.length
             },
             budget: {
                 monthly: monthlyBudget,

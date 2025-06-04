@@ -533,7 +533,18 @@
         function updateKPIs(kpis) { if(!kpis) return; document.getElementById('totalCost').textContent = formatCurrency(kpis.totalCost); const tcCE=document.getElementById('totalCostChange'),tcCIP=tcCE?.parentElement; if(tcCE&&tcCIP){tcCE.textContent=Math.abs(kpis.totalCostChange||0).toFixed(1)+'%';tcCIP.className=(kpis.totalCostChange||0)<0?'kpi-change positive':'kpi-change negative';tcCIP.querySelector('i').className=`fas fa-arrow-${(kpis.totalCostChange||0)<0?'down':'up'}`;} document.getElementById('avgShipmentCost').textContent=formatCurrency(kpis.avgShipmentCost); const acCE=document.getElementById('avgCostChange'),acCIP=acCE?.parentElement; if(acCE&&acCIP){acCE.textContent=Math.abs(kpis.avgCostChange||0).toFixed(1)+'%';acCIP.className=(kpis.avgCostChange||0)<0?'kpi-change positive':'kpi-change negative';acCIP.querySelector('i').className=`fas fa-arrow-${(kpis.avgCostChange||0)<0?'down':'up'}`;} document.getElementById('budgetUsed').textContent=(kpis.budgetUsed||0)+'%'; document.getElementById('budgetRemaining').textContent=formatCurrency(kpis.budgetRemaining||0); document.getElementById('potentialSavings').textContent=formatCurrency(kpis.potentialSavings||0); }
         function updateBudgetComparison(budget) { if(!budget) return; const p=budget.percentage||0,bB=document.getElementById('budgetBar'),bL=document.getElementById('budgetLabel'); if(bB)bB.style.width=p+'%'; if(bL)bL.textContent=p+'%'; if(bB){if(p>90)bB.className='budget-fill danger';else if(p>75)bB.className='budget-fill warning';else bB.className='budget-fill';} document.getElementById('monthlyBudget').textContent=formatCurrency(budget.monthly); document.getElementById('spentAmount').textContent=formatCurrency(budget.spent); document.getElementById('projectedAmount').textContent=formatCurrency(budget.projected); const sE=document.getElementById('budgetStatus'); if(sE){if(p>90)sE.innerHTML='<span class="cost-badge high">Oltre budget</span>';else if(p>75)sE.innerHTML='<span class="cost-badge medium">Attenzione</span>';else sE.innerHTML='<span class="cost-badge low">Sotto controllo</span>';} document.getElementById('budgetAmount').textContent=formatCurrency(budget.monthly); }
 
-        function updateCharts() { updateCostTrendChart(); updateCarrierCostChart(); updateTypeCostChart(); updateSupplierCostChart(); updateCostDistributionChart(); }
+        // START OF USER PROVIDED CHART FUNCTIONS
+        function updateCharts() { 
+            // Add a small delay to ensure DOM is ready
+            setTimeout(() => {
+                updateCostTrendChart(); 
+                updateCarrierCostChart(); 
+                updateTypeCostChart(); 
+                updateSupplierCostChart(); 
+                updateCostDistributionChart();
+            }, 100);
+        }
+        
         function updateCostTrendChart(period = 'daily') { const data = prepareTrendData(period); const opts = {...chartTheme, series:[{name:'Costo Trasporto',data}], chart:{...chartTheme.chart,type:'area',height:350}, xaxis:{...chartTheme.xaxis,type:'datetime'}, fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.7,opacityTo:0.2,stops:[0,90,100]}}}; renderOrUpdateChart('costTrend',"#costTrendChart",opts); }
         function updateCarrierCostChart() { const data = aggregateByCarrier(); const opts = {...chartTheme,series:data.values,labels:data.labels,chart:{...chartTheme.chart,type:'donut',height:350},plotOptions:{pie:{donut:{size:'65%'}}},responsive:[{breakpoint:480,options:{chart:{width:300},legend:{position:'bottom'}}}]}; renderOrUpdateChart('carrierCost',"#carrierCostChart",opts,true); }
         function updateTypeCostChart() { const data = aggregateByType(); const opts = {...chartTheme,series:[{name:'Costo',data:data.values}],chart:{...chartTheme.chart,type:'bar',height:350},xaxis:{...chartTheme.xaxis,categories:data.labels},plotOptions:{bar:{borderRadius:8,dataLabels:{position:'top'}}}}; renderOrUpdateChart('typeCost',"#typeCostChart",opts,true); }
@@ -544,42 +555,58 @@
             const el=document.querySelector(sel); 
             if(!el) { console.warn(`Chart element ${sel} not found for chart: ${key}`); return; }
             
-            // Ensure chart options have a valid height before rendering/updating
-            let chartHeight = opts.chart?.height || el.style.height || '350px';
-            if (typeof chartHeight === 'string' && chartHeight.endsWith('px')) {
-                chartHeight = parseInt(chartHeight, 10);
-            } else if (typeof chartHeight !== 'number' || chartHeight <= 0) {
-                chartHeight = 350; // Default fixed height if invalid
-            }
-             opts.chart = { ...opts.chart, height: chartHeight, width: '100%' };
-
-
-            if (el.offsetParent === null || el.offsetHeight <= 0) { 
-                console.warn(`Chart container ${sel} for ${key} is not visible or has no valid height (${el.offsetHeight}px). Retrying render/update...`);
-                setTimeout(() => renderOrUpdateChart(key, sel, opts, recreate), 250);
+            // Wait for container to be visible and have valid dimensions
+            if (el.offsetParent === null || el.offsetHeight <= 0 || el.offsetWidth <= 0) { 
+                console.warn(`Chart container ${sel} for ${key} is not visible yet. Retrying...`);
+                setTimeout(() => renderOrUpdateChart(key, sel, opts, recreate), 100);
                 return;
             }
+            
+            // Ensure valid dimensions
+            const containerHeight = el.offsetHeight || 350;
+            const containerWidth = el.offsetWidth || el.parentElement.offsetWidth || 400;
+            
+            // Update chart options with valid dimensions
+            opts.chart = { 
+                ...opts.chart, 
+                height: containerHeight > 50 ? containerHeight : 350,
+                width: '100%'
+            };
 
             try {
                 if(chartInstances[key] && typeof chartInstances[key].updateOptions === 'function' && !recreate){
-                    chartInstances[key].updateOptions(opts,true,true,true).catch(e=>console.error(`Chart update error for ${key}:`, e, "Options:", opts));
+                    chartInstances[key].updateOptions(opts, true, true, true);
                 } else {
-                    if(chartInstances[key] && typeof chartInstances[key].destroy === 'function') chartInstances[key].destroy();
-                    
-                    const currentEl = document.querySelector(sel); // Re-fetch element
-                    if(currentEl && currentEl.offsetHeight > 0){ 
-                         chartInstances[key]=new ApexCharts(currentEl,opts); 
-                         chartInstances[key].render().catch(e=>console.error(`Chart render error for ${key}:`, e, "Options:", opts, "Element:", currentEl));
-                    } else if (currentEl) {
-                        console.error(`Cannot render chart ${key}: Element ${sel} still has no/invalid height after delay. OffsetHeight: ${currentEl.offsetHeight}`);
-                    } else {
-                        console.error(`Cannot render chart ${key}: Element ${sel} not found after delay.`);
+                    // Destroy existing chart
+                    if(chartInstances[key] && typeof chartInstances[key].destroy === 'function') {
+                        chartInstances[key].destroy();
+                        delete chartInstances[key];
                     }
+                    
+                    // Clear container
+                    el.innerHTML = '';
+                    
+                    // Create new chart
+                    chartInstances[key] = new ApexCharts(el, opts); 
+                    chartInstances[key].render();
                 }
             } catch(e) {
-                 console.error(`General error in renderOrUpdateChart for ${key}:`, e, "Options:", opts);
+                console.error(`Error in renderOrUpdateChart for ${key}:`, e);
+                // Try again after a delay
+                setTimeout(() => {
+                    try {
+                        if(chartInstances[key]) chartInstances[key].destroy();
+                        delete chartInstances[key];
+                        el.innerHTML = '';
+                        chartInstances[key] = new ApexCharts(el, opts);
+                        chartInstances[key].render();
+                    } catch(e2) {
+                        console.error(`Failed to render chart ${key} after retry:`, e2);
+                    }
+                }, 500);
             }
         }
+        // END OF USER PROVIDED CHART FUNCTIONS
 
         function prepareTrendData(period) { const g={}; filteredData.forEach(i=>{const d=new Date(i.data_partenza); let k; if(period==='daily')k=d.toISOString().split('T')[0]; else if(period==='weekly'){const s=new Date(d);s.setDate(s.getDate()-s.getDay()+(s.getDay()===0?-6:1));k=s.toISOString().split('T')[0];} else k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; if(!g[k])g[k]=0;g[k]+=(i.costo_trasporto||0);}); return Object.entries(g).sort(([a],[b])=>new Date(a)-new Date(b)).map(([d,v])=>({x:new Date(d).getTime(),y:Math.round(v)}));}
         function aggregateByCarrier() { const g={}; filteredData.forEach(i=>{const c=i.spedizioniere||'N/D';if(!g[c])g[c]=0;g[c]+=(i.costo_trasporto||0);}); const s=Object.entries(g).sort(([,a],[,b])=>b-a); return{labels:s.map(([l])=>l),values:s.map(([,c])=>Math.round(c))};}
