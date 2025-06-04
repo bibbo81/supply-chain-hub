@@ -310,19 +310,22 @@
         }
         
         .password-input-wrapper .form-control {
-            padding-right: 3rem;
+            padding-right: 2.5rem;
         }
         
         .password-toggle {
             position: absolute;
-            right: var(--sol-space-md);
+            right: 0;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             color: var(--sol-text-tertiary);
             cursor: pointer;
-            padding: var(--sol-space-sm);
+            padding: 0 var(--sol-space-md);
+            height: 100%;
+            display: flex;
+            align-items: center;
             transition: var(--sol-transition-base);
             z-index: 2;
         }
