@@ -306,7 +306,7 @@ async function handleChangePassword(user, data, token) {
             requireUppercase: true,
             requireLowercase: true,
             requireNumbers: true,
-        requireSpecialChars: true
+            requireSpecialChars: true
           }
         })
       };
@@ -342,7 +342,7 @@ async function handleChangePassword(user, data, token) {
 
     // Log the password change
     await logActivity(user.id, 'password_changed', {
-      ip: event.headers['x-forwarded-for'] || 'unknown'
+      ip: 'unknown'
     });
 
     return {
