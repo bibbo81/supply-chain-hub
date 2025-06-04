@@ -304,6 +304,37 @@
         }
         
         /* Password Section */
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .password-input-wrapper .form-control {
+            padding-right: 3rem;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: var(--sol-space-md);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--sol-text-tertiary);
+            cursor: pointer;
+            padding: var(--sol-space-sm);
+            transition: var(--sol-transition-base);
+            z-index: 2;
+        }
+        
+        .password-toggle:hover {
+            color: var(--sol-text-secondary);
+        }
+        
+        .password-toggle:focus {
+            outline: none;
+        }
+        
         .password-requirements {
             margin-top: var(--sol-space-md);
             padding: var(--sol-space-md);
@@ -896,9 +927,9 @@
                     <div class="form-grid">
                         <div class="form-group full-width">
                             <label class="form-label required" for="currentPassword">Password Attuale</label>
-                            <div style="position: relative;">
-                                <input type="password" id="currentPassword" class="form-control" required style="padding-right: 3rem;">
-                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('currentPassword')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sol-text-tertiary); cursor: pointer; padding: 0.5rem;">
+                            <div class="password-input-wrapper">
+                                <input type="password" id="currentPassword" class="form-control" required>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('currentPassword')">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -906,9 +937,9 @@
 
                         <div class="form-group">
                             <label class="form-label required" for="newPassword">Nuova Password</label>
-                            <div style="position: relative;">
-                                <input type="password" id="newPassword" class="form-control" required style="padding-right: 3rem;">
-                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPassword')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sol-text-tertiary); cursor: pointer; padding: 0.5rem;">
+                            <div class="password-input-wrapper">
+                                <input type="password" id="newPassword" class="form-control" required>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPassword')">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -916,9 +947,9 @@
 
                         <div class="form-group">
                             <label class="form-label required" for="confirmPassword">Conferma Password</label>
-                            <div style="position: relative;">
-                                <input type="password" id="confirmPassword" class="form-control" required style="padding-right: 3rem;">
-                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword')" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--sol-text-tertiary); cursor: pointer; padding: 0.5rem;">
+                            <div class="password-input-wrapper">
+                                <input type="password" id="confirmPassword" class="form-control" required>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword')">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
