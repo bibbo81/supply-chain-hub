@@ -117,7 +117,7 @@
         .sol-main-content { margin-top: 80px; padding: var(--sol-space-xl); max-width: 1600px; margin-left: auto; margin-right: auto; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
         .kpi-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); transition: all 0.3s ease; position: relative; }
-        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; padding-top: 20px; /* Spazio per la drag bar */ }
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-md); position: relative; }
         .kpi-title { font-size: 0.875rem; color: var(--sol-text-secondary); font-weight: 500; flex-grow: 1; }
         .kpi-icon-wrapper { display: flex; align-items: center; }
         .kpi-icon { width: 40px; height: 40px; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; }
@@ -153,9 +153,9 @@
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(470px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
-        .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); box-shadow: var(--sol-shadow-md); overflow: hidden; display: flex; flex-direction: column; min-height: 400px;}
+        .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); overflow: hidden; display: flex; flex-direction: column; min-height: 400px; position: relative;}
         .chart-card.full-width { grid-column: 1 / -1; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; padding-top: 20px; /* Aumentato per drag bar */ }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; }
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
         .chart-actions { display: flex; gap: var(--sol-space-sm); }
@@ -315,8 +315,8 @@
 
         <div class="kpi-grid" id="kpiGridContainer">
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.1s;" data-id="totalCostCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="kpi-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Costo Totale</h3>
                     <div class="kpi-icon-wrapper">
                         <div class="kpi-icon"><i class="fas fa-euro-sign"></i></div>
@@ -326,8 +326,8 @@
                 <div class="kpi-change positive"><i class="fas fa-arrow-down"></i><span id="totalCostChange">0%</span> vs mese precedente</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.2s;" data-id="avgShipmentCostCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="kpi-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Costo Medio Spedizione</h3>
                      <div class="kpi-icon-wrapper">
                         <div class="kpi-icon"><i class="fas fa-box"></i></div>
@@ -337,8 +337,8 @@
                 <div class="kpi-change negative"><i class="fas fa-arrow-up"></i><span id="avgCostChange">0%</span> vs mese precedente</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.3s;" data-id="budgetUsedCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="kpi-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Budget Utilizzato</h3>
                     <div class="kpi-icon-wrapper">
                         <div class="kpi-icon"><i class="fas fa-chart-pie"></i></div>
@@ -348,8 +348,8 @@
                 <div class="kpi-change positive"><i class="fas fa-check-circle"></i><span id="budgetRemaining">€0</span> rimanenti</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.4s;" data-id="potentialSavingsCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="kpi-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="kpi-title">Risparmio Potenziale</h3>
                     <div class="kpi-icon-wrapper">
                         <div class="kpi-icon"><i class="fas fa-piggy-bank"></i></div>
@@ -381,8 +381,8 @@
 
         <div class="charts-grid" id="chartsGridContainer">
             <div class="chart-card full-width" data-id="costTrendChartCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="chart-header">
-                     <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Trend Costi nel Tempo</h3>
                     <div class="chart-actions-wrapper">
                         <div class="chart-actions"><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('daily')">Giornaliero</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('weekly')">Settimanale</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('monthly')">Mensile</button></div>
@@ -391,8 +391,8 @@
                 <div class="chart-container" id="costTrendChart"></div>
             </div>
             <div class="chart-card" data-id="carrierCostChartCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="chart-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Costi per Spedizioniere</h3>
                      <div class="chart-actions-wrapper">
                         <button class="sol-btn sol-btn-glass" onclick="toggleChartType('carrier')"><i class="fas fa-sync-alt"></i></button>
@@ -401,8 +401,8 @@
                 <div class="chart-container" id="carrierCostChart"></div>
             </div>
             <div class="chart-card" data-id="typeCostChartCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="chart-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Costi per Tipo Spedizione</h3>
                      <div class="chart-actions-wrapper">
                         <button class="sol-btn sol-btn-glass" onclick="toggleChartType('type')"><i class="fas fa-sync-alt"></i></button>
@@ -411,8 +411,8 @@
                 <div class="chart-container" id="typeCostChart"></div>
             </div>
             <div class="chart-card" data-id="supplierCostChartCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="chart-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Top 10 Fornitori per Costo</h3>
                     <div class="chart-actions-wrapper">
                         <button class="sol-btn sol-btn-glass" onclick="refreshSupplierChart()"><i class="fas fa-sync-alt"></i></button>
@@ -421,8 +421,8 @@
                 <div class="chart-container" id="supplierCostChart"></div>
             </div>
             <div class="chart-card" data-id="costDistributionChartCard">
+                <i class="fas fa-grip-lines card-drag-handle"></i>
                 <div class="chart-header">
-                    <i class="fas fa-grip-lines card-drag-handle"></i>
                     <h3 class="chart-title">Distribuzione Costi</h3>
                     <div class="chart-actions-wrapper">
                         <div style="position: relative;"><button class="sol-btn sol-btn-primary" onclick="toggleExportMenu(event)"><i class="fas fa-download"></i> Export</button><div class="export-menu" id="exportMenu"><button class="export-option" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button><button class="export-option" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button><button class="export-option" onclick="exportToCSV()"><i class="fas fa-file-csv"></i> Export CSV</button></div></div>
