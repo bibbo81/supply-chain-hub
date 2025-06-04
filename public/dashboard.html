@@ -119,7 +119,7 @@
         /* Widget System */
         .widgets-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: var(--sol-space-lg);
             margin-bottom: var(--sol-space-2xl);
         }
@@ -136,7 +136,6 @@
             position: relative;
             animation: sol-fade-in 0.6s ease-out backwards;
         }
-        
         @keyframes sol-fade-in { 
             from {
                 opacity: 0;
@@ -168,7 +167,9 @@
             border: 1px solid var(--sol-text-accent);
         }
 
-        .widget.sortable-chosen { }
+        .widget.sortable-chosen { 
+            /* Stile per l'elemento originale mentre viene trascinato */
+        }
         .widget.dragging,
         .widget.sortable-chosen { 
             user-select: none;
@@ -187,13 +188,6 @@
             padding-bottom: var(--sol-space-sm);
         }
         
-        .widget-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--sol-text-primary);
-            margin: 0;
-        }
-        
         .card-drag-handle {
             position: absolute;
             top: -10px; 
@@ -210,11 +204,8 @@
             transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
             z-index: 10; 
         }
-        
-        .widget:hover .card-drag-handle { 
-            opacity: 1; 
-            background-color: rgba(255,255,255,0.18); 
-        }
+        .widget:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
+        .widget-grip { display: none; } /* Nasconde il vecchio drag handle */
         
         .widget-actions {
             display: flex;
@@ -247,15 +238,19 @@
             transform: scale(1.1);
         }
         
-        .widget-content {
-            flex-grow: 1;
-        }
-        
         .widget.chart-widget .widget-content {
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 350px;
+        }
+        
+        .widget.chart-widget .sol-chart-container {
+            width: 100%;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .customize-fab {
@@ -346,39 +341,32 @@
             -webkit-backdrop-filter: var(--sol-blur-lg);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--sol-radius-xl);
-            padding: var(--sol-space-xl);
-            box-shadow: var(--sol-shadow-md);
-            min-height: 400px;
+            padding: var(--sol-space-lg);
+            box-shadow: var(--sol-shadow-sm);
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
         
         .sol-chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-md);
         }
         
         .sol-chart-title {
-            font-size: 1.125rem;
+            font-size: 1rem;
             font-weight: 600;
-            flex-grow: 1;
+            margin-bottom: var(--sol-space-xs);
         }
         
         .sol-chart-subtitle {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: var(--sol-text-tertiary);
         }
-        
-        .sol-chart-container {
-            width: 100%;
-            min-height: 350px;
-            height: 350px;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+
+        .chart-container {
+             width: 100%;
+             flex-grow: 1;
+             min-height: 250px;
         }
         
         .sol-modal {
@@ -509,15 +497,14 @@
         .sol-kpi-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: center; 
             margin-bottom: var(--sol-space-md);
         }
-        
+
         .sol-kpi-icon-wrapper {
             display: flex;
             align-items: center;
         }
-        
         .sol-kpi-icon {
             width: 40px;
             height: 40px;
@@ -529,7 +516,6 @@
             color: white;
             font-size: 1.25rem;
         }
-        
         .sol-kpi-change {
             display: flex;
             align-items: center;
@@ -537,11 +523,9 @@
             font-size: 0.875rem;
             font-weight: 600;
         }
-        
         .sol-kpi-change.positive {
             color: #34C759;
         }
-        
         .sol-kpi-change.negative {
             color: #FF3B30;
         }
@@ -551,7 +535,6 @@
             font-weight: 500;
             color: var(--sol-text-secondary);
             margin: 0;
-            flex-grow: 1;
         }
         
         .sol-kpi-trend {
@@ -574,7 +557,8 @@
             font-size: 2rem;
             font-weight: 700;
             color: var(--sol-text-primary);
-            margin-bottom: var(--sol-space-sm);
+            margin: var(--sol-space-md) 0 var(--sol-space-sm) 0;
+            line-height: 1.1;
         }
         
         .sol-kpi-subtitle {
@@ -601,22 +585,7 @@
             visibility: visible;
         }
         
-        /* Responsive adjustments for charts */
-        @media (min-width: 769px) and (max-width: 1200px) {
-            .widgets-container {
-                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            }
-            
-            .widget.chart-widget {
-                grid-column: span 1;
-            }
-        }
-        
         @media (max-width: 768px) {
-            .widgets-container {
-                grid-template-columns: 1fr;
-            }
-            
             .widget.chart-widget,
             .widget.table-widget {
                 grid-column: span 1;
@@ -625,11 +594,6 @@
             .customize-fab {
                 bottom: var(--sol-space-lg);
                 right: var(--sol-space-lg);
-            }
-            
-            .sol-chart-container {
-                height: 300px;
-                min-height: 300px;
             }
         }
         
@@ -737,127 +701,21 @@
             color: #007AFF;
             transform: translateX(2px);
         }
-        
-        /* Loading skeleton */
-        .loading-skeleton {
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: var(--sol-radius-md);
-        }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        /* Animations */
-        .sol-animate-in {
-            animation: sol-fade-in 0.6s ease-out;
-        }
-        
-        /* Stili per dropdown header */
-        .sol-dropdown { 
-            position: absolute; 
-            top: 70px; 
-            right: var(--sol-space-xl); 
-            background: rgba(20, 20, 30, 0.95) !important; 
-            backdrop-filter: var(--sol-blur-xl); 
-            -webkit-backdrop-filter: var(--sol-blur-xl); 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            border-radius: var(--sol-radius-lg); 
-            padding: var(--sol-space-sm); 
-            min-width: 200px; 
-            display: none; 
-            z-index: 1000; 
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); 
-        }
-        
-        .sol-dropdown-item { 
-            display: block; 
-            width: 100%; 
-            padding: var(--sol-space-sm) var(--sol-space-md); 
-            color: var(--sol-text-primary); 
-            text-decoration: none; 
-            border-radius: var(--sol-radius-sm); 
-            transition: var(--sol-transition-base); 
-            background: none; 
-            border: none; 
-            text-align: left; 
-            cursor: pointer; 
-        }
-        
-        .notification-item { 
-            padding: var(--sol-space-md) var(--sol-space-lg); 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
-            cursor: pointer; 
-            transition: var(--sol-transition-base); 
-        }
-        
-        .notification-item:hover { 
-            background: rgba(255,255,255,0.03); 
-        }
-        
-        .noti-icon-wrap { 
-            width: 40px; 
-            height: 40px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            flex-shrink: 0; 
-        }
-        
-        .noti-icon-wrap.error { 
-            background: rgba(255,59,48,0.15); 
-            color: #FF3B30; 
-        }
-        
-        .noti-icon-wrap.info { 
-            background: rgba(0,122,255,0.15); 
-            color: #007AFF; 
-        }
-        
-        .noti-content-wrap .noti-title { 
-            margin: 0; 
-            font-weight: 500; 
-            font-size: 0.875rem; 
-        }
-        
-        .noti-content-wrap .noti-desc { 
-            margin: 0; 
-            margin-top: 2px; 
-            font-size: 0.75rem; 
-            color: var(--sol-text-secondary); 
-        }
-        
-        .noti-content-wrap .noti-time { 
-            margin: 0; 
-            margin-top: 4px; 
-            font-size: 0.75rem; 
-            color: var(--sol-text-tertiary); 
-        }
-        
-        .sol-link { 
-            color: var(--sol-text-primary); 
-            text-decoration: none; 
-            font-size: 0.875rem; 
-            font-weight: 500; 
-        }
-        
-        .sidebar-section-title { 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.1em; 
-            color: var(--sol-text-tertiary); 
-            margin-bottom: var(--sol-space-sm); 
-            padding: 0 var(--sol-space-lg); 
-        }
-        
-        .chart-container { 
-            width: 100%;
-            height: 300px;
-        }
+        /* Stili per dropdown header (da dashboard.html) */
+        .sol-dropdown { position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95) !important; backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); }
+        .sol-dropdown-item { display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer; }
+        .sol-dropdown-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .notification-item { padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base); }
+        .notification-item:hover { background: rgba(255,255,255,0.03); }
+        .noti-icon-wrap { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .noti-icon-wrap.error { background: rgba(255,59,48,0.15); color: #FF3B30; }
+        .noti-icon-wrap.info { background: rgba(0,122,255,0.15); color: #007AFF; }
+        .noti-content-wrap .noti-title { margin: 0; font-weight: 500; font-size: 0.875rem; }
+        .noti-content-wrap .noti-desc { margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary); }
+        .noti-content-wrap .noti-time { margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary); }
+        .sol-link { color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500; }
+        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg); }
+
     </style>
 </head>
 <body>
@@ -1182,7 +1040,7 @@
     <script>
         // Funzione helper per formattazione numeri in italiano
         function formatCurrency(value, decimals = 0) {
-            if (typeof value !== 'number' || isNaN(value)) value = 0;
+            if (typeof value !== 'number') value = parseFloat(value) || 0;
             return new Intl.NumberFormat('it-IT', {
                 style: 'currency',
                 currency: 'EUR',
@@ -1192,7 +1050,7 @@
         }
 
         function formatNumber(value, decimals = 0) {
-            if (typeof value !== 'number' || isNaN(value)) value = 0;
+            if (typeof value !== 'number') value = parseFloat(value) || 0;
             return new Intl.NumberFormat('it-IT', {
                 minimumFractionDigits: decimals,
                 maximumFractionDigits: decimals
@@ -1202,65 +1060,25 @@
         // Chart theme
         const chartTheme = {
             theme: { mode: 'dark' },
-            chart: { 
-                background: 'transparent', 
-                toolbar: { show: false }, 
-                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800
-                }
-            },
-            grid: { 
-                borderColor: 'rgba(255, 255, 255, 0.1)', 
-                strokeDashArray: 0 
-            },
+            chart: { background: 'transparent', toolbar: { show: false }, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' },
+            grid: { borderColor: 'rgba(255, 255, 255, 0.1)', strokeDashArray: 0 },
             colors: ['#007AFF', '#5856D6', '#34C759', '#FF9500', '#FF3B30', '#AF52DE'],
             dataLabels: { enabled: false },
-            stroke: { 
-                curve: 'smooth', 
-                width: 3 
-            },
-            xaxis: { 
-                labels: { 
-                    style: { 
-                        colors: 'rgba(255, 255, 255, 0.5)' 
-                    } 
-                }, 
-                axisBorder: { show: false }, 
-                axisTicks: { show: false } 
-            },
-            yaxis: { 
-                labels: { 
-                    style: { 
-                        colors: 'rgba(255, 255, 255, 0.5)' 
-                    } 
-                } 
-            },
-            legend: { 
-                labels: { 
-                    colors: 'rgba(255, 255, 255, 0.7)' 
-                } 
-            },
-            tooltip: { 
-                theme: 'dark', 
-                style: { 
-                    fontSize: '12px' 
-                } 
-            }
+            stroke: { curve: 'smooth', width: 3 },
+            xaxis: { labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: 'rgba(255, 255, 255, 0.5)' } } },
+            legend: { labels: { colors: 'rgba(255, 255, 255, 0.7)' } },
+            tooltip: { theme: 'dark', style: { fontSize: '12px' } }
         };
 
-        // Dashboard Manager - Sistema personalizzazione
+        // Dashboard Manager
         window.dashboardManager = {
-            // Widget disponibili
             availableWidgets: {
-                // KPI Widgets
                 totalCost: {
-                    id: 'totalCost',
-                    type: 'kpi',
-                    title: 'Costo Totale Trasporto',
-                    description: 'Somma costi trasporto nel periodo',
+                    id: 'totalCost',    
+                    type: 'kpi',    
+                    title: 'Costo Totale Trasporto',    
+                    description: 'Somma costi trasporto nel periodo',    
                     icon: 'fa-euro-sign',
                     render: (data) => `
                         <div class="sol-kpi-card sol-animate-in">
@@ -1281,156 +1099,146 @@
                     `
                 },
                 totalShipments: {
-                    id: 'totalShipments',
-                    type: 'kpi',
-                    title: 'Spedizioni Totali',
-                    description: 'Numero totale spedizioni',
+                    id: 'totalShipments', 
+                    type: 'kpi', 
+                    title: 'Spedizioni Totali', 
+                    description: 'Numero totale spedizioni', 
                     icon: 'fa-box',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Spedizioni Totali</h3>
-                                <div class="sol-kpi-icon-wrapper">
-                                    <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #5856D6 0%, #7C7AED 100%);">
-                                        <i class="fas fa-box"></i>
-                                    </div>
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Spedizioni Totali</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #5856D6 0%, #7C7AED 100%);">
+                                    <i class="fas fa-box"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
-                            <div class="sol-kpi-change ${data.shipmentsGrowth >= 0 ? 'positive' : 'negative'}">
-                                <i class="fas fa-arrow-${data.shipmentsGrowth >= 0 ? 'up' : 'down'}"></i>
-                                <span>${formatNumber(Math.abs(data.shipmentsGrowth || 0), 1)}%</span>
-                                vs mese precedente
-                            </div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.totalShipments || 0)}</div>
+                        <div class="sol-kpi-change ${data.shipmentsGrowth >= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.shipmentsGrowth >= 0 ? 'up' : 'down'}"></i>
+                            <span>${formatNumber(Math.abs(data.shipmentsGrowth || 0), 1)}%</span>
+                            vs mese precedente
+                        </div>
+                    </div>`
                 },
                 avgDeliveryTime: {
-                    id: 'avgDeliveryTime',
-                    type: 'kpi',
-                    title: 'Tempo Medio Consegna',
-                    description: 'Giorni medi per consegna',
+                    id: 'avgDeliveryTime', 
+                    type: 'kpi', 
+                    title: 'Tempo Medio Consegna', 
+                    description: 'Giorni medi per consegna', 
                     icon: 'fa-clock',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Tempo Medio Consegna</h3>
-                                <div class="sol-kpi-icon-wrapper">
-                                    <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #FF9500 0%, #FFAB00 100%);">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Tempo Medio Consegna</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #FF9500 0%, #FFAB00 100%);">
+                                    <i class="fas fa-clock"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.avgDeliveryTime || 0, 1)}</div>
-                            <div class="sol-kpi-change ${data.deliveryTimeChange <= 0 ? 'positive' : 'negative'}">
-                                <i class="fas fa-arrow-${data.deliveryTimeChange <= 0 ? 'down' : 'up'}"></i>
-                                <span>${formatNumber(Math.abs(data.deliveryTimeChange || 0), 1)}%</span>
-                                giorni
-                            </div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.avgDeliveryTime || 0, 1)}</div>
+                        <div class="sol-kpi-change ${data.deliveryTimeChange <= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.deliveryTimeChange <= 0 ? 'down' : 'up'}"></i>
+                            <span>${formatNumber(Math.abs(data.deliveryTimeChange || 0), 1)}%</span>
+                            giorni
+                        </div>
+                    </div>`
                 },
                 onTimeDelivery: {
-                    id: 'onTimeDelivery',
-                    type: 'kpi',
-                    title: 'Tasso Puntualità',
-                    description: 'Percentuale consegne puntuali',
+                    id: 'onTimeDelivery', 
+                    type: 'kpi', 
+                    title: 'Tasso Puntualità', 
+                    description: 'Percentuale consegne puntuali', 
                     icon: 'fa-check-circle',
                     render: (data) => `
-                        <div class="sol-kpi-card sol-animate-in">
-                            <div class="sol-kpi-header">
-                                <h3 class="sol-kpi-title">Tasso Puntualità</h3>
-                                <div class="sol-kpi-icon-wrapper">
-                                    <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #34C759 0%, #30D158 100%);">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
+                    <div class="sol-kpi-card sol-animate-in">
+                        <div class="sol-kpi-header">
+                            <h3 class="sol-kpi-title">Tasso Puntualità</h3>
+                            <div class="sol-kpi-icon-wrapper">
+                                <div class="sol-kpi-icon" style="background: linear-gradient(135deg, #34C759 0%, #30D158 100%);">
+                                    <i class="fas fa-check-circle"></i>
                                 </div>
                             </div>
-                            <div class="sol-kpi-value">${formatNumber(data.onTimeDelivery || 0, 1)}%</div>
-                            <div class="sol-kpi-change ${data.onTimeChange >= 0 ? 'positive' : 'negative'}">
-                                <i class="fas fa-arrow-${data.onTimeChange >= 0 ? 'up' : 'down'}"></i>
-                                <span>${formatNumber(Math.abs(data.onTimeChange || 0), 1)}%</span>
-                                consegne puntuali
-                            </div>
                         </div>
-                    `
+                        <div class="sol-kpi-value">${formatNumber(data.onTimeDelivery || 0, 1)}%</div>
+                        <div class="sol-kpi-change ${data.onTimeChange >= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${data.onTimeChange >= 0 ? 'up' : 'down'}"></i>
+                            <span>${formatNumber(Math.abs(data.onTimeChange || 0), 1)}%</span>
+                            consegne puntuali
+                        </div>
+                    </div>`
                 },
                 budgetStatus: {
-                    id: 'budgetStatus',
-                    type: 'kpi',
-                    title: 'Stato Budget Mensile',
-                    description: 'Budget utilizzato vs disponibile',
+                    id: 'budgetStatus', 
+                    type: 'kpi', 
+                    title: 'Stato Budget Mensile', 
+                    description: 'Budget utilizzato vs disponibile', 
                     icon: 'fa-chart-pie',
                     render: (data) => {
-                        const monthlyBudget = 150000;
-                        const spent = data.costs?.totalTransportCost || 0;
-                        const percentage = Math.round((spent / monthlyBudget) * 100);
+                        const monthlyBudget = 150000; 
+                        const spent = data.costs?.totalTransportCost || 0; 
+                        const percentage = Math.round((spent / monthlyBudget) * 100); 
                         const remaining = monthlyBudget - spent;
-                        
-                        let iconColor = 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)';
-                        let statusClass = 'positive';
-                        
-                        if (percentage > 90) {
-                            iconColor = 'linear-gradient(135deg, #FF3B30 0%, #FF1744 100%)';
-                            statusClass = 'negative';
-                        } else if (percentage > 75) {
-                            iconColor = 'linear-gradient(135deg, #FF9500 0%, #FF6B00 100%)';
-                            statusClass = 'negative';
+                        let barClass = 'budget-fill'; 
+                        let statusText = 'Sotto controllo'; 
+                        let statusColor = '#34C759';
+                        if (percentage > 90) { 
+                            barClass += ' danger'; 
+                            statusText = 'Budget quasi esaurito!'; 
+                            statusColor = '#FF3B30'; 
+                        } 
+                        else if (percentage > 75) { 
+                            barClass += ' warning'; 
+                            statusText = 'Attenzione al budget'; 
+                            statusColor = '#FF9500'; 
                         }
-                        
                         return `
                             <div class="sol-kpi-card sol-animate-in">
                                 <div class="sol-kpi-header">
                                     <h3 class="sol-kpi-title">Budget Mensile</h3>
                                     <div class="sol-kpi-icon-wrapper">
-                                        <div class="sol-kpi-icon" style="background: ${iconColor};">
-                                            <i class="fas fa-chart-pie"></i>
-                                        </div>
+                                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-secondary);"><i class="fas fa-chart-pie"></i></div>
                                     </div>
                                 </div>
                                 <div class="sol-kpi-value">${percentage}%</div>
-                                <div class="sol-kpi-change ${statusClass}">
-                                    <i class="fas fa-${percentage > 75 ? 'exclamation-triangle' : 'check-circle'}"></i>
-                                    <span>${formatCurrency(remaining)}</span> rimanenti
+                                <div class="budget-progress"><div class="${barClass}" style="width: ${percentage}%;"></div></div>
+                                <div class="sol-kpi-change positive" style="justify-content: space-between; width: 100%;">
+                                     <span>${formatCurrency(remaining)} rim.</span> <span style="color: ${statusColor}; font-weight: normal;">${statusText}</span>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 },
                 costAlerts: {
-                    id: 'costAlerts',
-                    type: 'kpi',
-                    title: 'Alert Costi',
-                    description: 'Spedizioni con costi anomali',
+                    id: 'costAlerts', 
+                    type: 'kpi', 
+                    title: 'Alert Costi', 
+                    description: 'Spedizioni con costi anomali', 
                     icon: 'fa-exclamation-triangle',
                     render: (data) => {
                         const highCostCount = data.alerts?.highCostShipments || 0;
-                        const hasAlerts = highCostCount > 0;
-                        
                         return `
                             <div class="sol-kpi-card sol-animate-in">
                                 <div class="sol-kpi-header">
                                     <h3 class="sol-kpi-title">Alert Costi Elevati</h3>
-                                    <div class="sol-kpi-icon-wrapper">
-                                        <div class="sol-kpi-icon" style="background: ${hasAlerts ? 'linear-gradient(135deg, #FF3B30 0%, #FF1744 100%)' : 'linear-gradient(135deg, #34C759 0%, #30D158 100%)'};">
-                                            <i class="fas fa-${hasAlerts ? 'exclamation-triangle' : 'check-shield'}"></i>
-                                        </div>
+                                     <div class="sol-kpi-icon-wrapper">
+                                        <div class="sol-kpi-icon" style="background: var(--sol-gradient-error);"><i class="fas fa-exclamation-triangle"></i></div>
                                     </div>
                                 </div>
                                 <div class="sol-kpi-value">${formatNumber(highCostCount)}</div>
-                                <div class="sol-kpi-change ${hasAlerts ? 'negative' : 'positive'}">
-                                    <i class="fas fa-${hasAlerts ? 'exclamation-circle' : 'check-circle'}"></i>
-                                    <span>${hasAlerts ? 'spedizioni sopra €1.000' : 'Tutto sotto controllo'}</span>
+                                <div class="sol-kpi-change ${highCostCount > 0 ? 'negative' : 'positive'}">
+                                     <i class="fas fa-arrow-${highCostCount > 0 ? 'up' : 'down'}"></i>
+                                    <span>${highCostCount > 0 ? 'Attenzione Richiesta' : 'Nessun Alert'}</span>                                   
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 },
                 costsByType: {
-                    id: 'costsByType',
-                    type: 'chart',
-                    title: 'Costi per Tipo Spedizione',
-                    description: 'Distribuzione costi MARE/AEREO/STRADA',
+                    id: 'costsByType', 
+                    type: 'chart', 
+                    title: 'Costi per Tipo Spedizione', 
+                    description: 'Distribuzione costi MARE/AEREO/STRADA', 
                     icon: 'fa-ship',
                     render: (data) => {
                         const widgetId = 'costsByType';
@@ -1438,54 +1246,40 @@
                             const chartElement = document.querySelector(`#chart-${widgetId}`);
                             if (!chartElement || !data.shipments) return;
                             
-                            const typeData = {};
-                            data.shipments.forEach(s => {
-                                const type = s.tipo_spedizione || 'ALTRO';
-                                if (!typeData[type]) {
-                                    typeData[type] = 0;
-                                }
-                                typeData[type] += s.costo_trasporto || 0;
+                            const typeData = {}; 
+                            data.shipments.forEach(s => { 
+                                const type = s.tipo_spedizione || 'ALTRO'; 
+                                if (!typeData[type]) typeData[type] = 0; 
+                                typeData[type] += s.costo_trasporto || 0; 
                             });
                             
-                            const colors = {
-                                'MARE': '#007AFF',
-                                'AEREO': '#FF9500',
-                                'STRADA': '#34C759'
-                            };
+                            const colors = { 'MARE': '#007AFF', 'AEREO': '#FF9500', 'STRADA': '#34C759' };
                             
-                            const chart = new ApexCharts(chartElement, {
+                            const options = {
                                 ...chartTheme,
                                 series: Object.values(typeData),
-                                chart: { 
-                                    ...chartTheme.chart, 
-                                    type: 'pie', 
-                                    height: 300
-                                },
                                 labels: Object.keys(typeData),
-                                colors: Object.keys(typeData).map(type => colors[type] || '#5856D6'),
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        colors: 'rgba(255, 255, 255, 0.7)'
-                                    }
-                                },
-                                dataLabels: {
-                                    enabled: true,
-                                    formatter: function(val, opts) {
-                                        return formatCurrency(opts.w.globals.series[opts.seriesIndex]);
-                                    },
-                                    style: {
-                                        fontSize: '14px',
-                                        fontWeight: 600
-                                    }
-                                },
-                                tooltip: {
-                                    y: {
-                                        formatter: (val) => formatCurrency(val)
+                                colors: Object.keys(typeData).map(t => colors[t] || '#5856D6'),
+                                chart: { ...chartTheme.chart, type: 'donut', height: 250 },
+                                plotOptions: {
+                                    pie: {
+                                        donut: {
+                                            size: '65%',
+                                            labels: {
+                                                show: true,
+                                                total: {
+                                                    show: true,
+                                                    label: 'Totale',
+                                                    formatter: () => formatCurrency(Object.values(typeData).reduce((a, b) => a + b, 0))
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                            });
-                            chart.render();
+                            };
+                            
+                            const chart = new ApexCharts(chartElement, options); 
+                            chart.render(); 
                             dashboardManager.chartInstances[widgetId] = chart;
                         }, 100);
                         
@@ -1496,18 +1290,15 @@
                                     <p class="sol-chart-subtitle">Distribuzione nel periodo</p>
                                 </div>
                                 <div class="chart-container" id="chart-${widgetId}"></div>
-                                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">
-                                    Analisi dettagliata <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        `;
+                                <a href="/costs.html" class="widget-link" style="text-align: center; display: block;">Analisi dettagliata <i class="fas fa-arrow-right"></i></a>
+                            </div>`;
                     }
                 },
                 costTrend: {
-                    id: 'costTrend',
-                    type: 'chart',
-                    title: 'Trend Costi Trasporto',
-                    description: 'Andamento costi nel tempo',
+                    id: 'costTrend', 
+                    type: 'chart', 
+                    title: 'Trend Costi Trasporto', 
+                    description: 'Andamento costi nel tempo', 
                     icon: 'fa-chart-line',
                     render: (data) => {
                         const widgetId = 'costTrend';
@@ -1515,27 +1306,21 @@
                             const chartElement = document.querySelector(`#chart-${widgetId}`);
                             if (!chartElement || !data.dailyTrend) return;
                             
-                            const chart = new ApexCharts(chartElement, {
+                            const options = {
                                 ...chartTheme,
                                 series: [{
-                                    name: 'Costo Trasporto',
-                                    data: data.dailyTrend.map(d => ({
-                                        x: new Date(d.date),
-                                        y: d.cost
-                                    }))
+                                    name: 'Costo Giornaliero',
+                                    data: data.dailyTrend.map(d => d.cost)
                                 }],
-                                chart: { 
-                                    ...chartTheme.chart, 
-                                    type: 'area', 
-                                    height: 300 
-                                },
-                                xaxis: { 
-                                    ...chartTheme.xaxis, 
-                                    type: 'datetime' 
+                                chart: { ...chartTheme.chart, type: 'area', height: 250 },
+                                xaxis: {
+                                    ...chartTheme.xaxis,
+                                    categories: data.dailyTrend.map(d => new Date(d.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }))
                                 },
                                 yaxis: {
                                     ...chartTheme.yaxis,
                                     labels: {
+                                        ...chartTheme.yaxis.labels,
                                         formatter: (val) => formatCurrency(val)
                                     }
                                 },
@@ -1544,20 +1329,16 @@
                                     gradient: {
                                         shadeIntensity: 1,
                                         opacityFrom: 0.7,
-                                        opacityTo: 0.2,
-                                        stops: [0, 90, 100]
-                                    }
-                                },
-                                tooltip: {
-                                    ...chartTheme.tooltip,
-                                    y: {
-                                        formatter: (val) => formatCurrency(val)
+                                        opacityTo: 0.2
                                     }
                                 }
-                            });
-                            chart.render();
+                            };
+                            
+                            const chart = new ApexCharts(chartElement, options); 
+                            chart.render(); 
                             dashboardManager.chartInstances[widgetId] = chart;
                         }, 100);
+                        
                         return `
                             <div class="sol-chart-card">
                                 <div class="sol-chart-header">
@@ -1565,15 +1346,14 @@
                                     <p class="sol-chart-subtitle">Andamento giornaliero</p>
                                 </div>
                                 <div class="chart-container" id="chart-${widgetId}"></div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 },
                 carrierDistribution: {
-                    id: 'carrierDistribution',
-                    type: 'chart',
-                    title: 'Distribuzione Spedizionieri',
-                    description: 'Costi per spedizioniere',
+                    id: 'carrierDistribution', 
+                    type: 'chart', 
+                    title: 'Distribuzione Spedizionieri', 
+                    description: 'Costi per spedizioniere', 
                     icon: 'fa-truck',
                     render: (data) => {
                         const widgetId = 'carrierDistribution';
@@ -1581,67 +1361,35 @@
                             const chartElement = document.querySelector(`#chart-${widgetId}`);
                             if (!chartElement || !data.topCarriers) return;
                             
-                            const chart = new ApexCharts(chartElement, {
+                            const options = {
                                 ...chartTheme,
-                                series: data.topCarriers.map(c => c.cost),
-                                chart: { 
-                                    ...chartTheme.chart, 
-                                    type: 'donut', 
-                                    height: 300
-                                },
-                                labels: data.topCarriers.map(c => c.name),
+                                series: [{
+                                    name: 'Costo',
+                                    data: data.topCarriers.map(c => c.cost)
+                                }],
+                                chart: { ...chartTheme.chart, type: 'bar', height: 250 },
                                 plotOptions: {
-                                    pie: {
-                                        donut: {
-                                            size: '65%',
-                                            labels: {
-                                                show: true,
-                                                name: {
-                                                    show: true,
-                                                    fontSize: '16px',
-                                                    fontFamily: 'inherit',
-                                                    fontWeight: 600,
-                                                    color: undefined,
-                                                    offsetY: -10
-                                                },
-                                                value: {
-                                                    show: true,
-                                                    fontSize: '24px',
-                                                    fontFamily: 'inherit',
-                                                    fontWeight: 400,
-                                                    color: undefined,
-                                                    offsetY: 16,
-                                                    formatter: function (val) {
-                                                        return formatNumber(parseInt(val));
-                                                    }
-                                                },
-                                                total: {
-                                                    show: true,
-                                                    label: 'Totale',
-                                                    formatter: () => formatCurrency(data.costs?.totalTransportCost || 0)
-                                                }
-                                            }
-                                        }
+                                    bar: {
+                                        horizontal: true,
+                                        borderRadius: 4,
+                                        dataLabels: { position: 'top' }
                                     }
                                 },
-                                legend: {
-                                    position: 'bottom',
+                                xaxis: {
+                                    ...chartTheme.xaxis,
+                                    categories: data.topCarriers.map(c => c.name),
                                     labels: {
-                                        colors: 'rgba(255, 255, 255, 0.7)'
+                                        ...chartTheme.xaxis.labels,
+                                        formatter: (val) => formatCurrency(val)
                                     }
-                                },
-                                responsive: [{
-                                    breakpoint: 480,
-                                    options: {
-                                        chart: {
-                                            width: '100%'
-                                        }
-                                    }
-                                }]
-                            });
-                            chart.render();
+                                }
+                            };
+                            
+                            const chart = new ApexCharts(chartElement, options); 
+                            chart.render(); 
                             dashboardManager.chartInstances[widgetId] = chart;
                         }, 100);
+                        
                         return `
                             <div class="sol-chart-card">
                                 <div class="sol-chart-header">
@@ -1649,19 +1397,724 @@
                                     <p class="sol-chart-subtitle">Top 5 per costo</p>
                                 </div>
                                 <div class="chart-container" id="chart-${widgetId}"></div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 },
                 topSuppliers: {
                     id: 'topSuppliers',
                     type: 'table',
-                    title: 'Top 5 Fornitori',
+                    title: 'Top Fornitori',
                     description: 'Fornitori principali per volume',
                     icon: 'fa-industry',
                     render: (data) => {
-                        const suppliers = data.topSuppliers || [];
+                        if (!data.topSuppliers || data.topSuppliers.length === 0) {
+                            return '<p style="text-align: center; color: var(--sol-text-secondary);">Nessun dato disponibile</p>';
+                        }
                         return `
                             <div class="sol-table-container">
-                                <div class="sol-table-header">
-                                    <h3 class="sol-table-title">Top
+                                <table class="sol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fornitore</th>
+                                            <th>Quantità</th>
+                                            <th>Costo</th>
+                                            <th>Spedizioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.topSuppliers.map(s => `
+                                            <tr>
+                                                <td>${s.name}</td>
+                                                <td>${formatNumber(s.quantity)}</td>
+                                                <td>${formatCurrency(s.cost)}</td>
+                                                <td>${formatNumber(s.shipments)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                },
+                topCostShipments: {
+                    id: 'topCostShipments',
+                    type: 'table',
+                    title: 'Spedizioni Più Costose',
+                    description: 'Top 10 spedizioni per costo',
+                    icon: 'fa-dollar-sign',
+                    render: (data) => {
+                        if (!data.topCostShipments || data.topCostShipments.length === 0) {
+                            return '<p style="text-align: center; color: var(--sol-text-secondary);">Nessun dato disponibile</p>';
+                        }
+                        return `
+                            <div class="sol-table-container">
+                                <table class="sol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID Spedizione</th>
+                                            <th>Destinazione</th>
+                                            <th>Tipo</th>
+                                            <th>Costo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.topCostShipments.map(s => `
+                                            <tr>
+                                                <td>${s.id}</td>
+                                                <td>${s.destination}</td>
+                                                <td><span class="sol-badge sol-badge-info">${s.type}</span></td>
+                                                <td>${formatCurrency(s.cost)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                },
+                alerts: {
+                    id: 'alerts',
+                    type: 'table',
+                    title: 'Alert e Notifiche',
+                    description: 'Problemi che richiedono attenzione',
+                    icon: 'fa-bell',
+                    render: (data) => {
+                        if (!data.alerts || !data.alerts.items || data.alerts.items.length === 0) {
+                            return '<p style="text-align: center; color: var(--sol-text-secondary);">Nessun alert attivo</p>';
+                        }
+                        return `
+                            <div class="sol-table-container">
+                                <table class="sol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Descrizione</th>
+                                            <th>Severità</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${data.alerts.items.map(a => `
+                                            <tr>
+                                                <td><i class="fas ${a.icon}"></i> ${a.type}</td>
+                                                <td>${a.description}</td>
+                                                <td><span class="sol-badge sol-badge-${a.severity}">${a.severity.toUpperCase()}</span></td>
+                                                <td>${new Date(a.date).toLocaleDateString('it-IT')}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+            },
+
+            activeWidgets: [],
+            dashboardData: null,
+            chartInstances: {},
+            sortable: null,
+
+            init() {
+                this.loadConfiguration();
+                this.loadDashboardData();
+                this.setupEventListeners();
+            },
+
+            loadConfiguration() {
+                const saved = localStorage.getItem('dashboardConfig');
+                if (saved) {
+                    this.activeWidgets = JSON.parse(saved);
+                } else {
+                    // Default configuration
+                    this.activeWidgets = [
+                        'totalCost',
+                        'totalShipments',
+                        'avgDeliveryTime',
+                        'onTimeDelivery',
+                        'budgetStatus',
+                        'costAlerts',
+                        'costsByType',
+                        'costTrend',
+                        'carrierDistribution'
+                    ];
+                }
+            },
+
+            async loadDashboardData() {
+                try {
+                    const periodSelect = document.getElementById('periodSelect');
+                    const days = periodSelect ? periodSelect.value : 30;
+                    
+                    // Try to load real data from API
+                    const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
+                    if (token) {
+                        const response = await fetch(`/.netlify/functions/dashboard-data?days=${days}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (response.ok) {
+                            this.dashboardData = await response.json();
+                            this.renderDashboard();
+                            return;
+                        }
+                    }
+                    
+                    // Fallback to mock data
+                    this.dashboardData = this.getMockData();
+                    this.renderDashboard();
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    this.dashboardData = this.getMockData();
+                    this.renderDashboard();
+                }
+            },
+
+            getMockData() {
+                return {
+                    totalShipments: 1234,
+                    shipmentsGrowth: 12.5,
+                    costs: {
+                        totalTransportCost: 125430,
+                        costGrowth: 8.2
+                    },
+                    avgDeliveryTime: 4.2,
+                    deliveryTimeChange: -5.3,
+                    onTimeDelivery: 89.7,
+                    onTimeChange: 2.1,
+                    alerts: {
+                        highCostShipments: 3,
+                        items: [
+                            { type: 'Costo Elevato', description: 'Spedizione ODA-123 supera budget del 50%', severity: 'error', icon: 'fa-exclamation-triangle', date: new Date() },
+                            { type: 'Ritardo', description: 'Spedizione MARE-456 in ritardo di 3 giorni', severity: 'warning', icon: 'fa-clock', date: new Date() },
+                            { type: 'Capacità', description: 'Corriere MSC vicino a capacità massima', severity: 'info', icon: 'fa-info-circle', date: new Date() }
+                        ]
+                    },
+                    topCarriers: [
+                        { name: 'MSC', cost: 45200, shipments: 234 },
+                        { name: 'Maersk', cost: 38900, shipments: 189 },
+                        { name: 'DHL', cost: 28700, shipments: 456 },
+                        { name: 'FedEx', cost: 12630, shipments: 145 },
+                        { name: 'UPS', cost: 9870, shipments: 98 }
+                    ],
+                    topSuppliers: [
+                        { name: 'Shanghai Electronics', quantity: 12450, cost: 45670, shipments: 89 },
+                        { name: 'Shenzhen Tech', quantity: 9870, cost: 38900, shipments: 67 },
+                        { name: 'Hong Kong Trading', quantity: 7650, cost: 28700, shipments: 45 },
+                        { name: 'Singapore Logistics', quantity: 5430, cost: 19800, shipments: 34 },
+                        { name: 'Taiwan Manufacturing', quantity: 3210, cost: 12300, shipments: 23 }
+                    ],
+                    topCostShipments: [
+                        { id: 'ODA-123', destination: 'Milano', type: 'AEREO', cost: 8900 },
+                        { id: 'MARE-456', destination: 'Genova', type: 'MARE', cost: 7650 },
+                        { id: 'STR-789', destination: 'Roma', type: 'STRADA', cost: 5430 },
+                        { id: 'AER-012', destination: 'Napoli', type: 'AEREO', cost: 4320 },
+                        { id: 'MARE-345', destination: 'Venezia', type: 'MARE', cost: 3210 }
+                    ],
+                    dailyTrend: Array.from({ length: 30 }, (_, i) => ({
+                        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000),
+                        cost: Math.random() * 5000 + 3000
+                    })),
+                    shipments: Array.from({ length: 100 }, (_, i) => ({
+                        tipo_spedizione: ['MARE', 'AEREO', 'STRADA'][Math.floor(Math.random() * 3)],
+                        costo_trasporto: Math.random() * 1000 + 100
+                    }))
+                };
+            },
+
+            renderDashboard() {
+                const container = document.getElementById('widgetsContainer');
+                if(!container) return;
+                container.innerHTML = '';
+                
+                Object.values(this.chartInstances).forEach(chart => { 
+                    if (chart && chart.destroy) chart.destroy(); 
+                });
+                this.chartInstances = {};
+                
+                this.activeWidgets.forEach((widgetId, index) => {
+                    const widgetConfig = this.availableWidgets[widgetId];
+                    if (!widgetConfig) return;
+                    
+                    const widget = document.createElement('div');
+                    widget.className = `widget ${widgetConfig.type}-widget sol-animate-in`;
+                    widget.dataset.widgetId = widgetId;
+                    widget.style.animationDelay = `${index * 0.07}s`;
+
+                    let widgetHeaderHTML = '';
+                    if (widgetConfig.type !== 'kpi') {
+                        widgetHeaderHTML = `
+                            <div class="widget-header">
+                                <h3 class="widget-title" style="flex-grow: 1;"> 
+                                    <i class="fas ${widgetConfig.icon || 'fa-question-circle'}" style="margin-right: 8px;"></i>
+                                    ${widgetConfig.title || 'Widget Title'}
+                                </h3>
+                                <div class="widget-actions">
+                                    <button class="widget-action" onclick="dashboardManager.refreshWidget('${widgetId}')" title="Aggiorna">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button class="widget-action" onclick="dashboardManager.removeWidget('${widgetId}')" title="Rimuovi">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    widget.innerHTML = `
+                        <div class="card-drag-handle"><i class="fas fa-grip-lines"></i></div> 
+                        ${widgetHeaderHTML}
+                        <div class="widget-content">
+                            ${widgetConfig.render.call(widgetConfig, this.dashboardData)}
+                        </div>
+                    `;
+                    container.appendChild(widget);
+                });
+                this.setupSortable();
+            },
+
+            setupSortable() {
+                const container = document.getElementById('widgetsContainer');
+                if (!container || this.sortable) return;
+                
+                this.sortable = Sortable.create(container, {
+                    animation: 150,
+                    handle: '.card-drag-handle',
+                    draggable: '.widget',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'dragging',
+                    onEnd: (evt) => {
+                        const newOrder = [];
+                        container.querySelectorAll('.widget').forEach(widget => {
+                            const widgetId = widget.dataset.widgetId;
+                            if (widgetId) newOrder.push(widgetId);
+                        });
+                        this.activeWidgets = newOrder;
+                        this.saveConfiguration();
+                    }
+                });
+            },
+
+            refreshWidget(widgetId) {
+                const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
+                if (!widget) return;
+                
+                const widgetConfig = this.availableWidgets[widgetId];
+                if (!widgetConfig) return;
+                
+                // Destroy chart if exists
+                if (this.chartInstances[widgetId]) {
+                    this.chartInstances[widgetId].destroy();
+                    delete this.chartInstances[widgetId];
+                }
+                
+                // Re-render widget content
+                const contentEl = widget.querySelector('.widget-content');
+                if (contentEl) {
+                    contentEl.innerHTML = widgetConfig.render.call(widgetConfig, this.dashboardData);
+                }
+                
+                window.showNotification('Widget aggiornato', 'success');
+            },
+
+            removeWidget(widgetId) {
+                this.activeWidgets = this.activeWidgets.filter(id => id !== widgetId);
+                this.saveConfiguration();
+                this.renderDashboard();
+                window.showNotification('Widget rimosso', 'info');
+            },
+
+            openCustomizer() {
+                const modal = document.getElementById('customizeModal');
+                const selector = document.getElementById('widgetSelector');
+                
+                if (!modal || !selector) return;
+                
+                selector.innerHTML = '';
+                
+                Object.values(this.availableWidgets).forEach(widget => {
+                    const option = document.createElement('label');
+                    option.className = 'widget-option';
+                    option.innerHTML = `
+                        <input type="checkbox" 
+                               value="${widget.id}" 
+                               ${this.activeWidgets.includes(widget.id) ? 'checked' : ''}>
+                        <div class="widget-info">
+                            <h4><i class="fas ${widget.icon}"></i> ${widget.title}</h4>
+                            <p>${widget.description}</p>
+                        </div>
+                    `;
+                    selector.appendChild(option);
+                });
+                
+                modal.classList.add('active');
+            },
+
+            closeCustomizer() {
+                const modal = document.getElementById('customizeModal');
+                if (modal) modal.classList.remove('active');
+            },
+
+            saveConfiguration() {
+                const selector = document.getElementById('widgetSelector');
+                if (selector) {
+                    const newActive = [];
+                    selector.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                        newActive.push(cb.value);
+                    });
+                    this.activeWidgets = newActive;
+                }
+                
+                localStorage.setItem('dashboardConfig', JSON.stringify(this.activeWidgets));
+                this.renderDashboard();
+                this.closeCustomizer();
+                window.showNotification('Configurazione salvata', 'success');
+            },
+
+            resetToDefault() {
+                localStorage.removeItem('dashboardConfig');
+                this.loadConfiguration();
+                this.renderDashboard();
+                this.closeCustomizer();
+                window.showNotification('Configurazione ripristinata', 'info');
+            },
+
+            setupEventListeners() {
+                const periodSelect = document.getElementById('periodSelect');
+                if (periodSelect) {
+                    periodSelect.addEventListener('change', () => {
+                        this.loadDashboardData();
+                    });
+                }
+            }
+        };
+
+        // Initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupGlobalEventListeners();
+            dashboardManager.init();
+        });
+
+        // Global functions
+        function setupGlobalEventListeners() {
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            if (menuToggle && sidebar && backdrop) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('active');
+                    backdrop.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                });
+
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (notificationDropdown) notificationDropdown.style.display = 'none';
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                userDropdown.addEventListener('click', function(e) { e.stopPropagation(); });
+            }
+            
+            if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (userDropdown) userDropdown.style.display = 'none';
+                    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                notificationDropdown.addEventListener('click', function(e) { e.stopPropagation(); });
+            }
+            
+            document.addEventListener('click', function(e) {
+                if (userDropdown && userDropdown.style.display !== 'none' && 
+                    userMenuBtn && !userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.style.display = 'none';
+                }
+                if (notificationDropdown && notificationDropdown.style.display !== 'none' && 
+                    notificationBtn && !notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (window.auth && window.auth.logout) {
+                        window.auth.logout();
+                    } else {
+                        localStorage.removeItem('sb-access-token');
+                        localStorage.removeItem('supabase.auth.token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
+                    }
+                });
+            }
+        }
+
+        // File upload handling
+        let currentFileData = null;
+        let currentFileName = '';
+
+        function handleFileUpload(file) {
+            currentFileName = file.name;
+            const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+            
+            const fileNameEl = document.getElementById('fileName');
+            const fileSizeEl = document.getElementById('fileSize');
+            const fileTypeIconEl = document.getElementById('fileTypeIcon');
+
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            if (fileSizeEl) fileSizeEl.textContent = fileSize;
+            
+            if (fileTypeIconEl) {
+                if (file.name.endsWith('.csv')) {
+                    fileTypeIconEl.className = 'fas fa-file-csv';
+                } else {
+                    fileTypeIconEl.className = 'fas fa-file-excel';
+                }
+            }
+            
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.csv')) {
+                reader.onload = (e) => processCSVForPreview(e.target.result);
+                reader.readAsText(file);
+            } else {
+                reader.onload = (e) => processExcelForPreview(e.target.result);
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function processCSVForPreview(csvData) {
+            const results = Papa.parse(csvData, { header: true, dynamicTyping: true, skipEmptyLines: true });
+            currentFileData = results.data;
+            const fileRowsEl = document.getElementById('fileRows');
+            const fileColumnsEl = document.getElementById('fileColumns');
+            if(fileRowsEl) fileRowsEl.textContent = formatNumber(results.data.length) + ' righe';
+            if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(results.data[0] || {}).length + ' colonne';
+            showImportModal(results.data.slice(0, 5), Object.keys(results.data[0] || {}));
+        }
+
+        function processExcelForPreview(excelData) {
+            const workbook = XLSX.read(excelData, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            currentFileData = jsonData;
+            const fileRowsEl = document.getElementById('fileRows');
+            const fileColumnsEl = document.getElementById('fileColumns');
+            if(fileRowsEl) fileRowsEl.textContent = formatNumber(jsonData.length) + ' righe';
+            if(fileColumnsEl) fileColumnsEl.textContent = Object.keys(jsonData[0] || {}).length + ' colonne';
+            showImportModal(jsonData.slice(0, 5), Object.keys(jsonData[0] || {}));
+        }
+
+        function showImportModal(previewData, columns) {
+            const importModal = document.getElementById('importModal');
+            const previewTable = document.getElementById('previewTable');
+            if (!importModal || !previewTable) return;
+            const thead = previewTable.querySelector('thead');
+            const tbody = previewTable.querySelector('tbody');
+            if(!thead || !tbody) return;
+            thead.innerHTML = ''; 
+            tbody.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => { 
+                const th = document.createElement('th'); 
+                th.textContent = col; 
+                headerRow.appendChild(th); 
+            });
+            thead.appendChild(headerRow);
+            previewData.forEach(row => { 
+                const tr = document.createElement('tr'); 
+                columns.forEach(col => { 
+                    const td = document.createElement('td'); 
+                    td.textContent = row[col] || ''; 
+                    tr.appendChild(td); 
+                }); 
+                tbody.appendChild(tr); 
+            });
+            importModal.classList.add('active');
+        }
+
+        window.closeImportModal = function() {
+            const importModal = document.getElementById('importModal');
+            if(importModal) importModal.classList.remove('active');
+            currentFileData = null; 
+            currentFileName = '';
+        }
+
+        window.confirmImport = async function() {
+            if (!currentFileData || currentFileData.length === 0) { 
+                window.showNotification('Nessun dato da importare', 'error'); 
+                return; 
+            }
+            const importStatusEl = document.getElementById('importStatus');
+            const confirmImportBtnEl = document.getElementById('confirmImportBtn');
+            if(importStatusEl) importStatusEl.style.display = 'block';
+            if(confirmImportBtnEl) confirmImportBtnEl.disabled = true;
+            try {
+                const token = localStorage.getItem('sb-access-token') || localStorage.getItem('supabase.auth.token');
+                const formData = new FormData();
+                const csvContent = Papa.unparse(currentFileData);
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                formData.append('file', blob, currentFileName);
+                const skipDuplicatesEl = document.getElementById('skipDuplicates');
+                const validateDataEl = document.getElementById('validateData');
+                const updateExistingEl = document.getElementById('updateExisting');
+                formData.append('skipDuplicates', skipDuplicatesEl ? skipDuplicatesEl.checked : true);
+                formData.append('validateData', validateDataEl ? validateDataEl.checked : true);
+                formData.append('updateExisting', updateExistingEl ? updateExistingEl.checked : false);
+                const response = await fetch('/.netlify/functions/import-file', { 
+                    method: 'POST', 
+                    headers: { 'Authorization': `Bearer ${token}` }, 
+                    body: formData 
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    window.showNotification(`Import completato: ${formatNumber(result.imported)} record importati`, 'success');
+                    setTimeout(() => { 
+                        closeImportModal(); 
+                        window.refreshDashboard(); 
+                    }, 1500);
+                } else { 
+                    throw new Error(result.error || 'Errore durante l\'import'); 
+                }
+            } catch (error) { 
+                console.error('Import error:', error); 
+                window.showNotification(error.message || 'Errore durante l\'import', 'error');
+            } finally { 
+                if(importStatusEl) importStatusEl.style.display = 'none'; 
+                if(confirmImportBtnEl) confirmImportBtnEl.disabled = false; 
+            }
+        }
+
+        window.refreshDashboard = function() {
+            dashboardManager.loadDashboardData();
+            window.showNotification('Dashboard aggiornata', 'success');
+        }
+
+        window.exportToPDF = async function() {
+            const { jsPDF } = window.jspdf; 
+            const doc = new jsPDF();
+            doc.setFontSize(20); 
+            doc.text('Supply Chain Hub - Dashboard Report', 20, 20);
+            doc.setFontSize(10); 
+            doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
+            doc.setFontSize(14); 
+            doc.text('KPI Principali', 20, 45);
+            const data = dashboardManager.dashboardData;
+            if (data) {
+                doc.setFontSize(10);
+                doc.text(`Spedizioni Totali: ${formatNumber(data.totalShipments || 0)}`, 20, 55);
+                doc.text(`Costo Totale Trasporto: ${formatCurrency(data.costs?.totalTransportCost || 0)}`, 20, 65);
+                doc.text(`Tempo Medio Consegna: ${formatNumber(data.avgDeliveryTime || 0, 1)} giorni`, 20, 75);
+                doc.text(`Tasso Puntualità: ${formatNumber(data.onTimeDelivery || 0, 1)}%`, 20, 85);
+            }
+            doc.save('dashboard-report.pdf'); 
+            window.showNotification('Report PDF generato', 'success');
+        }
+
+        window.exportToExcel = async function() {
+            const data = dashboardManager.dashboardData;
+            if (!data) { 
+                window.showNotification('Nessun dato da esportare', 'error'); 
+                return; 
+            }
+            const wb = XLSX.utils.book_new();
+            const kpiData = [ 
+                ['KPI', 'Valore', 'Variazione %'], 
+                ['Spedizioni Totali', data.totalShipments || 0, data.shipmentsGrowth || 0], 
+                ['Costo Totale Trasporto', data.costs?.totalTransportCost || 0, data.costs?.costGrowth || 0], 
+                ['Tempo Medio Consegna (giorni)', data.avgDeliveryTime || 0, data.deliveryTimeChange || 0], 
+                ['Tasso Puntualità (%)', data.onTimeDelivery || 0, data.onTimeChange || 0] 
+            ];
+            const kpiSheet = XLSX.utils.aoa_to_sheet(kpiData); 
+            XLSX.utils.book_append_sheet(wb, kpiSheet, 'KPI');
+            if (data.topCarriers) { 
+                const carriersData = [['Corriere', 'Costo', 'Spedizioni']]; 
+                data.topCarriers.forEach(c => { 
+                    carriersData.push([c.name, c.cost, c.shipments]); 
+                }); 
+                const carriersSheet = XLSX.utils.aoa_to_sheet(carriersData); 
+                XLSX.utils.book_append_sheet(wb, carriersSheet, 'Corrieri'); 
+            }
+            if (data.topSuppliers) { 
+                const suppliersData = [['Fornitore', 'Quantità', 'Costo', 'Spedizioni']]; 
+                data.topSuppliers.forEach(s => { 
+                    suppliersData.push([s.name, s.quantity, s.cost, s.shipments]); 
+                }); 
+                const suppliersSheet = XLSX.utils.aoa_to_sheet(suppliersData); 
+                XLSX.utils.book_append_sheet(wb, suppliersSheet, 'Fornitori'); 
+            }
+            XLSX.writeFile(wb, `dashboard-export-${new Date().toISOString().split('T')[0]}.xlsx`); 
+            window.showNotification('Export Excel completato', 'success');
+        }
+
+        window.showNotification = function(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 16px 24px;
+                background: var(--sol-glass-heavy);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                z-index: 3000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                max-width: 400px;
+            `;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function debounce(fn, delay) {
+            let t;
+            return function(...a) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, a), delay);
+            };
+        }
+
+    </script>
+</body>
+</html>
