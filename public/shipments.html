@@ -38,125 +38,6 @@
                     setTimeout(checkAuth, 100);
                     return;
                 }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Menu toggle
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
-            
-            menuToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('active');
-                backdrop.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
-            });
-
-            backdrop.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-
-            // User dropdown - FIXED WITH NULL CHECKS
-            const userMenuBtn = document.getElementById('userMenuBtn');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (userMenuBtn && userDropdown) {
-                userMenuBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-                });
-                
-                // Previeni la chiusura del dropdown quando si clicca su un link
-                userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-                
-                document.addEventListener('click', function() {
-                    userDropdown.style.display = 'none';
-                });
-            }
-
-            // Logout - FIX: usa window.auth.logout()
-            document.getElementById('logoutBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.auth && window.auth.logout) {
-                    window.auth.logout();
-                } else {
-                    // Fallback
-                    localStorage.removeItem('sb-access-token');
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.replace('/login.html');
-                }
-            });
-
-            // File upload
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.style.transform = 'scale(1.02)';
-                uploadArea.style.borderColor = 'rgba(0, 122, 255, 0.5)';
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.transform = 'scale(1)';
-                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.style.transform = 'scale(1)';
-                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                const files = Array.from(e.dataTransfer.files);
-                handleFileUpload(files);
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                handleFileUpload(files);
-            });
-
-            // Filters
-            document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('statusFilter').addEventListener('change', applyFilters);
-            document.getElementById('carrierFilter').addEventListener('change', applyFilters);
-            document.getElementById('dateFilter').addEventListener('change', applyFilters);
-            
-            // Advanced filters toggle
-            document.getElementById('toggleAdvancedFilters').addEventListener('click', function() {
-                const advancedFilters = document.getElementById('advancedFilters');
-                advancedFilters.classList.toggle('active');
-                this.innerHTML = advancedFilters.classList.contains('active') 
-                    ? '<i class="fas fa-sliders-h"></i> Nascondi Filtri'
-                    : '<i class="fas fa-sliders-h"></i> Filtri Avanzati';
-            });
-            
-            // Advanced filters
-            document.getElementById('senderFilter').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('recipientFilter').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('cityFilter').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('valueMin').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('valueMax').addEventListener('input', debounce(applyFilters, 300));
-            document.getElementById('dateFrom').addEventListener('change', applyFilters);
-            document.getElementById('dateTo').addEventListener('change', applyFilters);
-            document.getElementById('regionFilter').addEventListener('change', applyFilters);
-            
-            // Buttons
-            document.getElementById('applyFilters').addEventListener('click', applyFilters);
-            document.getElementById('resetFilters').addEventListener('click', resetFilters);
-            document.getElementById('newShipmentBtn').addEventListener('click', () => {
-                showNotification('Funzionalità in arrivo!', 'info');
-            });
-        }
                 
                 // Se non autenticato, redirect a login
                 if (!window.auth.isAuthenticated()) {
@@ -993,22 +874,22 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="sol-stats-grid" id="statsGrid">
             <div class="sol-stat-card" data-id="totalShipments">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value" id="totalShipments">20</div>
+                <div class="sol-stat-value" id="totalShipments">0</div>
                 <div class="sol-stat-label">Totale Spedizioni</div>
             </div>
             <div class="sol-stat-card" data-id="inTransit">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value" id="inTransit">4</div>
+                <div class="sol-stat-value" id="inTransit">0</div>
                 <div class="sol-stat-label">In Transito</div>
             </div>
             <div class="sol-stat-card" data-id="deliveredToday">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value" id="deliveredToday">1</div>
+                <div class="sol-stat-value" id="deliveredToday">0</div>
                 <div class="sol-stat-label">Consegnate Oggi</div>
             </div>
             <div class="sol-stat-card" data-id="delayedShipments">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value" id="delayedShipments">6</div>
+                <div class="sol-stat-value" id="delayedShipments">0</div>
                 <div class="sol-stat-label">In Ritardo</div>
             </div>
         </div>
@@ -1238,6 +1119,11 @@ document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadShipments(); // Cambiato da loadDemoData()
             setupSortableGrids();
+            
+            // Attendi un momento per assicurarti che tutto sia caricato
+            setTimeout(() => {
+                updateStatsDisplay();
+            }, 500);
         });
 
         // Setup Sortable for drag & drop
@@ -1589,18 +1475,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update stats
         function updateStats() {
-            document.getElementById('totalShipments').textContent = filteredShipments.length;
-            document.getElementById('inTransit').textContent = 
-                filteredShipments.filter(s => s.statoSpedizione === 'In transito').length;
-            document.getElementById('deliveredToday').textContent = 
-                filteredShipments.filter(s => 
-                    s.statoSpedizione === 'Consegnato' && 
-                    s.dataArrivo === new Date().toISOString().split('T')[0]
-                ).length;
-            document.getElementById('delayedShipments').textContent = 
-                filteredShipments.filter(s => s.statoSpedizione === 'In ritardo').length;
+            updateStatsDisplay();
+        }
+        
+        // Fix per l'aggiornamento delle metriche KPI
+        function updateStatsDisplay() {
+            // Assicurati che gli elementi esistano prima di aggiornarli
+            const totalShipmentsEl = document.getElementById('totalShipments');
+            const inTransitEl = document.getElementById('inTransit');
+            const deliveredTodayEl = document.getElementById('deliveredToday');
+            const delayedShipmentsEl = document.getElementById('delayedShipments');
             
-            document.getElementById('resultsCount').textContent = `${filteredShipments.length} risultati trovati`;
+            if (totalShipmentsEl) {
+                totalShipmentsEl.textContent = filteredShipments.length;
+            }
+            
+            if (inTransitEl) {
+                inTransitEl.textContent = filteredShipments.filter(s => s.statoSpedizione === 'In transito').length;
+            }
+            
+            if (deliveredTodayEl) {
+                const today = new Date().toISOString().split('T')[0];
+                deliveredTodayEl.textContent = filteredShipments.filter(s => 
+                    s.statoSpedizione === 'Consegnato' && 
+                    s.dataArrivo === today
+                ).length;
+            }
+            
+            if (delayedShipmentsEl) {
+                delayedShipmentsEl.textContent = filteredShipments.filter(s => s.statoSpedizione === 'In ritardo').length;
+            }
+            
+            // Aggiorna anche il conteggio risultati
+            const resultsCountEl = document.getElementById('resultsCount');
+            if (resultsCountEl) {
+                resultsCountEl.textContent = `${filteredShipments.length} risultati trovati`;
+            }
         }
 
         // Render table
