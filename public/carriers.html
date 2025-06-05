@@ -799,22 +799,22 @@
         <div class="sol-stats-grid" id="statsGrid">
             <div class="sol-stat-card" data-id="totalCarriers">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value">12</div>
+                <div class="sol-stat-value" id="totalCarriers">0</div>
                 <div class="sol-stat-label">Corrieri Attivi</div>
             </div>
             <div class="sol-stat-card" data-id="avgDeliveryTime">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value">2.8</div>
+                <div class="sol-stat-value" id="avgDeliveryTime">0</div>
                 <div class="sol-stat-label">Tempo Medio Consegna (giorni)</div>
             </div>
             <div class="sol-stat-card" data-id="successRate">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value">96.5%</div>
+                <div class="sol-stat-value" id="successRate">0%</div>
                 <div class="sol-stat-label">Tasso di Successo</div>
             </div>
             <div class="sol-stat-card" data-id="totalShipments">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
-                <div class="sol-stat-value">1,234</div>
+                <div class="sol-stat-value" id="totalShipments">0</div>
                 <div class="sol-stat-label">Spedizioni Questo Mese</div>
             </div>
         </div>
@@ -1014,7 +1014,48 @@
             renderPerformanceTable();
             updateUserInfo();
             setupSortableGrids();
+            
+            // Attendi un momento per assicurarti che tutto sia caricato e poi aggiorna le stats
+            setTimeout(() => {
+                updateCarrierStats();
+            }, 500);
         });
+
+        // Funzione per aggiornare le statistiche
+        function updateCarrierStats() {
+            // Calcola statistiche dai dati dei corrieri
+            const activeCarriers = carriers.filter(c => c.active).length;
+            const totalShipments = carriers.reduce((sum, c) => sum + c.shipments, 0);
+            const avgDeliveryTime = (carriers.reduce((sum, c) => sum + c.avgDays, 0) / carriers.length).toFixed(1);
+            const avgSuccessRate = (carriers.reduce((sum, c) => sum + c.onTime, 0) / carriers.length).toFixed(1);
+            
+            // Aggiorna i valori nel DOM
+            const totalCarriersEl = document.getElementById('totalCarriers');
+            const avgDeliveryTimeEl = document.getElementById('avgDeliveryTime');
+            const successRateEl = document.getElementById('successRate');
+            const totalShipmentsEl = document.getElementById('totalShipments');
+            
+            if (totalCarriersEl) {
+                totalCarriersEl.textContent = activeCarriers;
+            }
+            
+            if (avgDeliveryTimeEl) {
+                avgDeliveryTimeEl.textContent = avgDeliveryTime;
+            }
+            
+            if (successRateEl) {
+                successRateEl.textContent = avgSuccessRate + '%';
+            }
+            
+            if (totalShipmentsEl) {
+                totalShipmentsEl.textContent = formatNumber(totalShipments);
+            }
+        }
+
+        // Funzione helper per formattare i numeri
+        function formatNumber(num) {
+            return new Intl.NumberFormat('it-IT').format(num);
+        }
 
         // Setup Sortable for drag & drop
         function setupSortableGrids() {
@@ -1260,6 +1301,9 @@
                 `;
                 grid.appendChild(card);
             });
+            
+            // Aggiorna le statistiche dopo il rendering
+            updateCarrierStats();
         }
 
         // Generate star rating
