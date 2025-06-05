@@ -1815,6 +1815,8 @@ MSCU7654321,MSC,container,PO123457
                 });
                 
                 const result = await response.json();
+console.log('DEBUG - Struttura risposta:', result); // Aggiungi questo per debug
+trackings = result.data || result.trackings || result || [];
                 
                 if (!response.ok) {
                     throw new Error(result.error || 'Errore durante l\'aggiornamento');
