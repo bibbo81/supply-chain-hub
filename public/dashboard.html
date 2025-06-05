@@ -155,8 +155,22 @@
             cursor: grabbing;
         }
         
-        .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
-        .kpi-card.sortable-chosen, .chart-card.sortable-chosen { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
+        /* Fixed dragging styles to match costs.html */
+        .kpi-card.dragging, .chart-card.dragging { 
+            opacity: 0.6; 
+            transform: scale(0.97); 
+            box-shadow: var(--sol-shadow-lg); 
+            border: 1px solid var(--sol-text-accent); 
+        }
+        .kpi-card.sortable-chosen, .chart-card.sortable-chosen { 
+            /* Style for the original element while dragging */  
+        }
+        .kpi-card.dragging, .kpi-card.sortable-chosen, .chart-card.dragging, .chart-card.sortable-chosen { 
+            user-select: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+        }
 
         /* Filter Bar */
         .filter-bar { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); display: flex; gap: var(--sol-space-md); flex-wrap: wrap; align-items: center; justify-content: space-between; }
@@ -1278,9 +1292,10 @@
                     animation: 150,
                     handle: '.card-drag-handle',
                     draggable: '.kpi-card',
-                    ghostClass: 'sortable-ghost',
+                    ghostClass: 'dragging',
                     chosenClass: 'sortable-chosen',
                     dragClass: 'dragging',
+                    forceFallback: true,
                     onEnd: (evt) => {
                         const newOrder = [];
                         container.querySelectorAll('.kpi-card').forEach(card => {
@@ -1301,9 +1316,10 @@
                     animation: 150,
                     handle: '.card-drag-handle',
                     draggable: '.chart-card',
-                    ghostClass: 'sortable-ghost',
+                    ghostClass: 'dragging',
                     chosenClass: 'sortable-chosen',
                     dragClass: 'dragging',
+                    forceFallback: true,
                     onEnd: (evt) => {
                         const newOrder = [];
                         container.querySelectorAll('.chart-card').forEach(card => {
