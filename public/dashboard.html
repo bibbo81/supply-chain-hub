@@ -155,17 +155,26 @@
             cursor: grabbing;
         }
         
-        /* Fixed dragging styles to match costs.html */
-        .kpi-card.dragging, .chart-card.dragging { 
-            opacity: 0.6; 
-            transform: scale(0.97); 
-            box-shadow: var(--sol-shadow-lg); 
-            border: 1px solid var(--sol-text-accent); 
+        /* Fixed dragging styles with ghost preview */
+        .kpi-card.sortable-ghost, .chart-card.sortable-ghost { 
+            opacity: 0.4;
+            position: relative;
+            transform: scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(0, 122, 255, 0.6);
+            background: var(--sol-glass-medium);
         }
-        .kpi-card.sortable-chosen, .chart-card.sortable-chosen { 
-            /* Style for the original element while dragging */  
+        
+        .kpi-card.sortable-chosen, .chart-card.sortable-chosen {
+            opacity: 0.2;
+            transform: scale(0.95);
         }
-        .kpi-card.dragging, .kpi-card.sortable-chosen, .chart-card.dragging, .chart-card.sortable-chosen { 
+        
+        .kpi-card.sortable-drag, .chart-card.sortable-drag {
+            opacity: 0;
+        }
+        
+        .kpi-card, .chart-card {
             user-select: none; 
             -webkit-user-select: none; 
             -moz-user-select: none; 
@@ -1292,10 +1301,9 @@
                     animation: 150,
                     handle: '.card-drag-handle',
                     draggable: '.kpi-card',
-                    ghostClass: 'dragging',
+                    ghostClass: 'sortable-ghost',
                     chosenClass: 'sortable-chosen',
-                    dragClass: 'dragging',
-                    forceFallback: true,
+                    dragClass: 'sortable-drag',
                     onEnd: (evt) => {
                         const newOrder = [];
                         container.querySelectorAll('.kpi-card').forEach(card => {
@@ -1316,10 +1324,9 @@
                     animation: 150,
                     handle: '.card-drag-handle',
                     draggable: '.chart-card',
-                    ghostClass: 'dragging',
+                    ghostClass: 'sortable-ghost',
                     chosenClass: 'sortable-chosen',
-                    dragClass: 'dragging',
-                    forceFallback: true,
+                    dragClass: 'sortable-drag',
                     onEnd: (evt) => {
                         const newOrder = [];
                         container.querySelectorAll('.chart-card').forEach(card => {
