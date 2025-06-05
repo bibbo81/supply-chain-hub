@@ -1,6 +1,7 @@
 // netlify/functions/add-tracking.js
 const { createClient } = require('@supabase/supabase-js');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 
 // Initialize Supabase
 const supabase = createClient(
