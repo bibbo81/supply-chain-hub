@@ -1867,7 +1867,7 @@ trackings = result.data || result.trackings || result || [];
                 }
                 
                 const result = await response.json();
-                const tracking = result.tracking;
+trackings = result.trackings || result.data || [];
                 const events = result.events || [];
                 
                 document.getElementById('modalTitle').textContent = `Timeline - ${tracking.tracking_number}`;
