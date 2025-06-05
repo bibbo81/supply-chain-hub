@@ -154,7 +154,6 @@
         .card-drag-handle:active {
             cursor: grabbing;
         }
-        .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
         
         .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
         .kpi-card.sortable-chosen, .chart-card.sortable-chosen { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
@@ -189,12 +188,69 @@
         .status-badge.delivered { background: rgba(52, 199, 89, 0.15); color: #34C759; }
         .status-badge.transit { background: rgba(0, 122, 255, 0.15); color: #007AFF; }
         .status-badge.delayed { background: rgba(255, 59, 48, 0.15); color: #FF3B30; }
+        .status-badge.mare { background: rgba(0, 122, 255, 0.15); color: #007AFF; }
+        .status-badge.aereo { background: rgba(255, 149, 0, 0.15); color: #FF9500; }
+        .status-badge.strada { background: rgba(52, 199, 89, 0.15); color: #34C759; }
         
         /* Budget Progress */
         .budget-progress { flex: 1; height: 24px; background: rgba(255, 255, 255, 0.05); border-radius: var(--sol-radius-full); overflow: hidden; position: relative; }
         .budget-fill { height: 100%; background: var(--sol-gradient-primary); border-radius: var(--sol-radius-full); transition: width 0.6s ease; position: relative; }
         .budget-fill.warning { background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%); }
         .budget-fill.danger { background: linear-gradient(135deg, #FF3B30 0%, #FF1744 100%); }
+        
+        /* Custom Select Styling - Enhanced */
+        .sol-select, select.sol-select {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: var(--sol-blur-lg) !important;
+            -webkit-backdrop-filter: var(--sol-blur-lg) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: var(--sol-radius-md) !important;
+            padding: var(--sol-space-sm) var(--sol-space-lg) !important;
+            padding-right: var(--sol-space-2xl) !important;
+            color: var(--sol-text-primary) !important;
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all var(--sol-transition-base) !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.5)' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right var(--sol-space-md) center !important;
+            width: 100% !important;
+            min-height: 40px !important;
+        }
+        
+        .sol-select:hover, select.sol-select:hover {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .sol-select:focus, select.sol-select:focus {
+            outline: none !important;
+            border-color: rgba(0, 122, 255, 0.5) !important;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1) !important;
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+        
+        .sol-select option, select.sol-select option {
+            background: #161b22 !important;
+            color: var(--sol-text-primary) !important;
+            padding: var(--sol-space-sm) !important;
+        }
+        
+        /* Chart select specific styling */
+        .chart-header .sol-select, .chart-header select.sol-select {
+            min-width: 140px !important;
+            width: auto !important;
+            padding: var(--sol-space-xs) var(--sol-space-md) !important;
+            padding-right: var(--sol-space-xl) !important;
+            font-size: 0.8125rem !important;
+            min-height: 36px !important;
+        }
         
         /* Customize FAB */
         .customize-fab {
