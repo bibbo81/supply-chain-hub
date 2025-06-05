@@ -6,7 +6,7 @@
     <title>Supply Chain Hub - Gestione Spedizioni</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,6 +17,9 @@
     
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    
+    <!-- Sortable.js for drag & drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <!-- Solarium Design System -->
     <link rel="stylesheet" href="/solarium.css">
@@ -35,6 +38,125 @@
                     setTimeout(checkAuth, 100);
                     return;
                 }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown - FIXED WITH NULL CHECKS
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                // Previeni la chiusura del dropdown quando si clicca su un link
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
+
+            // Logout - FIX: usa window.auth.logout()
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    // Fallback
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login.html');
+                }
+            });
+
+            // File upload
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.transform = 'scale(1.02)';
+                uploadArea.style.borderColor = 'rgba(0, 122, 255, 0.5)';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.transform = 'scale(1)';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.transform = 'scale(1)';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                const files = Array.from(e.dataTransfer.files);
+                handleFileUpload(files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileUpload(files);
+            });
+
+            // Filters
+            document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('carrierFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            
+            // Advanced filters toggle
+            document.getElementById('toggleAdvancedFilters').addEventListener('click', function() {
+                const advancedFilters = document.getElementById('advancedFilters');
+                advancedFilters.classList.toggle('active');
+                this.innerHTML = advancedFilters.classList.contains('active') 
+                    ? '<i class="fas fa-sliders-h"></i> Nascondi Filtri'
+                    : '<i class="fas fa-sliders-h"></i> Filtri Avanzati';
+            });
+            
+            // Advanced filters
+            document.getElementById('senderFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('recipientFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('cityFilter').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('valueMin').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('valueMax').addEventListener('input', debounce(applyFilters, 300));
+            document.getElementById('dateFrom').addEventListener('change', applyFilters);
+            document.getElementById('dateTo').addEventListener('change', applyFilters);
+            document.getElementById('regionFilter').addEventListener('change', applyFilters);
+            
+            // Buttons
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            document.getElementById('newShipmentBtn').addEventListener('click', () => {
+                showNotification('Funzionalità in arrivo!', 'info');
+            });
+        }
                 
                 // Se non autenticato, redirect a login
                 if (!window.auth.isAuthenticated()) {
@@ -161,6 +283,12 @@
             display: flex;
             flex-direction: column;
             gap: var(--sol-space-sm);
+            position: relative;
+            cursor: move;
+            user-select: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none;
         }
         
         .sol-filter-label {
@@ -207,6 +335,120 @@
             grid-template-columns: 1fr auto 1fr;
             gap: var(--sol-space-sm);
             align-items: center;
+        }
+
+        /* Drag Handle per Filter Groups */
+        .filter-drag-handle { 
+            position: absolute;
+            top: 6px; 
+            right: 6px;
+            color: var(--sol-text-tertiary);
+            cursor: grab; 
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 0.875rem;
+        }
+        
+        .sol-filter-group:hover .filter-drag-handle { 
+            opacity: 0.5; 
+        }
+        
+        .filter-drag-handle:hover {
+            opacity: 1 !important;
+        }
+        
+        .filter-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Stili di dragging come da handoff */
+        .sol-filter-group.sortable-ghost { 
+            opacity: 0.4;
+            position: relative;
+            transform: scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(0, 122, 255, 0.6);
+            background: var(--sol-glass-medium);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-md);
+        }
+
+        .sol-filter-group.sortable-chosen {
+            opacity: 0.2;
+            transform: scale(0.95);
+        }
+
+        .sol-filter-group.sortable-drag {
+            opacity: 0;
+        }
+
+        /* Stats Cards con drag & drop */
+        .sol-stat-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-lg);
+            text-align: center;
+            box-shadow: var(--sol-shadow-sm);
+            transition: var(--sol-transition-base);
+            position: relative;
+            cursor: move;
+            user-select: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none;
+        }
+        
+        .sol-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sol-shadow-md);
+        }
+
+        /* Drag Handle per Stats Cards */
+        .card-drag-handle { 
+            position: absolute;
+            top: 8px; 
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--sol-text-tertiary);
+            cursor: grab; 
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 0.875rem;
+        }
+        
+        .sol-stat-card:hover .card-drag-handle { 
+            opacity: 0.5; 
+        }
+        
+        .card-drag-handle:hover {
+            opacity: 1 !important;
+        }
+        
+        .card-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Stili di dragging per stats cards */
+        .sol-stat-card.sortable-ghost { 
+            opacity: 0.4;
+            position: relative;
+            transform: scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(0, 122, 255, 0.6);
+            background: var(--sol-glass-medium);
+        }
+
+        .sol-stat-card.sortable-chosen {
+            opacity: 0.2;
+            transform: scale(0.95);
+        }
+
+        .sol-stat-card.sortable-drag {
+            opacity: 0;
         }
         
         /* Table Styles */
@@ -270,22 +512,6 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: var(--sol-space-lg);
             margin-bottom: var(--sol-space-xl);
-        }
-        
-        .sol-stat-card {
-            background: var(--sol-glass-light);
-            backdrop-filter: var(--sol-blur-lg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--sol-radius-lg);
-            padding: var(--sol-space-lg);
-            text-align: center;
-            box-shadow: var(--sol-shadow-sm);
-            transition: var(--sol-transition-base);
-        }
-        
-        .sol-stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--sol-shadow-md);
         }
         
         .sol-stat-value {
@@ -763,21 +989,25 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="sol-stats-grid">
-            <div class="sol-stat-card">
+        <!-- Stats Cards con drag & drop -->
+        <div class="sol-stats-grid" id="statsGrid">
+            <div class="sol-stat-card" data-id="totalShipments">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="sol-stat-value" id="totalShipments">20</div>
                 <div class="sol-stat-label">Totale Spedizioni</div>
             </div>
-            <div class="sol-stat-card">
+            <div class="sol-stat-card" data-id="inTransit">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="sol-stat-value" id="inTransit">4</div>
                 <div class="sol-stat-label">In Transito</div>
             </div>
-            <div class="sol-stat-card">
+            <div class="sol-stat-card" data-id="deliveredToday">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="sol-stat-value" id="deliveredToday">1</div>
                 <div class="sol-stat-label">Consegnate Oggi</div>
             </div>
-            <div class="sol-stat-card">
+            <div class="sol-stat-card" data-id="delayedShipments">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="sol-stat-value" id="delayedShipments">6</div>
                 <div class="sol-stat-label">In Ritardo</div>
             </div>
@@ -805,14 +1035,16 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <!-- Basic Filters -->
-            <div class="sol-filters-grid">
-                <div class="sol-filter-group">
+            <div class="sol-filters-grid" id="basicFiltersGrid">
+                <div class="sol-filter-group" data-id="search">
+                    <i class="fas fa-grip-vertical filter-drag-handle"></i>
                     <label class="sol-filter-label">
                         <i class="fas fa-search"></i> Cerca
                     </label>
                     <input type="text" id="searchFilter" class="sol-filter-input" placeholder="Tracking, destinatario, città...">
                 </div>
-                <div class="sol-filter-group">
+                <div class="sol-filter-group" data-id="status">
+                    <i class="fas fa-grip-vertical filter-drag-handle"></i>
                     <label class="sol-filter-label">
                         <i class="fas fa-info-circle"></i> Stato
                     </label>
@@ -824,7 +1056,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="In ritardo">In ritardo</option>
                     </select>
                 </div>
-                <div class="sol-filter-group">
+                <div class="sol-filter-group" data-id="carrier">
+                    <i class="fas fa-grip-vertical filter-drag-handle"></i>
                     <label class="sol-filter-label">
                         <i class="fas fa-truck"></i> Corriere
                     </label>
@@ -837,7 +1070,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="ups">UPS</option>
                     </select>
                 </div>
-                <div class="sol-filter-group">
+                <div class="sol-filter-group" data-id="date">
+                    <i class="fas fa-grip-vertical filter-drag-handle"></i>
                     <label class="sol-filter-label">
                         <i class="fas fa-calendar"></i> Data Spedizione
                     </label>
@@ -847,26 +1081,30 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <!-- Advanced Filters -->
             <div class="sol-filters-advanced" id="advancedFilters">
-                <div class="sol-filters-grid">
-                    <div class="sol-filter-group">
+                <div class="sol-filters-grid" id="advancedFiltersGrid">
+                    <div class="sol-filter-group" data-id="sender">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-user"></i> Mittente
                         </label>
                         <input type="text" id="senderFilter" class="sol-filter-input" placeholder="Nome mittente...">
                     </div>
-                    <div class="sol-filter-group">
+                    <div class="sol-filter-group" data-id="recipient">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-user-tie"></i> Destinatario
                         </label>
                         <input type="text" id="recipientFilter" class="sol-filter-input" placeholder="Nome destinatario...">
                     </div>
-                    <div class="sol-filter-group">
+                    <div class="sol-filter-group" data-id="city">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-map-marker-alt"></i> Città
                         </label>
                         <input type="text" id="cityFilter" class="sol-filter-input" placeholder="Città di destinazione...">
                     </div>
-                    <div class="sol-filter-group">
+                    <div class="sol-filter-group" data-id="value">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-euro-sign"></i> Range Valore
                         </label>
@@ -876,7 +1114,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="number" id="valueMax" class="sol-filter-input" placeholder="Max" min="0">
                         </div>
                     </div>
-                    <div class="sol-filter-group">
+                    <div class="sol-filter-group" data-id="period">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-calendar-alt"></i> Periodo
                         </label>
@@ -886,7 +1125,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="date" id="dateTo" class="sol-filter-input">
                         </div>
                     </div>
-                    <div class="sol-filter-group">
+                    <div class="sol-filter-group" data-id="region">
+                        <i class="fas fa-grip-vertical filter-drag-handle"></i>
                         <label class="sol-filter-label">
                             <i class="fas fa-globe-europe"></i> Regione
                         </label>
@@ -988,11 +1228,98 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentPage = 1;
         const rowsPerPage = 20;
 
+        // Sortable instances
+        let statsGridSortable = null;
+        let basicFiltersSortable = null;
+        let advancedFiltersSortable = null;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadShipments(); // Cambiato da loadDemoData()
+            setupSortableGrids();
         });
+
+        // Setup Sortable for drag & drop
+        function setupSortableGrids() {
+            // Stats Grid Sortable
+            const statsGrid = document.getElementById('statsGrid');
+            if (statsGrid) {
+                statsGridSortable = new Sortable(statsGrid, { 
+                    group: 'statsCards', 
+                    animation: 150, 
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    draggable: '.sol-stat-card', 
+                    handle: '.card-drag-handle',
+                    onEnd: function(evt) {
+                        // Salva l'ordine delle stats cards
+                        saveStatsOrder();
+                    }
+                });
+            }
+
+            // Basic Filters Sortable
+            const basicFiltersGrid = document.getElementById('basicFiltersGrid');
+            if (basicFiltersGrid) {
+                basicFiltersSortable = new Sortable(basicFiltersGrid, { 
+                    group: 'filterGroups', 
+                    animation: 150, 
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    draggable: '.sol-filter-group', 
+                    handle: '.filter-drag-handle',
+                    onEnd: function(evt) {
+                        // Salva l'ordine dei filtri base
+                        saveBasicFiltersOrder();
+                    }
+                });
+            }
+
+            // Advanced Filters Sortable
+            const advancedFiltersGrid = document.getElementById('advancedFiltersGrid');
+            if (advancedFiltersGrid) {
+                advancedFiltersSortable = new Sortable(advancedFiltersGrid, { 
+                    group: 'filterGroups', 
+                    animation: 150, 
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    draggable: '.sol-filter-group', 
+                    handle: '.filter-drag-handle',
+                    onEnd: function(evt) {
+                        // Salva l'ordine dei filtri avanzati
+                        saveAdvancedFiltersOrder();
+                    }
+                });
+            }
+        }
+
+        // Save stats order to localStorage
+        function saveStatsOrder() {
+            const statsGrid = document.getElementById('statsGrid');
+            const cards = statsGrid.querySelectorAll('.sol-stat-card');
+            const order = Array.from(cards).map(card => card.dataset.id);
+            localStorage.setItem('shipmentsStatsOrder', JSON.stringify(order));
+        }
+
+        // Save basic filters order to localStorage
+        function saveBasicFiltersOrder() {
+            const filtersGrid = document.getElementById('basicFiltersGrid');
+            const filters = filtersGrid.querySelectorAll('.sol-filter-group');
+            const order = Array.from(filters).map(filter => filter.dataset.id);
+            localStorage.setItem('shipmentsBasicFiltersOrder', JSON.stringify(order));
+        }
+
+        // Save advanced filters order to localStorage
+        function saveAdvancedFiltersOrder() {
+            const filtersGrid = document.getElementById('advancedFiltersGrid');
+            const filters = filtersGrid.querySelectorAll('.sol-filter-group');
+            const order = Array.from(filters).map(filter => filter.dataset.id);
+            localStorage.setItem('shipmentsAdvancedFiltersOrder', JSON.stringify(order));
+        }
 
         // Setup event listeners
         function setupEventListeners() {
@@ -1264,14 +1591,14 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateStats() {
             document.getElementById('totalShipments').textContent = filteredShipments.length;
             document.getElementById('inTransit').textContent = 
-                filteredShipments.filter(s => s.status === 'transit').length;
+                filteredShipments.filter(s => s.statoSpedizione === 'In transito').length;
             document.getElementById('deliveredToday').textContent = 
                 filteredShipments.filter(s => 
-                    s.status === 'delivered' && 
-                    s.date === new Date().toISOString().split('T')[0]
+                    s.statoSpedizione === 'Consegnato' && 
+                    s.dataArrivo === new Date().toISOString().split('T')[0]
                 ).length;
             document.getElementById('delayedShipments').textContent = 
-                filteredShipments.filter(s => s.status === 'delayed').length;
+                filteredShipments.filter(s => s.statoSpedizione === 'In ritardo').length;
             
             document.getElementById('resultsCount').textContent = `${filteredShipments.length} risultati trovati`;
         }
@@ -1403,19 +1730,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 header: true,
                 dynamicTyping: true,
                 complete: (results) => {
-                    const newShipments = results.data.map(row => ({
-                        tracking: row.tracking || `SP-${Date.now()}`,
-                        date: row.date || new Date().toISOString().split('T')[0],
-                        sender: row.sender || 'N/A',
-                        recipient: row.recipient || 'N/A',
-                        city: row.city || 'N/A',
-                        carrier: row.carrier || 'Unknown',
-                        status: row.status || 'pending',
-                        value: parseFloat(row.value || 0)
+                    const newShipments = results.data.map((row, index) => ({
+                        nOda: row.n_oda || row['N. ODA'] || `NEW-${Date.now()}-${index}`,
+                        codArt: row.cod_art || row['Cod. Art.'] || '',
+                        descrizione: row.descrizione || row['Descrizione'] || '',
+                        fornitore: row.fornitore || row['Fornitore'] || '',
+                        tipoSpedizione: row.tipo_spedizione || row['Tipo Spedizione'] || 'STRADA',
+                        spedizioniere: row.spedizioniere || row['Spedizioniere'] || '',
+                        rifSpedizione: row.rif_spedizione || row['Rif. Spedizione'] || '',
+                        statoSpedizione: row.stato_spedizione || row['Stato Spedizione'] || 'In preparazione',
+                        dataPartenza: row.data_partenza || row['Data Partenza'] || new Date().toISOString().split('T')[0],
+                        dataArrivo: row.data_arrivo || row['Data Arrivo'] || '',
+                        transitTime: parseInt(row.transit_time || row['Transit Time'] || 0),
+                        costoTrasporto: parseFloat(row.costo_trasporto || row['Costo Trasporto'] || 0)
                     }));
+                    
                     shipments = [...shipments, ...newShipments];
                     applyFilters();
-                    showNotification(`File CSV caricato: ${filename}`, 'success');
+                    showNotification(`File CSV caricato: ${filename} (${newShipments.length} spedizioni)`, 'success');
                 }
             });
         }
@@ -1426,20 +1758,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-            const newShipments = jsonData.map(row => ({
-                tracking: row.tracking || `SP-${Date.now()}`,
-                date: row.date || new Date().toISOString().split('T')[0],
-                sender: row.sender || 'N/A',
-                recipient: row.recipient || 'N/A',
-                city: row.city || 'N/A',
-                carrier: row.carrier || 'Unknown',
-                status: row.status || 'pending',
-                value: parseFloat(row.value || 0)
+            const newShipments = jsonData.map((row, index) => ({
+                nOda: row.n_oda || row['N. ODA'] || `NEW-${Date.now()}-${index}`,
+                codArt: row.cod_art || row['Cod. Art.'] || '',
+                descrizione: row.descrizione || row['Descrizione'] || '',
+                fornitore: row.fornitore || row['Fornitore'] || '',
+                tipoSpedizione: row.tipo_spedizione || row['Tipo Spedizione'] || 'STRADA',
+                spedizioniere: row.spedizioniere || row['Spedizioniere'] || '',
+                rifSpedizione: row.rif_spedizione || row['Rif. Spedizione'] || '',
+                statoSpedizione: row.stato_spedizione || row['Stato Spedizione'] || 'In preparazione',
+                dataPartenza: row.data_partenza || row['Data Partenza'] || new Date().toISOString().split('T')[0],
+                dataArrivo: row.data_arrivo || row['Data Arrivo'] || '',
+                transitTime: parseInt(row.transit_time || row['Transit Time'] || 0),
+                costoTrasporto: parseFloat(row.costo_trasporto || row['Costo Trasporto'] || 0)
             }));
             
             shipments = [...shipments, ...newShipments];
             applyFilters();
-            showNotification(`File Excel caricato: ${filename}`, 'success');
+            showNotification(`File Excel caricato: ${filename} (${newShipments.length} spedizioni)`, 'success');
         }
 
         // Export functions
@@ -1458,25 +1794,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 20, 35);
                 doc.text(`Totale spedizioni: ${filteredShipments.length}`, 20, 45);
                 
-                // Table headers
-                let yPos = 60;
+                // Stats summary
                 doc.setFontSize(10);
-                doc.text('Tracking', 20, yPos);
-                doc.text('Data', 50, yPos);
-                doc.text('Destinatario', 80, yPos);
-                doc.text('Città', 120, yPos);
-                doc.text('Corriere', 150, yPos);
-                doc.text('Stato', 180, yPos);
+                doc.text(`In transito: ${filteredShipments.filter(s => s.statoSpedizione === 'In transito').length}`, 20, 55);
+                doc.text(`Consegnate: ${filteredShipments.filter(s => s.statoSpedizione === 'Consegnato').length}`, 80, 55);
+                doc.text(`In ritardo: ${filteredShipments.filter(s => s.statoSpedizione === 'In ritardo').length}`, 140, 55);
                 
-                // Table data (max 50 rows)
+                // Table headers
+                let yPos = 70;
+                doc.setFontSize(9);
+                doc.text('N.ODA', 20, yPos);
+                doc.text('Fornitore', 40, yPos);
+                doc.text('Spedizioniere', 80, yPos);
+                doc.text('Stato', 120, yPos);
+                doc.text('Data', 150, yPos);
+                doc.text('Costo', 180, yPos);
+                
+                // Table data (max 50 rows per page)
                 yPos += 10;
                 filteredShipments.slice(0, 50).forEach(shipment => {
-                    doc.text(shipment.tracking, 20, yPos);
-                    doc.text(formatDate(shipment.date), 50, yPos);
-                    doc.text(shipment.recipient.substring(0, 20), 80, yPos);
-                    doc.text(shipment.city, 120, yPos);
-                    doc.text(shipment.carrier, 150, yPos);
-                    doc.text(shipment.status, 180, yPos);
+                    doc.text(String(shipment.nOda), 20, yPos);
+                    doc.text(shipment.fornitore.substring(0, 20), 40, yPos);
+                    doc.text(shipment.spedizioniere.substring(0, 20), 80, yPos);
+                    doc.text(shipment.statoSpedizione, 120, yPos);
+                    doc.text(formatDate(shipment.dataPartenza), 150, yPos);
+                    doc.text(`€${shipment.costoTrasporto}`, 180, yPos);
                     
                     yPos += 8;
                     
@@ -1502,14 +1844,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Prepare data
                 const excelData = filteredShipments.map(shipment => ({
-                    'Tracking ID': shipment.tracking,
-                    'Data Spedizione': shipment.date,
-                    'Mittente': shipment.sender,
-                    'Destinatario': shipment.recipient,
-                    'Città': shipment.city,
-                    'Corriere': shipment.carrier,
-                    'Stato': shipment.status,
-                    'Valore (€)': shipment.value
+                    'N. ODA': shipment.nOda,
+                    'Cod. Art.': shipment.codArt,
+                    'Descrizione': shipment.descrizione,
+                    'Fornitore': shipment.fornitore,
+                    'Tipo Spedizione': shipment.tipoSpedizione,
+                    'Spedizioniere': shipment.spedizioniere,
+                    'Rif. Spedizione': shipment.rifSpedizione,
+                    'Stato Spedizione': shipment.statoSpedizione,
+                    'Data Partenza': shipment.dataPartenza,
+                    'Data Arrivo': shipment.dataArrivo,
+                    'Transit Time (giorni)': shipment.transitTime,
+                    'Costo Trasporto (€)': shipment.costoTrasporto
                 }));
                 
                 // Create worksheet
@@ -1517,14 +1863,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set column widths
                 const colWidths = [
-                    { wch: 15 }, // Tracking
-                    { wch: 12 }, // Data
-                    { wch: 20 }, // Mittente
-                    { wch: 20 }, // Destinatario
-                    { wch: 15 }, // Città
-                    { wch: 10 }, // Corriere
-                    { wch: 12 }, // Stato
-                    { wch: 10 }  // Valore
+                    { wch: 12 }, // N. ODA
+                    { wch: 15 }, // Cod. Art.
+                    { wch: 30 }, // Descrizione
+                    { wch: 20 }, // Fornitore
+                    { wch: 15 }, // Tipo Spedizione
+                    { wch: 20 }, // Spedizioniere
+                    { wch: 18 }, // Rif. Spedizione
+                    { wch: 15 }, // Stato
+                    { wch: 12 }, // Data Partenza
+                    { wch: 12 }, // Data Arrivo
+                    { wch: 12 }, // Transit Time
+                    { wch: 15 }  // Costo
                 ];
                 ws['!cols'] = colWidths;
                 
@@ -1537,12 +1887,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     [''],
                     ['Data Generazione', new Date().toLocaleDateString('it-IT')],
                     ['Totale Spedizioni', filteredShipments.length],
-                    ['In Transito', filteredShipments.filter(s => s.status === 'transit').length],
-                    ['Consegnate', filteredShipments.filter(s => s.status === 'delivered').length],
-                    ['In Ritardo', filteredShipments.filter(s => s.status === 'delayed').length],
-                    ['In Attesa', filteredShipments.filter(s => s.status === 'pending').length],
                     [''],
-                    ['Valore Totale', '€' + filteredShipments.reduce((sum, s) => sum + s.value, 0).toFixed(2)]
+                    ['Riepilogo per Stato:'],
+                    ['In transito', filteredShipments.filter(s => s.statoSpedizione === 'In transito').length],
+                    ['Consegnate', filteredShipments.filter(s => s.statoSpedizione === 'Consegnato').length],
+                    ['In ritardo', filteredShipments.filter(s => s.statoSpedizione === 'In ritardo').length],
+                    ['In preparazione', filteredShipments.filter(s => s.statoSpedizione === 'In preparazione').length],
+                    [''],
+                    ['Riepilogo per Tipo:'],
+                    ['MARE', filteredShipments.filter(s => s.tipoSpedizione === 'MARE').length],
+                    ['AEREO', filteredShipments.filter(s => s.tipoSpedizione === 'AEREO').length],
+                    ['STRADA', filteredShipments.filter(s => s.tipoSpedizione === 'STRADA').length],
+                    [''],
+                    ['Costo Totale', '€' + filteredShipments.reduce((sum, s) => sum + s.costoTrasporto, 0).toFixed(2)]
                 ];
                 
                 const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -1582,6 +1939,78 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 5000);
         }
+
+        // Restore saved order on page load
+        function restoreOrder() {
+            // Restore stats order
+            const savedStatsOrder = localStorage.getItem('shipmentsStatsOrder');
+            if (savedStatsOrder) {
+                try {
+                    const order = JSON.parse(savedStatsOrder);
+                    const statsGrid = document.getElementById('statsGrid');
+                    const cards = Array.from(statsGrid.querySelectorAll('.sol-stat-card'));
+                    
+                    // Sort cards based on saved order
+                    cards.sort((a, b) => {
+                        const aIndex = order.indexOf(a.dataset.id);
+                        const bIndex = order.indexOf(b.dataset.id);
+                        return aIndex - bIndex;
+                    });
+                    
+                    // Re-append in correct order
+                    cards.forEach(card => statsGrid.appendChild(card));
+                } catch (e) {
+                    console.error('Error restoring stats order:', e);
+                }
+            }
+            
+            // Restore basic filters order
+            const savedBasicFiltersOrder = localStorage.getItem('shipmentsBasicFiltersOrder');
+            if (savedBasicFiltersOrder) {
+                try {
+                    const order = JSON.parse(savedBasicFiltersOrder);
+                    const filtersGrid = document.getElementById('basicFiltersGrid');
+                    const filters = Array.from(filtersGrid.querySelectorAll('.sol-filter-group'));
+                    
+                    // Sort filters based on saved order
+                    filters.sort((a, b) => {
+                        const aIndex = order.indexOf(a.dataset.id);
+                        const bIndex = order.indexOf(b.dataset.id);
+                        return aIndex - bIndex;
+                    });
+                    
+                    // Re-append in correct order
+                    filters.forEach(filter => filtersGrid.appendChild(filter));
+                } catch (e) {
+                    console.error('Error restoring basic filters order:', e);
+                }
+            }
+            
+            // Restore advanced filters order
+            const savedAdvancedFiltersOrder = localStorage.getItem('shipmentsAdvancedFiltersOrder');
+            if (savedAdvancedFiltersOrder) {
+                try {
+                    const order = JSON.parse(savedAdvancedFiltersOrder);
+                    const filtersGrid = document.getElementById('advancedFiltersGrid');
+                    const filters = Array.from(filtersGrid.querySelectorAll('.sol-filter-group'));
+                    
+                    // Sort filters based on saved order
+                    filters.sort((a, b) => {
+                        const aIndex = order.indexOf(a.dataset.id);
+                        const bIndex = order.indexOf(b.dataset.id);
+                        return aIndex - bIndex;
+                    });
+                    
+                    // Re-append in correct order
+                    filters.forEach(filter => filtersGrid.appendChild(filter));
+                } catch (e) {
+                    console.error('Error restoring advanced filters order:', e);
+                }
+            }
+        }
+
+        // Call restore order after render
+        setTimeout(restoreOrder, 100);
     </script>
 </body>
 </html>
