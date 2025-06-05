@@ -1326,54 +1326,55 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Load shipments from database
-        async function loadShipments() {
-            try {
-                const token = localStorage.getItem('sb-access-token');
-                if (!token) {
-                    console.error('No auth token found');
-                    loadDemoData(); // Fallback to demo data
-                    return;
-                }
-
-                const response = await fetch('/.netlify/functions/shipments', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch shipments');
-                }
-
-                const data = await response.json();
-                console.log('Loaded shipments:', data);
-
-                // Mappa i dati dal database al formato che usiamo nel frontend
-                shipments = data.shipments.map(s => ({
-                    id: s.id,
-                    nOda: s.n_oda,
-                    codArt: s.cod_art,
-                    descrizione: s.descrizione,
-                    fornitore: s.fornitore,
-                    tipoSpedizione: s.tipo_spedizione,
-                    spedizioniere: s.spedizioniere,
-                    rifSpedizione: s.rif_spedizione,
-                    statoSpedizione: s.stato_spedizione,
-                    dataPartenza: s.data_partenza,
-                    dataArrivo: s.data_arrivo_effettiva,
-                    transitTime: s.transit_time_giorni,
-                    costoTrasporto: parseFloat(s.costo_trasporto) || 0
-                }));
-
-                applyFilters();
-                
-            } catch (error) {
-                console.error('Error loading shipments:', error);
-                // Se c'è un errore, carica i dati demo
-                loadDemoData();
-            }
+        // Trova questa parte del codice (intorno alla riga 1342):
+async function loadShipments() {
+    try {
+        const token = localStorage.getItem('sb-access-token');
+        if (!token) {
+            console.error('No auth token found');
+            loadDemoData(); // Fallback to demo data
+            return;
         }
+
+        const response = await fetch('/.netlify/functions/shipments', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch shipments');
+        }
+
+        const data = await response.json();
+        console.log('Loaded shipments:', data);
+
+        // CORREZIONE: cambia data.shipments in data.data
+        // perché l'API ritorna { data: [...], pagination: {...} }
+        shipments = (data.data || []).map(s => ({
+            id: s.id,
+            nOda: s.n_oda,
+            codArt: s.cod_art,
+            descrizione: s.descrizione,
+            fornitore: s.fornitore,
+            tipoSpedizione: s.tipo_spedizione,
+            spedizioniere: s.spedizioniere,
+            rifSpedizione: s.rif_spedizione,
+            statoSpedizione: s.stato_spedizione,
+            dataPartenza: s.data_partenza,
+            dataArrivo: s.data_arrivo_effettiva,
+            transitTime: s.transit_time_giorni,
+            costoTrasporto: parseFloat(s.costo_trasporto) || 0
+        }));
+
+        applyFilters();
+        
+    } catch (error) {
+        console.error('Error loading shipments:', error);
+        // Se c'è un errore, carica i dati demo
+        loadDemoData();
+    }
+}
 
         // Load demo data (fallback)
         function loadDemoData() {
