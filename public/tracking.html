@@ -1680,7 +1680,7 @@ MSCU7654321,MSC,container,PO123457
                 }
                 
                 const result = await response.json();
-                trackings = result.data || [];
+                trackings = result.data || result.trackings || [];
                 
                 // Update stats with API data
                 if (result.stats) {
