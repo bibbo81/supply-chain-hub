@@ -128,22 +128,30 @@
         .kpi-change.positive { color: #34C759; }
         .kpi-change.negative { color: #FF3B30; }
 
-        /* Drag Handle */
+        /* Drag Handle - New Design */
         .card-drag-handle { 
             position: absolute;
-            top: -5px; 
-            left: 50%;
-            transform: translateX(-50%);
+            top: 12px; 
+            right: 12px;
             color: var(--sol-text-tertiary);
-            background-color: rgba(255,255,255,0.12); 
-            padding: 2px var(--sol-space-xl); 
-            border-radius: 4px; 
-            line-height: 1;
-            font-size: 0.8rem; 
             cursor: grab; 
-            opacity: 0.6; 
-            transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
-            z-index: 10; 
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 1rem;
+        }
+        
+        .kpi-card:hover .card-drag-handle, 
+        .chart-card:hover .card-drag-handle { 
+            opacity: 0.5; 
+        }
+        
+        .card-drag-handle:hover {
+            opacity: 1 !important;
+        }
+        
+        .card-drag-handle:active {
+            cursor: grabbing;
         }
         .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
         
@@ -152,7 +160,8 @@
 
         /* Filter Bar */
         .filter-bar { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); display: flex; gap: var(--sol-space-md); flex-wrap: wrap; align-items: center; }
-        .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); flex: 1; min-width: 200px; }
+        .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); }
+        .filter-group.period-filter { flex: 0 0 200px; }
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
         /* Charts Grid */
@@ -467,7 +476,7 @@
         </div>
 
         <div class="filter-bar">
-            <div class="filter-group">
+            <div class="filter-group period-filter">
                 <label class="filter-label">Periodo</label>
                 <select class="sol-select" id="periodSelect">
                     <option value="7">Ultimi 7 giorni</option>
@@ -559,7 +568,7 @@
                 <button class="sol-btn sol-btn-glass" onclick="dashboardManager.closeCustomizer()">
                     Annulla
                 </button>
-                <button class="sol-btn sol-btn-primary" onclick="dashboardManager.saveConfiguration()">
+                <button class="sol-btn sol-btn-primary" onclick="dashboardManager.saveConfigurationFromModal()">
                     <i class="fas fa-save"></i>
                     Salva Configurazione
                 </button>
@@ -626,7 +635,7 @@
                     icon: 'fa-euro-sign',
                     render: (data) => `
                         <div class="kpi-card sol-animate-in" data-id="totalCost">
-                            <i class="fas fa-grip-lines card-drag-handle"></i>
+                            <i class="fas fa-grip-vertical card-drag-handle"></i>
                             <div class="kpi-header">
                                 <h3 class="kpi-title">Costo Totale Trasporto</h3>
                                 <div class="kpi-icon-wrapper">
@@ -651,7 +660,7 @@
                     icon: 'fa-box',
                     render: (data) => `
                         <div class="kpi-card sol-animate-in" data-id="totalShipments">
-                            <i class="fas fa-grip-lines card-drag-handle"></i>
+                            <i class="fas fa-grip-vertical card-drag-handle"></i>
                             <div class="kpi-header">
                                 <h3 class="kpi-title">Spedizioni Totali</h3>
                                 <div class="kpi-icon-wrapper">
@@ -677,7 +686,7 @@
                     icon: 'fa-clock',
                     render: (data) => `
                         <div class="kpi-card sol-animate-in" data-id="avgDeliveryTime">
-                            <i class="fas fa-grip-lines card-drag-handle"></i>
+                            <i class="fas fa-grip-vertical card-drag-handle"></i>
                             <div class="kpi-header">
                                 <h3 class="kpi-title">Tempo Medio Consegna</h3>
                                 <div class="kpi-icon-wrapper">
@@ -703,7 +712,7 @@
                     icon: 'fa-check-circle',
                     render: (data) => `
                         <div class="kpi-card sol-animate-in" data-id="onTimeDelivery">
-                            <i class="fas fa-grip-lines card-drag-handle"></i>
+                            <i class="fas fa-grip-vertical card-drag-handle"></i>
                             <div class="kpi-header">
                                 <h3 class="kpi-title">Tasso Puntualità</h3>
                                 <div class="kpi-icon-wrapper">
@@ -747,7 +756,7 @@
                         }
                         return `
                             <div class="kpi-card sol-animate-in" data-id="budgetStatus">
-                                <i class="fas fa-grip-lines card-drag-handle"></i>
+                                <i class="fas fa-grip-vertical card-drag-handle"></i>
                                 <div class="kpi-header">
                                     <h3 class="kpi-title">Budget Mensile</h3>
                                     <div class="kpi-icon-wrapper">
@@ -778,7 +787,7 @@
                         const highCostCount = data.alerts?.highCostShipments || 0;
                         return `
                             <div class="kpi-card sol-animate-in" data-id="costAlerts">
-                                <i class="fas fa-grip-lines card-drag-handle"></i>
+                                <i class="fas fa-grip-vertical card-drag-handle"></i>
                                 <div class="kpi-header">
                                     <h3 class="kpi-title">Alert Costi Elevati</h3>
                                     <div class="kpi-icon-wrapper">
@@ -857,7 +866,7 @@
                         
                         return `
                             <div class="chart-card" data-id="${widgetId}">
-                                <i class="fas fa-grip-lines card-drag-handle"></i>
+                                <i class="fas fa-grip-vertical card-drag-handle"></i>
                                 <div class="chart-header">
                                     <h3 class="chart-title">Costi per Tipo Spedizione</h3>
                                     <div class="chart-actions-wrapper">
@@ -919,7 +928,7 @@
                         
                         return `
                             <div class="chart-card full-width" data-id="${widgetId}">
-                                <i class="fas fa-grip-lines card-drag-handle"></i>
+                                <i class="fas fa-grip-vertical card-drag-handle"></i>
                                 <div class="chart-header">
                                     <h3 class="chart-title">Trend Costi Trasporto</h3>
                                     <div class="chart-actions-wrapper">
@@ -985,7 +994,7 @@
                         
                         return `
                             <div class="chart-card" data-id="${widgetId}">
-                                <i class="fas fa-grip-lines card-drag-handle"></i>
+                                <i class="fas fa-grip-vertical card-drag-handle"></i>
                                 <div class="chart-header">
                                     <h3 class="chart-title">Top 5 Spedizionieri</h3>
                                     <div class="chart-actions-wrapper">
@@ -1323,6 +1332,13 @@
             },
 
             saveConfiguration() {
+                // Non usiamo il selector quando salviamo dalla sortable
+                // Salviamo solo le configurazioni attuali già in memoria
+                localStorage.setItem('dashboardWidgets', JSON.stringify(this.activeWidgets));
+                localStorage.setItem('dashboardCharts', JSON.stringify(this.activeCharts));
+            },
+            
+            saveConfigurationFromModal() {
                 const selector = document.getElementById('widgetSelector');
                 if (selector) {
                     const newActiveWidgets = [];
