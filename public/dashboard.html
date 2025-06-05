@@ -929,11 +929,11 @@
                                 <div class="chart-header">
                                     <h3 class="chart-title">Trend Costi Trasporto</h3>
                                     <div class="chart-actions-wrapper">
-                                        <div class="chart-actions">
-                                            <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('daily')">Giornaliero</button>
-                                            <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('weekly')">Settimanale</button>
-                                            <button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('monthly')">Mensile</button>
-                                        </div>
+                                        <select class="sol-select" onchange="updateCostTrendChart(this.value)" style="padding: var(--sol-space-xs) var(--sol-space-md); font-size: 0.875rem;">
+                                            <option value="daily">Giornaliero</option>
+                                            <option value="weekly">Settimanale</option>
+                                            <option value="monthly">Mensile</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="chart-container" id="chart-${widgetId}"></div>
@@ -1534,8 +1534,60 @@
         }
 
         window.updateCostTrendChart = function(period) {
-            // Placeholder for chart update functionality
-            window.showNotification(`Vista ${period} selezionata`, 'info');
+            const chartInstance = dashboardManager.chartInstances['costTrend'];
+            if (!chartInstance || !dashboardManager.dashboardData) return;
+            
+            let aggregatedData;
+            const dailyData = dashboardManager.dashboardData.dailyTrend;
+            
+            switch(period) {
+                case 'weekly':
+                    // Aggrega per settimana
+                    aggregatedData = [];
+                    for (let i = 0; i < dailyData.length; i += 7) {
+                        const weekData = dailyData.slice(i, i + 7);
+                        const avgCost = weekData.reduce((sum, d) => sum + d.cost, 0) / weekData.length;
+                        aggregatedData.push({
+                            date: weekData[0].date,
+                            cost: avgCost
+                        });
+                    }
+                    break;
+                    
+                case 'monthly':
+                    // Mostra solo l'ultimo mese aggregato
+                    const totalCost = dailyData.reduce((sum, d) => sum + d.cost, 0);
+                    aggregatedData = [{
+                        date: dailyData[0].date,
+                        cost: totalCost
+                    }];
+                    break;
+                    
+                default: // daily
+                    aggregatedData = dailyData;
+            }
+            
+            const categories = aggregatedData.map(d => {
+                const date = new Date(d.date);
+                if (period === 'weekly') {
+                    return `Sett. ${date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}`;
+                } else if (period === 'monthly') {
+                    return date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+                }
+                return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+            });
+            
+            chartInstance.updateOptions({
+                series: [{
+                    name: period === 'monthly' ? 'Costo Mensile' : period === 'weekly' ? 'Costo Settimanale' : 'Costo Giornaliero',
+                    data: aggregatedData.map(d => Math.round(d.cost))
+                }],
+                xaxis: {
+                    categories: categories
+                }
+            });
+            
+            window.showNotification(`Vista ${period === 'daily' ? 'giornaliera' : period === 'weekly' ? 'settimanale' : 'mensile'} selezionata`, 'info');
         }
 
         window.showNotification = function(message, type = 'info') {
