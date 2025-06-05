@@ -1,0 +1,56 @@
+.
+├── build.sh
+├── netlify
+│   └── functions
+│       ├── api-integration.js
+│       ├── carriers.js
+│       ├── config.js
+│       ├── create-organization.js
+│       ├── dashboard-stats.js
+│       ├── dashboard-stats.js.backup
+│       ├── export-costs.js
+│       ├── get-costs.js
+│       ├── import-file.js
+│       ├── shipments.js
+│       ├── shipments.js.backup
+│       ├── test-db-structure.js
+│       └── update-profile.js
+├── netlify.toml
+├── package-lock.json
+├── package.json
+├── project_structure.txt
+├── public
+│   ├── api-management.html
+│   ├── auth.js
+│   ├── backend-spedizioni.html
+│   ├── backup
+│   │   ├── import-file-old.html
+│   │   └── old-index.html
+│   ├── carriers.html
+│   ├── components
+│   │   └── sidebar.js
+│   ├── costs.html
+│   ├── dashboard.html
+│   ├── import.html
+│   ├── index-old.html
+│   ├── index.html
+│   ├── login.html
+│   ├── profile.html
+│   ├── script.js
+│   ├── settings.html
+│   ├── shipments.html
+│   ├── solarium.css
+│   └── style.css
+├── README.md
+├── supabase
+│   └── migrations
+│       ├── 20250530220558_crea_tabella_organizzazioni.sql
+│       ├── 20250530220715_aggiungi_organizzazione_id_a_shipments.sql
+│       ├── 20250531_001_sistema_import_mare_multitenancy.sql
+│       ├── 20250531_002_aggiungi_organizzazione_id_tutte_tabelle.sql
+│       ├── 20250531_003_crea_vista_unificata_import.sql
+│       ├── 20250531_aggiungi_organizzazione_id_altre_tabelle.sql
+│       └── 20250531_sistema_import_mare_multitenancy.sql
+└── variables.env
+
+8 directories, 46 files
