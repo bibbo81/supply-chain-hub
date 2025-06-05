@@ -611,7 +611,68 @@
         }
 
         function loadMockData() { const mock = generateMockCostsData(); costsData = mock.shipments; applyFiltersAndRender(mock.kpis, mock.budget); populateFilters(); }
-        function generateMockCostsData() { /* ... (La tua funzione mock, assicurati che ritorni kpis e budget come calcolato sopra) ... */ return {"shipments":[{"n_oda":"ODA-MOCK-2073","cod_art":"ART-M238","data_partenza":"2025-05-10T12:00:00.000Z","fornitore":"Gamma Inc","spedizioniere":"UPS","tipo_spedizione":"STRADA","quantita":161,"costo_trasporto":1078.58,"costo_unitario_trasporto":6.7,"stato_spedizione":"In transito"}],"kpis":{"totalCost":1078.58,"avgShipmentCost":1078.58,"shipmentCount":1,"totalCostChange":-5,"avgCostChange":2.1,"potentialSavings":86.29},"budget":{"monthly":150000,"spent":1078.58,"projected":1186.44,"percentage":1,"remaining":148921.42}}; }
+        function generateMockCostsData() { 
+            const today = new Date();
+            const shipments = [];
+            const suppliers = ['Acme Corp', 'Global Logistics', 'FastShip Inc', 'Ocean Carriers', 'Sky Transport', 'Road Masters', 'Supply Direct', 'Mega Freight', 'Express Delivery', 'Prime Movers'];
+            const carriers = ['DHL', 'FedEx', 'UPS', 'Maersk', 'MSC', 'TNT', 'DB Schenker'];
+            const types = ['MARE', 'AEREO', 'STRADA'];
+            
+            // Genera 150 spedizioni mock
+            for(let i = 0; i < 150; i++) {
+                const daysAgo = Math.floor(Math.random() * 90);
+                const date = new Date(today);
+                date.setDate(date.getDate() - daysAgo);
+                
+                const type = types[Math.floor(Math.random() * types.length)];
+                const baseTransportCost = type === 'AEREO' ? 2000 : type === 'MARE' ? 800 : 500;
+                const transportCost = baseTransportCost + Math.random() * baseTransportCost * 2;
+                const quantity = Math.floor(Math.random() * 500) + 50;
+                
+                shipments.push({
+                    n_oda: `ODA-2025-${String(i+1).padStart(4, '0')}`,
+                    cod_art: `ART-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+                    data_partenza: date.toISOString(),
+                    fornitore: suppliers[Math.floor(Math.random() * suppliers.length)],
+                    spedizioniere: carriers[Math.floor(Math.random() * carriers.length)],
+                    tipo_spedizione: type,
+                    quantita: quantity,
+                    costo_trasporto: Math.round(transportCost * 100) / 100,
+                    costo_unitario_trasporto: Math.round((transportCost / quantity) * 100) / 100,
+                    stato_spedizione: ['In transito', 'Consegnato', 'In preparazione'][Math.floor(Math.random() * 3)]
+                });
+            }
+            
+            // Calcola KPIs
+            const totalCost = shipments.reduce((sum, s) => sum + s.costo_trasporto, 0);
+            const avgCost = totalCost / shipments.length;
+            const monthlyBudget = 150000;
+            const spent = shipments.filter(s => {
+                const d = new Date(s.data_partenza);
+                return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            }).reduce((sum, s) => sum + s.costo_trasporto, 0);
+            
+            return {
+                shipments: shipments.sort((a, b) => new Date(b.data_partenza) - new Date(a.data_partenza)),
+                kpis: {
+                    totalCost: Math.round(totalCost),
+                    avgShipmentCost: Math.round(avgCost),
+                    shipmentCount: shipments.length,
+                    totalCostChange: -5.2,
+                    avgCostChange: 2.1,
+                    budgetUsed: Math.round((spent / monthlyBudget) * 100),
+                    budgetRemaining: monthlyBudget - spent,
+                    potentialSavings: Math.round(totalCost * 0.08)
+                },
+                budget: {
+                    monthly: monthlyBudget,
+                    spent: Math.round(spent),
+                    projected: Math.round(spent * 1.3),
+                    percentage: Math.round((spent / monthlyBudget) * 100),
+                    remaining: Math.round(monthlyBudget - spent)
+                }
+            };
+        }
 
         function updateKPIs(kpis) { if(!kpis) return; document.getElementById('totalCost').textContent = formatCurrency(kpis.totalCost); const tcCE=document.getElementById('totalCostChange'),tcCIP=tcCE?.parentElement; if(tcCE&&tcCIP){tcCE.textContent=Math.abs(kpis.totalCostChange||0).toFixed(1)+'%';tcCIP.className=(kpis.totalCostChange||0)<0?'kpi-change positive':'kpi-change negative';tcCIP.querySelector('i').className=`fas fa-arrow-${(kpis.totalCostChange||0)<0?'down':'up'}`;} document.getElementById('avgShipmentCost').textContent=formatCurrency(kpis.avgShipmentCost); const acCE=document.getElementById('avgCostChange'),acCIP=acCE?.parentElement; if(acCE&&acCIP){acCE.textContent=Math.abs(kpis.avgCostChange||0).toFixed(1)+'%';acCIP.className=(kpis.avgCostChange||0)<0?'kpi-change positive':'kpi-change negative';acCIP.querySelector('i').className=`fas fa-arrow-${(kpis.avgCostChange||0)<0?'down':'up'}`;} document.getElementById('budgetUsed').textContent=(kpis.budgetUsed||0)+'%'; document.getElementById('budgetRemaining').textContent=formatCurrency(kpis.budgetRemaining||0); document.getElementById('potentialSavings').textContent=formatCurrency(kpis.potentialSavings||0); }
         function updateBudgetComparison(budget) { if(!budget) return; const p=budget.percentage||0,bB=document.getElementById('budgetBar'),bL=document.getElementById('budgetLabel'); if(bB)bB.style.width=p+'%'; if(bL)bL.textContent=p+'%'; if(bB){if(p>90)bB.className='budget-fill danger';else if(p>75)bB.className='budget-fill warning';else bB.className='budget-fill';} document.getElementById('monthlyBudget').textContent=formatCurrency(budget.monthly); document.getElementById('spentAmount').textContent=formatCurrency(budget.spent); document.getElementById('projectedAmount').textContent=formatCurrency(budget.projected); const sE=document.getElementById('budgetStatus'); if(sE){if(p>90)sE.innerHTML='<span class="cost-badge high">Oltre budget</span>';else if(p>75)sE.innerHTML='<span class="cost-badge medium">Attenzione</span>';else sE.innerHTML='<span class="cost-badge low">Sotto controllo</span>';} document.getElementById('budgetAmount').textContent=formatCurrency(budget.monthly); }
