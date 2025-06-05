@@ -93,11 +93,61 @@
             box-shadow: var(--sol-shadow-sm);
             transition: var(--sol-transition-base);
             position: relative;
+            cursor: move;
+            user-select: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none;
         }
         
         .sol-stat-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--sol-shadow-md);
+        }
+
+        /* Drag Handle per Stats Cards */
+        .sol-stat-card .card-drag-handle { 
+            position: absolute;
+            top: 8px; 
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--sol-text-tertiary);
+            cursor: grab; 
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 0.875rem;
+        }
+        
+        .sol-stat-card:hover .card-drag-handle { 
+            opacity: 0.5; 
+        }
+        
+        .sol-stat-card .card-drag-handle:hover {
+            opacity: 1 !important;
+        }
+        
+        .sol-stat-card .card-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Stili di dragging per stats cards */
+        .sol-stat-card.sortable-ghost { 
+            opacity: 0.4;
+            position: relative;
+            transform: scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(0, 122, 255, 0.6);
+            background: var(--sol-glass-medium);
+        }
+
+        .sol-stat-card.sortable-chosen {
+            opacity: 0.2;
+            transform: scale(0.95);
+        }
+
+        .sol-stat-card.sortable-drag {
+            opacity: 0;
         }
         
         .sol-stat-value {
