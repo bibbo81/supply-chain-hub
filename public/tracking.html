@@ -458,6 +458,112 @@
             background: rgba(255, 255, 255, 0.05);
         }
         
+        /* Tab System per Import - Coerente con design Solarium */
+        .form-tabs {
+            display: flex;
+            gap: var(--sol-space-xs);
+            margin-bottom: var(--sol-space-xl);
+            background: var(--sol-glass-light);
+            padding: var(--sol-space-xs);
+            border-radius: var(--sol-radius-full);
+        }
+        
+        .form-tab {
+            flex: 1;
+            padding: var(--sol-space-sm) var(--sol-space-lg);
+            border: none;
+            background: transparent;
+            color: var(--sol-text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: var(--sol-radius-full);
+            cursor: pointer;
+            transition: var(--sol-transition-spring);
+            position: relative;
+        }
+        
+        .form-tab.active {
+            background: var(--sol-gradient-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        
+        .form-tab:hover:not(.active) {
+            color: var(--sol-text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .badge-new {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF3B30;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        
+        .import-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--sol-space-lg);
+        }
+        
+        .import-method {
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-xl);
+            text-align: center;
+        }
+        
+        .import-method i {
+            font-size: 3rem;
+            color: #007AFF;
+            margin-bottom: var(--sol-space-md);
+        }
+        
+        .import-method h4 {
+            margin: 0 0 var(--sol-space-sm) 0;
+            font-size: 1.125rem;
+        }
+        
+        .import-method p {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            margin-bottom: var(--sol-space-lg);
+        }
+        
+        .import-textarea {
+            width: 100%;
+            min-height: 150px;
+            background: var(--sol-glass-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-md);
+            color: var(--sol-text-primary);
+            font-family: monospace;
+            font-size: 0.875rem;
+            resize: vertical;
+            margin-bottom: var(--sol-space-md);
+        }
+        
+        .import-textarea:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 768px) {
             #userName { display: none; }
@@ -519,6 +625,15 @@
             .sol-table th:nth-child(n+5),
             .sol-table td:nth-child(n+5) {
                 display: none;
+            }
+            
+            .import-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-tab {
+                font-size: 0.8rem;
+                padding: var(--sol-space-xs) var(--sol-space-sm);
             }
         }
         
@@ -766,7 +881,7 @@
             <div class="form-header">
                 <h3 class="form-title">
                     <i class="fas fa-plus-circle"></i>
-                    Aggiungi Nuovo Tracking
+                    Gestione Tracking
                 </h3>
                 <button class="sol-btn sol-btn-glass" onclick="toggleAddForm()">
                     <i class="fas fa-times"></i>
@@ -774,92 +889,162 @@
                 </button>
             </div>
             
-            <form id="trackingForm" onsubmit="handleSubmit(event)">
-                <div class="form-grid">
-                    <div class="form-group" style="position: relative;">
-                        <label class="form-label">
-                            <i class="fas fa-barcode"></i> Numero Tracking
-                        </label>
-                        <input type="text" 
-                               id="trackingNumber" 
-                               class="form-input" 
-                               placeholder="Es: MSKU1234567, MAEU1234567890, 176-12345678"
-                               oninput="detectTrackingType(this.value)"
-                               required>
-                        <span class="type-indicator" id="typeIndicator" style="display: none;"></span>
+            <!-- TAB NAVIGATION -->
+            <div class="form-tabs">
+                <button class="form-tab active" onclick="switchFormTab('single')">
+                    <i class="fas fa-plus"></i>
+                    Singolo Tracking
+                </button>
+                <button class="form-tab" onclick="switchFormTab('import')">
+                    <i class="fas fa-file-import"></i>
+                    Import Multiplo
+                    <span class="badge-new">NEW</span>
+                </button>
+            </div>
+            
+            <!-- TAB CONTENT: Single -->
+            <div id="singleTab" class="tab-content active">
+                <form id="trackingForm" onsubmit="handleSubmit(event)">
+                    <div class="form-grid">
+                        <div class="form-group" style="position: relative;">
+                            <label class="form-label">
+                                <i class="fas fa-barcode"></i> Numero Tracking
+                            </label>
+                            <input type="text" 
+                                   id="trackingNumber" 
+                                   class="form-input" 
+                                   placeholder="Es: MSKU1234567, MAEU1234567890, 176-12345678"
+                                   oninput="detectTrackingType(this.value)"
+                                   required>
+                            <span class="type-indicator" id="typeIndicator" style="display: none;"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-box"></i> Tipo Tracking
+                            </label>
+                            <select id="trackingType" class="form-select" required>
+                                <option value="">Seleziona tipo</option>
+                                <option value="container">Container</option>
+                                <option value="bl">Bill of Lading (BL)</option>
+                                <option value="awb">Air Waybill (AWB)</option>
+                                <option value="parcel">Parcel/Express</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-truck"></i> Carrier
+                            </label>
+                            <select id="carrierCode" class="form-select" required>
+                                <option value="">Seleziona carrier</option>
+                                <optgroup label="Maritime">
+                                    <option value="MSC">MSC</option>
+                                    <option value="MAERSK">MAERSK</option>
+                                    <option value="CMA-CGM">CMA CGM</option>
+                                    <option value="COSCO">COSCO</option>
+                                    <option value="HAPAG-LLOYD">HAPAG-LLOYD</option>
+                                    <option value="ONE">ONE</option>
+                                    <option value="EVERGREEN">EVERGREEN</option>
+                                    <option value="YANG-MING">YANG MING</option>
+                                    <option value="ZIM">ZIM</option>
+                                    <option value="HMM">HMM</option>
+                                </optgroup>
+                                <optgroup label="Air Cargo">
+                                    <option value="FX">FedEx (FX)</option>
+                                    <option value="5X">UPS (5X)</option>
+                                    <option value="CV">Cargolux (CV)</option>
+                                    <option value="CX">Cathay Pacific (CX)</option>
+                                    <option value="EK">Emirates (EK)</option>
+                                    <option value="LH">Lufthansa Cargo (LH)</option>
+                                    <option value="KE">Korean Air (KE)</option>
+                                </optgroup>
+                                <optgroup label="Express/Parcel">
+                                    <option value="DHL">DHL Express</option>
+                                    <option value="FEDEX">FedEx</option>
+                                    <option value="UPS">UPS</option>
+                                    <option value="TNT">TNT</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tag"></i> Riferimento (opzionale)
+                            </label>
+                            <input type="text" 
+                                   id="referenceNumber" 
+                                   class="form-input" 
+                                   placeholder="Es: PO123456, INV789">
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-box"></i> Tipo Tracking
-                        </label>
-                        <select id="trackingType" class="form-select" required>
-                            <option value="">Seleziona tipo</option>
-                            <option value="container">Container</option>
-                            <option value="bl">Bill of Lading (BL)</option>
-                            <option value="awb">Air Waybill (AWB)</option>
-                            <option value="parcel">Parcel/Express</option>
-                        </select>
+                    <div style="display: flex; gap: var(--sol-space-md); justify-content: flex-end; margin-top: var(--sol-space-xl);">
+                        <button type="button" class="sol-btn sol-btn-glass" onclick="resetForm()">
+                            <i class="fas fa-undo"></i>
+                            Reset
+                        </button>
+                        <button type="submit" class="sol-btn sol-btn-primary" id="submitBtn">
+                            <i class="fas fa-plus"></i>
+                            Aggiungi Tracking
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- TAB CONTENT: Import -->
+            <div id="importTab" class="tab-content">
+                <div class="import-grid">
+                    <!-- File Import -->
+                    <div class="import-method">
+                        <i class="fas fa-file-excel"></i>
+                        <h4>Import da File</h4>
+                        <p>Carica un file CSV o Excel con i tuoi tracking esistenti</p>
+                        
+                        <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display: none;" onchange="handleFileImport(event)">
+                        <button class="sol-btn sol-btn-primary" onclick="document.getElementById('importFile').click()">
+                            <i class="fas fa-upload"></i>
+                            Seleziona File
+                        </button>
+                        
+                        <button class="sol-btn sol-btn-glass" style="margin-top: var(--sol-space-sm);" onclick="downloadTemplate()">
+                            <i class="fas fa-download"></i>
+                            Scarica Template
+                        </button>
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-truck"></i> Carrier
-                        </label>
-                        <select id="carrierCode" class="form-select" required>
-                            <option value="">Seleziona carrier</option>
-                            <optgroup label="Maritime">
-                                <option value="MSC">MSC</option>
-                                <option value="MAERSK">MAERSK</option>
-                                <option value="CMA-CGM">CMA CGM</option>
-                                <option value="COSCO">COSCO</option>
-                                <option value="HAPAG-LLOYD">HAPAG-LLOYD</option>
-                                <option value="ONE">ONE</option>
-                                <option value="EVERGREEN">EVERGREEN</option>
-                                <option value="YANG-MING">YANG MING</option>
-                                <option value="ZIM">ZIM</option>
-                                <option value="HMM">HMM</option>
-                            </optgroup>
-                            <optgroup label="Air Cargo">
-                                <option value="FX">FedEx (FX)</option>
-                                <option value="5X">UPS (5X)</option>
-                                <option value="CV">Cargolux (CV)</option>
-                                <option value="CX">Cathay Pacific (CX)</option>
-                                <option value="EK">Emirates (EK)</option>
-                                <option value="LH">Lufthansa Cargo (LH)</option>
-                                <option value="KE">Korean Air (KE)</option>
-                            </optgroup>
-                            <optgroup label="Express/Parcel">
-                                <option value="DHL">DHL Express</option>
-                                <option value="FEDEX">FedEx</option>
-                                <option value="UPS">UPS</option>
-                                <option value="TNT">TNT</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-tag"></i> Riferimento (opzionale)
-                        </label>
-                        <input type="text" 
-                               id="referenceNumber" 
-                               class="form-input" 
-                               placeholder="Es: PO123456, INV789">
+                    <!-- Manual Import -->
+                    <div class="import-method">
+                        <i class="fas fa-clipboard"></i>
+                        <h4>Import Manuale</h4>
+                        <p>Incolla i tracking uno per riga</p>
+                        
+                        <textarea 
+                            id="importTextarea" 
+                            class="import-textarea" 
+                            placeholder="MRKU1234567, MAERSK
+MSCU7654321, MSC
+176-12345678, CV"
+                        ></textarea>
+                        
+                        <button class="sol-btn sol-btn-primary" onclick="processManualImport()">
+                            <i class="fas fa-check"></i>
+                            Importa Lista
+                        </button>
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: var(--sol-space-md); justify-content: flex-end; margin-top: var(--sol-space-xl);">
-                    <button type="button" class="sol-btn sol-btn-glass" onclick="resetForm()">
-                        <i class="fas fa-undo"></i>
-                        Reset
-                    </button>
-                    <button type="submit" class="sol-btn sol-btn-primary" id="submitBtn">
-                        <i class="fas fa-plus"></i>
-                        Aggiungi Tracking
-                    </button>
+                <!-- Import Progress -->
+                <div id="importProgress" style="display: none; margin-top: var(--sol-space-xl);">
+                    <h4 style="margin-bottom: var(--sol-space-md);">Import in corso...</h4>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="importProgressBar"></div>
+                    </div>
+                    <p style="text-align: center; margin-top: var(--sol-space-sm); color: var(--sol-text-secondary);">
+                        <span id="importedCount">0</span> / <span id="totalCount">0</span> tracking importati
+                    </p>
                 </div>
-            </form>
+            </div>
         </div>
 
         <!-- Tracking List -->
@@ -1121,6 +1306,265 @@
             if (form.style.display === 'block') {
                 document.getElementById('trackingNumber').focus();
             }
+        }
+
+        // Tab switching functionality
+        function switchFormTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.form-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.form-tab').classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            
+            // Focus on appropriate field
+            if (tab === 'single') {
+                document.getElementById('trackingNumber').focus();
+            } else {
+                document.getElementById('importTextarea').focus();
+            }
+        }
+
+        // Download CSV template
+        function downloadTemplate() {
+            const csvContent = `tracking_number,carrier_code,tracking_type,reference
+MRKU1234567,MAERSK,container,PO123456
+MSCU7654321,MSC,container,PO123457
+176-12345678,CV,awb,AWB789012
+1234567890,DHL,parcel,DHL456789`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'tracking_import_template.csv';
+            link.click();
+            
+            showNotification('Template CSV scaricato!', 'success');
+        }
+
+        // Process manual import
+        async function processManualImport() {
+            const textarea = document.getElementById('importTextarea');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                showNotification('Inserisci almeno un tracking', 'error');
+                return;
+            }
+            
+            // Parse lines
+            const lines = text.split('\n').filter(line => line.trim());
+            const trackingList = [];
+            
+            lines.forEach(line => {
+                const parts = line.split(',').map(p => p.trim());
+                if (parts[0]) {
+                    trackingList.push({
+                        tracking_number: parts[0].toUpperCase(),
+                        carrier_code: parts[1] || detectCarrierFromNumber(parts[0]),
+                        tracking_type: parts[2] || detectTypeFromNumber(parts[0]),
+                        description: `Import batch ${new Date().toLocaleDateString()}`
+                    });
+                }
+            });
+            
+            if (trackingList.length === 0) {
+                showNotification('Nessun tracking valido trovato', 'error');
+                return;
+            }
+            
+            // Start import
+            await importTrackingBatch(trackingList);
+        }
+
+        // Handle file import
+        let fileData = null;
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.csv')) {
+                reader.onload = async (e) => {
+                    const text = e.target.result;
+                    const lines = text.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    
+                    const trackingList = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        if (values[0]) {
+                            const item = {};
+                            headers.forEach((header, index) => {
+                                item[header] = values[index];
+                            });
+                            
+                            trackingList.push({
+                                tracking_number: item.tracking_number || item['tracking number'] || values[0],
+                                carrier_code: item.carrier_code || item.carrier || values[1],
+                                tracking_type: item.tracking_type || item.type || detectTypeFromNumber(values[0]),
+                                description: `Import da ${file.name}`
+                            });
+                        }
+                    }
+                    
+                    await importTrackingBatch(trackingList);
+                };
+                reader.readAsText(file);
+            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                reader.onload = async (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    const trackingList = jsonData.map(row => ({
+                        tracking_number: row.tracking_number || row['Tracking Number'] || '',
+                        carrier_code: row.carrier_code || row.Carrier || '',
+                        tracking_type: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                        description: `Import da ${file.name}`
+                    })).filter(item => item.tracking_number);
+                    
+                    await importTrackingBatch(trackingList);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // Import tracking batch
+        async function importTrackingBatch(trackingList) {
+            const progressDiv = document.getElementById('importProgress');
+            const progressBar = document.getElementById('importProgressBar');
+            const importedCount = document.getElementById('importedCount');
+            const totalCount = document.getElementById('totalCount');
+            
+            // Show progress
+            progressDiv.style.display = 'block';
+            totalCount.textContent = trackingList.length;
+            importedCount.textContent = '0';
+            progressBar.style.width = '0%';
+            
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+            
+            const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+            if (!token) {
+                showNotification('Token di autenticazione non trovato', 'error');
+                return;
+            }
+            
+            // Process in batches of 5
+            const batchSize = 5;
+            for (let i = 0; i < trackingList.length; i += batchSize) {
+                const batch = trackingList.slice(i, i + batchSize);
+                
+                await Promise.all(batch.map(async (tracking) => {
+                    try {
+                        const response = await fetch('/.netlify/functions/add-tracking', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(tracking)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                            errors.push({
+                                tracking: tracking.tracking_number,
+                                error: result.error || 'Errore sconosciuto'
+                            });
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        errors.push({
+                            tracking: tracking.tracking_number,
+                            error: error.message
+                        });
+                    }
+                    
+                    // Update progress
+                    const completed = successCount + errorCount;
+                    importedCount.textContent = completed;
+                    progressBar.style.width = `${(completed / trackingList.length) * 100}%`;
+                }));
+                
+                // Small delay between batches
+                if (i + batchSize < trackingList.length) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            // Show results
+            let message = `Import completato: ${successCount} successi`;
+            if (errorCount > 0) {
+                message += `, ${errorCount} errori`;
+                console.error('Errori import:', errors);
+            }
+            
+            showNotification(message, errorCount > 0 ? 'warning' : 'success');
+            
+            // Clear form and reload
+            if (successCount > 0) {
+                document.getElementById('importTextarea').value = '';
+                document.getElementById('importFile').value = '';
+                
+                // Reload tracking list after 2 seconds
+                setTimeout(() => {
+                    loadTrackings();
+                    toggleAddForm(); // Close form
+                }, 2000);
+            }
+            
+            // Hide progress after 3 seconds
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Helper: Detect carrier from number
+        function detectCarrierFromNumber(trackingNumber) {
+            const num = trackingNumber.toUpperCase();
+            
+            // Container prefixes
+            if (num.startsWith('MRKU') || num.startsWith('MAEU')) return 'MAERSK';
+            if (num.startsWith('MSCU')) return 'MSC';
+            if (num.startsWith('CMDU')) return 'CMA-CGM';
+            if (num.startsWith('COSU')) return 'COSCO';
+            if (num.startsWith('HLCU')) return 'HAPAG-LLOYD';
+            if (num.startsWith('ONEY')) return 'ONE';
+            if (num.startsWith('EGLV') || num.startsWith('EISU')) return 'EVERGREEN';
+            
+            // AWB patterns
+            if (/^172-/.test(num)) return 'CV'; // Cargolux
+            if (/^176-/.test(num)) return 'EK'; // Emirates
+            if (/^020-/.test(num)) return 'LH'; // Lufthansa
+            
+            return '';
+        }
+
+        // Helper: Detect type from number  
+        function detectTypeFromNumber(trackingNumber) {
+            const num = trackingNumber.toUpperCase();
+            
+            if (/^[A-Z]{4}\d{7}$/.test(num)) return 'container';
+            if (/^[A-Z]{4}\d{8,12}$/.test(num)) return 'bl';
+            if (/^\d{3}-\d{8}$/.test(num)) return 'awb';
+            if (num.length >= 10 && num.length <= 30) return 'parcel';
+            
+            return '';
         }
 
         // Detect tracking type
