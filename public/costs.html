@@ -128,21 +128,29 @@
 
         .card-drag-handle { 
             position: absolute;
-            top: -10px; 
+            top: 12px; 
             left: 50%;
             transform: translateX(-50%);
             color: var(--sol-text-tertiary);
-            background-color: rgba(255,255,255,0.12); 
-            padding: 2px var(--sol-space-xl); 
-            border-radius: 4px; 
-            line-height: 1;
-            font-size: 0.8rem; 
             cursor: grab; 
-            opacity: 0.6; 
-            transition: opacity var(--sol-transition-fast), background-color var(--sol-transition-fast);
-            z-index: 10; 
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 1rem;
         }
-        .kpi-card:hover .card-drag-handle, .chart-card:hover .card-drag-handle { opacity: 1; background-color: rgba(255,255,255,0.18); }
+
+        .kpi-card:hover .card-drag-handle, 
+        .chart-card:hover .card-drag-handle { 
+            opacity: 0.5; 
+        }
+
+        .card-drag-handle:hover {
+            opacity: 1 !important;
+        }
+
+        .card-drag-handle:active {
+            cursor: grabbing;
+        }
         
         .kpi-card.dragging, .chart-card.dragging { opacity: 0.6; transform: scale(0.97); box-shadow: var(--sol-shadow-lg); border: 1px solid var(--sol-text-accent); }
         .kpi-card.sortable-chosen, .chart-card.sortable-chosen { /* Style for the original element while dragging */  }
@@ -152,9 +160,43 @@
         .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); flex: 1; min-width: 200px; }
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
+        .sol-select {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: var(--sol-blur-lg);
+            -webkit-backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-sm) var(--sol-space-lg);
+            padding-right: var(--sol-space-2xl);
+            color: var(--sol-text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--sol-transition-base);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.5)' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right var(--sol-space-md) center;
+            width: 100%;
+            min-height: 40px;
+        }
+
+        .sol-select:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sol-select:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+        
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(470px, 1fr)); gap: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); }
         .chart-card { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-xl); overflow: hidden; display: flex; flex-direction: column; min-height: 400px; position: relative;}
-        .chart-card.full-width { grid-column: 1 / -1; }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sol-space-lg); position: relative; }
         .chart-title { font-size: 1.125rem; font-weight: 600; color: var(--sol-text-primary); flex-grow: 1; }
         .chart-actions-wrapper { display: flex; align-items: center; }
@@ -315,7 +357,7 @@
 
         <div class="kpi-grid" id="kpiGridContainer">
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.1s;" data-id="totalCostCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="kpi-header">
                     <h3 class="kpi-title">Costo Totale</h3>
                     <div class="kpi-icon-wrapper">
@@ -326,7 +368,7 @@
                 <div class="kpi-change positive"><i class="fas fa-arrow-down"></i><span id="totalCostChange">0%</span> vs mese precedente</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.2s;" data-id="avgShipmentCostCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="kpi-header">
                     <h3 class="kpi-title">Costo Medio Spedizione</h3>
                      <div class="kpi-icon-wrapper">
@@ -337,7 +379,7 @@
                 <div class="kpi-change negative"><i class="fas fa-arrow-up"></i><span id="avgCostChange">0%</span> vs mese precedente</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.3s;" data-id="budgetUsedCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="kpi-header">
                     <h3 class="kpi-title">Budget Utilizzato</h3>
                     <div class="kpi-icon-wrapper">
@@ -348,7 +390,7 @@
                 <div class="kpi-change positive"><i class="fas fa-check-circle"></i><span id="budgetRemaining">€0</span> rimanenti</div>
             </div>
             <div class="kpi-card sol-animate-in" style="animation-delay: 0.4s;" data-id="potentialSavingsCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="kpi-header">
                     <h3 class="kpi-title">Risparmio Potenziale</h3>
                     <div class="kpi-icon-wrapper">
@@ -380,18 +422,22 @@
         </div>
 
         <div class="charts-grid" id="chartsGridContainer">
-            <div class="chart-card full-width" data-id="costTrendChartCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+            <div class="chart-card" data-id="costTrendChartCard">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="chart-header">
                     <h3 class="chart-title">Trend Costi nel Tempo</h3>
                     <div class="chart-actions-wrapper">
-                        <div class="chart-actions"><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('daily')">Giornaliero</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('weekly')">Settimanale</button><button class="sol-btn sol-btn-glass" onclick="updateCostTrendChart('monthly')">Mensile</button></div>
+                        <select class="sol-select" onchange="updateCostTrendChart(this.value)" style="min-width: 140px; width: auto; padding: var(--sol-space-xs) var(--sol-space-md); padding-right: var(--sol-space-xl); font-size: 0.8125rem; min-height: 36px;">
+                            <option value="daily" selected>Giornaliero</option>
+                            <option value="weekly">Settimanale</option>
+                            <option value="monthly">Mensile</option>
+                        </select>
                     </div>
                 </div>
                 <div class="chart-container" id="costTrendChart"></div>
             </div>
             <div class="chart-card" data-id="carrierCostChartCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="chart-header">
                     <h3 class="chart-title">Costi per Spedizioniere</h3>
                      <div class="chart-actions-wrapper">
@@ -401,7 +447,7 @@
                 <div class="chart-container" id="carrierCostChart"></div>
             </div>
             <div class="chart-card" data-id="typeCostChartCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="chart-header">
                     <h3 class="chart-title">Costi per Tipo Spedizione</h3>
                      <div class="chart-actions-wrapper">
@@ -411,7 +457,7 @@
                 <div class="chart-container" id="typeCostChart"></div>
             </div>
             <div class="chart-card" data-id="supplierCostChartCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="chart-header">
                     <h3 class="chart-title">Top 10 Fornitori per Costo</h3>
                     <div class="chart-actions-wrapper">
@@ -421,7 +467,7 @@
                 <div class="chart-container" id="supplierCostChart"></div>
             </div>
             <div class="chart-card" data-id="costDistributionChartCard">
-                <i class="fas fa-grip-lines card-drag-handle"></i>
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="chart-header">
                     <h3 class="chart-title">Distribuzione Costi</h3>
                     <div class="chart-actions-wrapper">
@@ -688,6 +734,3 @@
                 }
             });
         }
-    </script>
-</body>
-</html>
