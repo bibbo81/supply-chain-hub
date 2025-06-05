@@ -1365,11 +1365,11 @@ MSCU7654321,MSC,container,PO123457
                 const parts = line.split(',').map(p => p.trim());
                 if (parts[0]) {
                     trackingList.push({
-                        tracking_number: parts[0].toUpperCase(),
-                        carrier_code: parts[1] || detectCarrierFromNumber(parts[0]),
-                        tracking_type: parts[2] || detectTypeFromNumber(parts[0]),
-                        description: `Import batch ${new Date().toLocaleDateString()}`
-                    });
+    trackingNumber: parts[0].toUpperCase(),    // NOTA: camelCase!
+    carrierCode: parts[1] || detectCarrierFromNumber(parts[0]),
+    trackingType: parts[2] || detectTypeFromNumber(parts[0]),
+    description: `Import batch ${new Date().toLocaleDateString()}`
+});
                 }
             });
             
