@@ -1654,33 +1654,33 @@ MSCU7654321,MSC,container,PO123457
 
         // Load trackings - INTEGRAZIONE API
         async function loadTrackings() {
-            showLoadingState(true);
-            
-            try {
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    throw new Error('Token di autenticazione non trovato');
-                }
-                
-                const params = new URLSearchParams({
-                    page: 1,
-                    limit: 100,
-                    sort: 'created_at',
-                    order: 'desc'
-                });
-                
-                const response = await fetch(`/.netlify/functions/get-trackings?${params}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+    showLoadingState(true);
+    
+    try {
+        const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+        if (!token) {
+            throw new Error('Token di autenticazione non trovato');
+        }
+        
+        const params = new URLSearchParams({
+            page: 1,
+            limit: 100,
+            sort: 'created_at',
+            order: 'desc'
+        });
+        
+        const response = await fetch(`/.netlify/functions/get-trackings?${params}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
                 
                 if (!response.ok) {
                     throw new Error('Errore nel caricamento dei tracking');
                 }
                 
                 const result = await response.json();
-                trackings = result.data || result.trackings || [];
+                ttrackings = result.trackings || result.data || [];
                 
                 // Update stats with API data
                 if (result.stats) {
