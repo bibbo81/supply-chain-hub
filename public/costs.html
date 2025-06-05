@@ -618,39 +618,73 @@
             const carriers = ['DHL', 'FedEx', 'UPS', 'Maersk', 'MSC', 'TNT', 'DB Schenker'];
             const types = ['MARE', 'AEREO', 'STRADA'];
             
-            // Genera 150 spedizioni mock
-            for(let i = 0; i < 150; i++) {
-                const daysAgo = Math.floor(Math.random() * 90);
+            // Base giornaliera di spedizioni (più realistico)
+            const avgShipmentsPerDay = 5;
+            const dailyVariation = 0.3; // +/- 30% variazione
+            
+            // Genera spedizioni distribuite negli ultimi 90 giorni
+            for(let daysAgo = 0; daysAgo < 90; daysAgo++) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - daysAgo);
                 
-                const type = types[Math.floor(Math.random() * types.length)];
-                const baseTransportCost = type === 'AEREO' ? 2000 : type === 'MARE' ? 800 : 500;
-                const transportCost = baseTransportCost + Math.random() * baseTransportCost * 2;
-                const quantity = Math.floor(Math.random() * 500) + 50;
+                // Salta i weekend per essere più realistico
+                if(date.getDay() === 0 || date.getDay() === 6) {
+                    continue;
+                }
                 
-                shipments.push({
-                    n_oda: `ODA-2025-${String(i+1).padStart(4, '0')}`,
-                    cod_art: `ART-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-                    data_partenza: date.toISOString(),
-                    fornitore: suppliers[Math.floor(Math.random() * suppliers.length)],
-                    spedizioniere: carriers[Math.floor(Math.random() * carriers.length)],
-                    tipo_spedizione: type,
-                    quantita: quantity,
-                    costo_trasporto: Math.round(transportCost * 100) / 100,
-                    costo_unitario_trasporto: Math.round((transportCost / quantity) * 100) / 100,
-                    stato_spedizione: ['In transito', 'Consegnato', 'In preparazione'][Math.floor(Math.random() * 3)]
-                });
+                // Numero di spedizioni per questo giorno
+                const shipmentsToday = Math.floor(avgShipmentsPerDay * (1 + (Math.random() - 0.5) * 2 * dailyVariation));
+                
+                for(let j = 0; j < shipmentsToday; j++) {
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    
+                    // Costi base più realistici con meno variabilità
+                    const baseCosts = {
+                        'AEREO': 3000 + Math.random() * 2000,
+                        'MARE': 1200 + Math.random() * 800,
+                        'STRADA': 600 + Math.random() * 400
+                    };
+                    
+                    const transportCost = baseCosts[type];
+                    const quantity = Math.floor(Math.random() * 300) + 100;
+                    
+                    shipments.push({
+                        n_oda: `ODA-2025-${String(shipments.length + 1).padStart(4, '0')}`,
+                        cod_art: `ART-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+                        data_partenza: date.toISOString(),
+                        fornitore: suppliers[Math.floor(Math.random() * suppliers.length)],
+                        spedizioniere: carriers[Math.floor(Math.random() * carriers.length)],
+                        tipo_spedizione: type,
+                        quantita: quantity,
+                        costo_trasporto: Math.round(transportCost * 100) / 100,
+                        costo_unitario_trasporto: Math.round((transportCost / quantity) * 100) / 100,
+                        stato_spedizione: daysAgo < 7 ? 'In transito' : daysAgo < 14 ? ['In transito', 'Consegnato'][Math.floor(Math.random() * 2)] : 'Consegnato'
+                    });
+                }
             }
             
             // Calcola KPIs
             const totalCost = shipments.reduce((sum, s) => sum + s.costo_trasporto, 0);
             const avgCost = totalCost / shipments.length;
             const monthlyBudget = 150000;
+            
+            // Spese del mese corrente
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
             const spent = shipments.filter(s => {
                 const d = new Date(s.data_partenza);
-                return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
             }).reduce((sum, s) => sum + s.costo_trasporto, 0);
+            
+            // Spese del mese precedente per il confronto
+            const lastMonthSpent = shipments.filter(s => {
+                const d = new Date(s.data_partenza);
+                const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+                return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+            }).reduce((sum, s) => sum + s.costo_trasporto, 0);
+            
+            const totalCostChange = lastMonthSpent > 0 ? ((spent - lastMonthSpent) / lastMonthSpent * 100) : 0;
             
             return {
                 shipments: shipments.sort((a, b) => new Date(b.data_partenza) - new Date(a.data_partenza)),
@@ -658,8 +692,8 @@
                     totalCost: Math.round(totalCost),
                     avgShipmentCost: Math.round(avgCost),
                     shipmentCount: shipments.length,
-                    totalCostChange: -5.2,
-                    avgCostChange: 2.1,
+                    totalCostChange: Math.round(totalCostChange * 10) / 10,
+                    avgCostChange: Math.round((Math.random() * 4 - 2) * 10) / 10, // -2% a +2%
                     budgetUsed: Math.round((spent / monthlyBudget) * 100),
                     budgetRemaining: monthlyBudget - spent,
                     potentialSavings: Math.round(totalCost * 0.08)
@@ -667,7 +701,7 @@
                 budget: {
                     monthly: monthlyBudget,
                     spent: Math.round(spent),
-                    projected: Math.round(spent * 1.3),
+                    projected: Math.round(spent * (30 / new Date().getDate())), // Proiezione basata sui giorni del mese
                     percentage: Math.round((spent / monthlyBudget) * 100),
                     remaining: Math.round(monthlyBudget - spent)
                 }
