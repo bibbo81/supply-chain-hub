@@ -132,7 +132,8 @@
         .card-drag-handle { 
             position: absolute;
             top: 12px; 
-            right: 12px;
+            left: 50%;
+            transform: translateX(-50%);
             color: var(--sol-text-tertiary);
             cursor: grab; 
             opacity: 0;
@@ -159,9 +160,10 @@
         .kpi-card.sortable-chosen, .chart-card.sortable-chosen { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
 
         /* Filter Bar */
-        .filter-bar { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); display: flex; gap: var(--sol-space-md); flex-wrap: wrap; align-items: center; }
+        .filter-bar { background: var(--sol-glass-light); backdrop-filter: var(--sol-blur-lg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-xl); padding: var(--sol-space-lg); margin-bottom: var(--sol-space-2xl); display: flex; gap: var(--sol-space-md); flex-wrap: wrap; align-items: center; justify-content: space-between; }
         .filter-group { display: flex; flex-direction: column; gap: var(--sol-space-xs); }
-        .filter-group.period-filter { flex: 0 0 200px; }
+        .filter-group.period-filter { flex: 0 0 180px; }
+        .action-buttons { display: flex; gap: var(--sol-space-md); align-items: flex-end; }
         .filter-label { font-size: 0.75rem; color: var(--sol-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
         
         /* Charts Grid */
@@ -485,18 +487,13 @@
                     <option value="365">Ultimo anno</option>
                 </select>
             </div>
-            <div style="flex: 1;"></div>
-            <div class="filter-group" style="flex: 0; align-self: flex-end;">
+            <div class="action-buttons">
                 <button class="sol-btn sol-btn-glass" onclick="refreshDashboard()">
                     <i class="fas fa-sync-alt"></i> Aggiorna
                 </button>
-            </div>
-            <div class="filter-group" style="flex: 0; align-self: flex-end;">
                 <button class="sol-btn sol-btn-glass" onclick="exportToPDF()">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </button>
-            </div>
-            <div class="filter-group" style="flex: 0; align-self: flex-end;">
                 <button class="sol-btn sol-btn-primary" onclick="exportToExcel()">
                     <i class="fas fa-file-excel"></i> Export Excel
                 </button>
