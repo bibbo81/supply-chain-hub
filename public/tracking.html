@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Hub - Tracking Spedizioni</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Sortable.js for drag & drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Solarium Design System -->
+    <link rel="stylesheet" href="/solarium.css">
+    
+    <!-- Auth System -->
+    <script src="/auth.js"></script>
+    
+    <!-- Page Protection -->
+    <script>
+        (function() {
+            console.log('[Tracking] Checking authentication...');
+            
+            function checkAuth() {
+                if (!window.auth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
+                
+                if (!window.auth.isAuthenticated()) {
+                    console.log('[Tracking] Not authenticated, redirecting...');
+                    window.location.replace('/login.html');
+                    return;
+                }
+                
+                console.log('[Tracking] User authenticated');
+            }
+            
+            checkAuth();
+        })();
+    </script>
+    
+    <style>
+        /* Page Specific Styles */
+        .sol-main-content {
+            margin-top: 80px;
+            padding: var(--sol-space-xl);
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .sol-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sol-space-2xl);
+            flex-wrap: wrap;
+            gap: var(--sol-space-lg);
+        }
+        
+        .sol-page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .sol-page-subtitle {
+            font-size: 1rem;
+            color: var(--sol-text-tertiary);
+        }
+        
+        /* Stats Cards */
+        .sol-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--sol-space-lg);
+            margin-bottom: var(--sol-space-xl);
+        }
+        
+        .sol-stat-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-lg);
+            text-align: center;
+            box-shadow: var(--sol-shadow-sm);
+            transition: var(--sol-transition-base);
+            position: relative;
+            cursor: move;
+            user-select: none;
+        }
+        
+        .sol-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sol-shadow-md);
+        }
+        
+        .sol-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--sol-text-primary) 0%, var(--sol-text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sol-stat-label {
+            font-size: 0.875rem;
+            color: var(--sol-text-tertiary);
+            margin-top: var(--sol-space-xs);
+        }
+        
+        /* Add Tracking Form */
+        .tracking-form-card {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            padding: var(--sol-space-xl);
+            margin-bottom: var(--sol-space-xl);
+            box-shadow: var(--sol-shadow-md);
+        }
+        
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--sol-space-lg);
+        }
+        
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-sm);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--sol-space-lg);
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sol-space-sm);
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--sol-space-xs);
+        }
+        
+        .form-input,
+        .form-select {
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-sm) var(--sol-space-md);
+            color: var(--sol-text-primary);
+            transition: var(--sol-transition-base);
+            width: 100%;
+        }
+        
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.5);
+            background: var(--sol-glass-heavy);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
+        .type-indicator {
+            position: absolute;
+            right: var(--sol-space-md);
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px 12px;
+            border-radius: var(--sol-radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0, 122, 255, 0.15);
+            color: #007AFF;
+        }
+        
+        /* Tracking List */
+        .tracking-list-wrapper {
+            background: var(--sol-glass-light);
+            backdrop-filter: var(--sol-blur-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-xl);
+            overflow: hidden;
+            box-shadow: var(--sol-shadow-md);
+        }
+        
+        .list-header {
+            padding: var(--sol-space-lg) var(--sol-space-xl);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .list-filters {
+            display: flex;
+            gap: var(--sol-space-md);
+            align-items: center;
+        }
+        
+        .filter-select {
+            background: var(--sol-glass-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-md);
+            padding: var(--sol-space-xs) var(--sol-space-md);
+            color: var(--sol-text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        /* Timeline Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: var(--sol-space-xl);
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--sol-glass-heavy);
+            backdrop-filter: var(--sol-blur-xl);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-2xl);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--sol-shadow-lg);
+        }
+        
+        .modal-header {
+            padding: var(--sol-space-xl);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: var(--sol-space-xl);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--sol-text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: var(--sol-space-sm);
+            border-radius: 50%;
+            transition: var(--sol-transition-base);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: var(--sol-glass-medium);
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: var(--sol-space-2xl);
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #007AFF, #5856D6);
+            opacity: 0.3;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: var(--sol-space-xl);
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -24px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--sol-gradient-primary);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.2);
+        }
+        
+        .timeline-content {
+            background: var(--sol-glass-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--sol-radius-lg);
+            padding: var(--sol-space-lg);
+        }
+        
+        .timeline-date {
+            font-size: 0.875rem;
+            color: var(--sol-text-tertiary);
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: var(--sol-space-xs);
+        }
+        
+        .timeline-description {
+            font-size: 0.875rem;
+            color: var(--sol-text-secondary);
+        }
+        
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: inherit;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: var(--sol-space-md);
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--sol-gradient-primary);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        /* Drag Handle */
+        .card-drag-handle {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--sol-text-tertiary);
+            cursor: grab;
+            opacity: 0;
+            transition: opacity var(--sol-transition-fast);
+            z-index: 10;
+            font-size: 0.875rem;
+        }
+        
+        .sol-stat-card:hover .card-drag-handle {
+            opacity: 0.5;
+        }
+        
+        .card-drag-handle:hover {
+            opacity: 1 !important;
+        }
+        
+        .card-drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        /* Sortable styles */
+        .sol-stat-card.sortable-ghost {
+            opacity: 0.4;
+            position: relative;
+            transform: scale(1.02);
+            box-shadow: 0 12px 48px rgba(0, 122, 255, 0.4);
+            border: 1px solid rgba(0, 122, 255, 0.6);
+            background: var(--sol-glass-medium);
+        }
+        
+        .sol-stat-card.sortable-chosen {
+            opacity: 0.2;
+            transform: scale(0.95);
+        }
+        
+        .sol-stat-card.sortable-drag {
+            opacity: 0;
+        }
+        
+        /* Dropdown styles */
+        .sol-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #userName { display: none; }
+            .sol-logo-text { display: none; }
+            .sol-header-center { display: none; }
+            #userMenuBtn .fa-chevron-down { display: none; }
+            .sol-header-content { padding: 0 var(--sol-space-md); }
+            .sol-header-right { gap: var(--sol-space-xs) !important; }
+            
+            #notificationDropdown {
+                right: 10px !important;
+                left: 10px;
+                width: auto;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .sol-main-content {
+                padding: var(--sol-space-md);
+                margin-top: 60px;
+            }
+            
+            .sol-page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .sol-page-title {
+                font-size: 1.5rem;
+            }
+            
+            .sol-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--sol-space-md);
+            }
+            
+            .sol-stat-value {
+                font-size: 2rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tracking-list-wrapper {
+                margin: 0 -var(--sol-space-md);
+                border-radius: 0;
+            }
+            
+            .list-filters {
+                flex-direction: column;
+                width: 100%;
+                gap: var(--sol-space-sm);
+            }
+            
+            .filter-select {
+                width: 100%;
+            }
+            
+            .sol-table th:nth-child(n+5),
+            .sol-table td:nth-child(n+5) {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .sol-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER UNIFICATO STANDARD -->
+    <header class="sol-header" style="overflow: visible;">
+        <div class="sol-header-content">
+            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="/dashboard.html" class="sol-logo">
+                    <div class="sol-logo-icon">SCH</div>
+                    <span class="sol-logo-text">Supply Chain Hub</span>
+                </a>
+            </div>
+
+            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+                <div style="position: relative;">
+                    <input type="search" class="sol-search" placeholder="Cerca tracking, container..." style="padding-left: 2.5rem;">
+                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
+                </div>
+            </div>
+            
+            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+                <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                    <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+                </button>
+                
+                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <span id="userInitial">U</span>
+                    </div>
+                    <span id="userName">Utente</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                    <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                        <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                    </div>
+                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-user"></i> Profilo
+                    </a>
+                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                        <i class="fas fa-cog"></i> Impostazioni
+                    </a>
+                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Esci
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICATION DROPDOWN -->
+    <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+        <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(255, 59, 48, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-exclamation-triangle" style="color: #FF3B30;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Container in Ritardo</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">MSKU1234567 - ETA superata di 2 giorni</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">30 minuti fa</p>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(52, 199, 89, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-check-circle" style="color: #34C759;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Consegna Completata</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">BL MAEU1234567890 consegnato</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">2 ore fa</p>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-item" style="padding: var(--sol-space-md) var(--sol-space-lg); cursor: pointer; transition: var(--sol-transition-base);">
+                <div style="display: flex; gap: var(--sol-space-md);">
+                    <div style="width: 40px; height: 40px; background: rgba(0, 122, 255, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-ship" style="color: #007AFF;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 500; font-size: 0.875rem;">Partenza Nave</p>
+                        <p style="margin: 0; margin-top: 2px; font-size: 0.75rem; color: var(--sol-text-secondary);">MSC GÜLSÜN partita da Shanghai</p>
+                        <p style="margin: 0; margin-top: 4px; font-size: 0.75rem; color: var(--sol-text-tertiary);">Oggi, 08:30</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="padding: var(--sol-space-md) var(--sol-space-lg); border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+            <a href="/notifications.html" style="color: var(--sol-text-primary); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Vedi tutte le notifiche</a>
+        </div>
+    </div>
+
+    <!-- STYLE AGGIUNTIVI PER NOTIFICHE -->
+    <style>
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        #notificationBtn {
+            position: relative;
+            transition: var(--sol-transition-base);
+        }
+        #notificationBtn:hover {
+            transform: translateY(-1px);
+        }
+        #notificationBtn:active {
+            transform: translateY(0);
+        }
+        .sol-dropdown {
+            background: rgba(20, 20, 30, 0.95) !important;
+        }
+    </style>
+
+    <!-- Sidebar -->
+    <aside class="sol-sidebar" id="sidebar">
+        <nav style="padding: var(--sol-space-lg) 0;">
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">PRINCIPALE</div>
+                <a href="/dashboard.html" class="sol-nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/shipments.html" class="sol-nav-item">
+                    <i class="fas fa-box"></i>
+                    <span>Spedizioni</span>
+                </a>
+                <a href="/carriers.html" class="sol-nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Corrieri</span>
+                </a>
+                <a href="/tracking.html" class="sol-nav-item active">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Tracking</span>
+                </a>
+            </div>
+            
+            <div style="margin-bottom: var(--sol-space-xl);">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">STRUMENTI</div>
+                <a href="/import.html" class="sol-nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Importa Dati</span>
+                </a>
+                <a href="/reports.html" class="sol-nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Report</span>
+                </a>
+                <a href="/costs.html" class="sol-nav-item">
+                    <i class="fas fa-coins"></i>
+                    <span>Analisi Costi</span>
+                </a>
+            </div>
+            
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sol-text-tertiary); margin-bottom: var(--sol-space-sm); padding: 0 var(--sol-space-lg);">CONFIGURAZIONE</div>
+                <a href="/team.html" class="sol-nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Team</span>
+                </a>
+                <a href="/settings.html" class="sol-nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Impostazioni</span>
+                </a>
+                <a href="/billing.html" class="sol-nav-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Fatturazione</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="sol-main-content">
+        <!-- Page Header -->
+        <div class="sol-page-header">
+            <div>
+                <h1 class="sol-page-title">Tracking Spedizioni</h1>
+                <p class="sol-page-subtitle">Monitora in tempo reale container, BL e spedizioni aeree</p>
+            </div>
+            <div style="display: flex; gap: var(--sol-space-md); flex-wrap: wrap;">
+                <button class="sol-btn sol-btn-glass" onclick="refreshAllTrackings()">
+                    <i class="fas fa-sync-alt"></i>
+                    Aggiorna Tutto
+                </button>
+                <button class="sol-btn sol-btn-glass" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf"></i>
+                    Export PDF
+                </button>
+                <button class="sol-btn sol-btn-glass" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i>
+                    Export Excel
+                </button>
+                <button class="sol-btn sol-btn-primary" onclick="toggleAddForm()">
+                    <i class="fas fa-plus"></i>
+                    Aggiungi Tracking
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards con drag & drop -->
+        <div class="sol-stats-grid" id="statsGrid">
+            <div class="sol-stat-card" data-id="activeTrackings">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
+                <div class="sol-stat-value" id="activeTrackings">0</div>
+                <div class="sol-stat-label">Tracking Attivi</div>
+            </div>
+            <div class="sol-stat-card" data-id="inTransit">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
+                <div class="sol-stat-value" id="inTransit">0</div>
+                <div class="sol-stat-label">In Transito</div>
+            </div>
+            <div class="sol-stat-card" data-id="delivered">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
+                <div class="sol-stat-value" id="delivered">0</div>
+                <div class="sol-stat-label">Consegnati</div>
+            </div>
+            <div class="sol-stat-card" data-id="delayed">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
+                <div class="sol-stat-value" id="delayed">0</div>
+                <div class="sol-stat-label">In Ritardo</div>
+            </div>
+        </div>
+
+        <!-- Add Tracking Form (initially hidden) -->
+        <div class="tracking-form-card" id="addTrackingForm" style="display: none;">
+            <div class="form-header">
+                <h3 class="form-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Aggiungi Nuovo Tracking
+                </h3>
+                <button class="sol-btn sol-btn-glass" onclick="toggleAddForm()">
+                    <i class="fas fa-times"></i>
+                    Chiudi
+                </button>
+            </div>
+            
+            <form id="trackingForm" onsubmit="handleSubmit(event)">
+                <div class="form-grid">
+                    <div class="form-group" style="position: relative;">
+                        <label class="form-label">
+                            <i class="fas fa-barcode"></i> Numero Tracking
+                        </label>
+                        <input type="text" 
+                               id="trackingNumber" 
+                               class="form-input" 
+                               placeholder="Es: MSKU1234567, MAEU1234567890, 176-12345678"
+                               oninput="detectTrackingType(this.value)"
+                               required>
+                        <span class="type-indicator" id="typeIndicator" style="display: none;"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-box"></i> Tipo Tracking
+                        </label>
+                        <select id="trackingType" class="form-select" required>
+                            <option value="">Seleziona tipo</option>
+                            <option value="container">Container</option>
+                            <option value="bl">Bill of Lading (BL)</option>
+                            <option value="awb">Air Waybill (AWB)</option>
+                            <option value="parcel">Parcel/Express</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-truck"></i> Carrier
+                        </label>
+                        <select id="carrierCode" class="form-select" required>
+                            <option value="">Seleziona carrier</option>
+                            <optgroup label="Maritime">
+                                <option value="MSC">MSC</option>
+                                <option value="MAERSK">MAERSK</option>
+                                <option value="CMA-CGM">CMA CGM</option>
+                                <option value="COSCO">COSCO</option>
+                                <option value="HAPAG-LLOYD">HAPAG-LLOYD</option>
+                                <option value="ONE">ONE</option>
+                                <option value="EVERGREEN">EVERGREEN</option>
+                                <option value="YANG-MING">YANG MING</option>
+                                <option value="ZIM">ZIM</option>
+                                <option value="HMM">HMM</option>
+                            </optgroup>
+                            <optgroup label="Air Cargo">
+                                <option value="FX">FedEx (FX)</option>
+                                <option value="5X">UPS (5X)</option>
+                                <option value="CV">Cargolux (CV)</option>
+                                <option value="CX">Cathay Pacific (CX)</option>
+                                <option value="EK">Emirates (EK)</option>
+                                <option value="LH">Lufthansa Cargo (LH)</option>
+                                <option value="KE">Korean Air (KE)</option>
+                            </optgroup>
+                            <optgroup label="Express/Parcel">
+                                <option value="DHL">DHL Express</option>
+                                <option value="FEDEX">FedEx</option>
+                                <option value="UPS">UPS</option>
+                                <option value="TNT">TNT</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i> Riferimento (opzionale)
+                        </label>
+                        <input type="text" 
+                               id="referenceNumber" 
+                               class="form-input" 
+                               placeholder="Es: PO123456, INV789">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: var(--sol-space-md); justify-content: flex-end; margin-top: var(--sol-space-xl);">
+                    <button type="button" class="sol-btn sol-btn-glass" onclick="resetForm()">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                    <button type="submit" class="sol-btn sol-btn-primary" id="submitBtn">
+                        <i class="fas fa-plus"></i>
+                        Aggiungi Tracking
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tracking List -->
+        <div class="tracking-list-wrapper">
+            <div class="list-header">
+                <h3 class="list-title">Lista Tracking Attivi</h3>
+                <div class="list-filters">
+                    <select class="filter-select" id="statusFilter" onchange="filterTrackings()">
+                        <option value="">Tutti gli stati</option>
+                        <option value="registered">Registrato</option>
+                        <option value="in_transit">In Transito</option>
+                        <option value="delivered">Consegnato</option>
+                        <option value="delayed">In Ritardo</option>
+                    </select>
+                    <select class="filter-select" id="typeFilter" onchange="filterTrackings()">
+                        <option value="">Tutti i tipi</option>
+                        <option value="container">Container</option>
+                        <option value="bl">Bill of Lading</option>
+                        <option value="awb">Air Waybill</option>
+                        <option value="parcel">Parcel</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="overflow-x: auto; position: relative;">
+                <div id="tableLoadingOverlay" class="loading-overlay" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
+                <table class="sol-table">
+                    <thead>
+                        <tr>
+                            <th>Tracking Number</th>
+                            <th>Tipo</th>
+                            <th>Carrier</th>
+                            <th>Stato</th>
+                            <th>Ultimo Aggiornamento</th>
+                            <th>Posizione</th>
+                            <th>ETA</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trackingTableBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+                
+                <!-- Empty State -->
+                <div id="emptyState" style="text-align: center; padding: var(--sol-space-3xl); display: none;">
+                    <i class="fas fa-map-marked-alt" style="font-size: 4rem; opacity: 0.3; margin-bottom: var(--sol-space-lg);"></i>
+                    <h3 style="font-size: 1.5rem; font-weight: 600; margin-bottom: var(--sol-space-sm);">Nessun tracking attivo</h3>
+                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xl);">Aggiungi il tuo primo tracking per iniziare il monitoraggio.</p>
+                    <button class="sol-btn sol-btn-primary" onclick="toggleAddForm()">
+                        <i class="fas fa-plus"></i>
+                        Aggiungi Tracking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Backdrop -->
+    <div class="sol-backdrop" id="backdrop"></div>
+
+    <!-- Timeline Modal -->
+    <div class="modal-overlay" id="timelineModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Timeline Tracking</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Timeline content will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tracking patterns
+        const TRACKING_PATTERNS = {
+            container: /^[A-Z]{4}\d{7}$/,        // MSKU1234567
+            bl: /^[A-Z]{4}\d{8,12}$/,           // MAEU1234567890
+            awb: /^\d{3}-\d{8}$/,               // 176-12345678
+            parcel: /^[A-Z0-9]{10,30}$/         // DHL, FedEx, UPS
+        };
+
+        // Global variables
+        let trackings = [];
+        let filteredTrackings = [];
+        let autoRefreshInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadTrackings();
+            setupSortable();
+            updateUserInfo();
+            startAutoRefresh();
+        });
+
+        // Setup Sortable for stats cards
+        function setupSortable() {
+            const statsGrid = document.getElementById('statsGrid');
+            if (statsGrid) {
+                new Sortable(statsGrid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    draggable: '.sol-stat-card',
+                    handle: '.card-drag-handle',
+                    onEnd: function(evt) {
+                        saveStatsOrder();
+                    }
+                });
+            }
+        }
+
+        // Save stats order
+        function saveStatsOrder() {
+            const statsGrid = document.getElementById('statsGrid');
+            const cards = statsGrid.querySelectorAll('.sol-stat-card');
+            const order = Array.from(cards).map(card => card.dataset.id);
+            localStorage.setItem('trackingStatsOrder', JSON.stringify(order));
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
+
+            // Notification dropdown
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = 'none';
+                    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                        notificationDropdown.style.display = 'none';
+                    }
+                });
+            }
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login.html');
+                }
+            });
+        }
+
+        // Update user info
+        function updateUserInfo() {
+            function formatUserName(user) {
+                if (user.user_metadata && user.user_metadata.display_name) {
+                    return user.user_metadata.display_name;
+                }
+                
+                let fullName = '';
+                if (user.user_metadata) {
+                    fullName = user.user_metadata.full_name || user.user_metadata.name || '';
+                }
+                
+                if (fullName) {
+                    fullName = fullName.replace(/[._-]/g, ' ');
+                    return fullName.split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                }
+                
+                if (user.email) {
+                    const emailName = user.email.split('@')[0];
+                    return emailName
+                        .replace(/[._-]/g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                }
+                
+                return 'Utente';
+            }
+            
+            function getUserInitials(name) {
+                const words = name.split(' ').filter(w => w.length > 0);
+                if (words.length >= 2) {
+                    return words[0][0].toUpperCase() + words[1][0].toUpperCase();
+                } else if (words.length === 1) {
+                    return words[0][0].toUpperCase();
+                }
+                return 'U';
+            }
+            
+            const user = window.auth ? window.auth.getCurrentUser() : null;
+            if (!user) return;
+            
+            const displayName = formatUserName(user);
+            const initials = getUserInitials(displayName);
+            
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userInitial').textContent = initials;
+            document.getElementById('userFullName').textContent = displayName;
+            document.getElementById('userEmail').textContent = user.email || '';
+        }
+
+        // Toggle add form
+        function toggleAddForm() {
+            const form = document.getElementById('addTrackingForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if (form.style.display === 'block') {
+                document.getElementById('trackingNumber').focus();
+            }
+        }
+
+        // Detect tracking type
+        function detectTrackingType(value) {
+            const input = value.trim().toUpperCase();
+            const typeSelect = document.getElementById('trackingType');
+            const indicator = document.getElementById('typeIndicator');
+            
+            let detectedType = null;
+            
+            if (TRACKING_PATTERNS.container.test(input)) {
+                detectedType = 'container';
+            } else if (TRACKING_PATTERNS.bl.test(input)) {
+                detectedType = 'bl';
+            } else if (TRACKING_PATTERNS.awb.test(input)) {
+                detectedType = 'awb';
+            } else if (input.length >= 10 && TRACKING_PATTERNS.parcel.test(input)) {
+                detectedType = 'parcel';
+            }
+            
+            if (detectedType) {
+                typeSelect.value = detectedType;
+                indicator.textContent = detectedType.toUpperCase();
+                indicator.style.display = 'block';
+            } else {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // Handle form submit - INTEGRAZIONE API
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aggiunta in corso...';
+            
+            const formData = {
+                trackingNumber: document.getElementById('trackingNumber').value.trim().toUpperCase(),
+                trackingType: document.getElementById('trackingType').value,
+                carrierCode: document.getElementById('carrierCode').value,
+                referenceNumber: document.getElementById('referenceNumber').value
+            };
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const response = await fetch('/.netlify/functions/add-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'aggiunta del tracking');
+                }
+                
+                // Success
+                resetForm();
+                toggleAddForm();
+                showNotification(result.warning || 'Tracking aggiunto con successo!', result.warning ? 'warning' : 'success');
+                await loadTrackings(); // Reload list
+                
+            } catch (error) {
+                console.error('Error adding tracking:', error);
+                showNotification(error.message || 'Errore durante l\'aggiunta del tracking', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('trackingForm').reset();
+            document.getElementById('typeIndicator').style.display = 'none';
+        }
+
+        // Load trackings - INTEGRAZIONE API
+        async function loadTrackings() {
+            showLoadingState(true);
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const params = new URLSearchParams({
+                    page: 1,
+                    limit: 100,
+                    sort: 'created_at',
+                    order: 'desc'
+                });
+                
+                const response = await fetch(`/.netlify/functions/get-trackings?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento dei tracking');
+                }
+                
+                const result = await response.json();
+                trackings = result.data || [];
+                
+                // Update stats with API data
+                if (result.stats) {
+                    document.getElementById('activeTrackings').textContent = result.stats.total || 0;
+                    document.getElementById('inTransit').textContent = result.stats.in_transit || 0;
+                    document.getElementById('delivered').textContent = result.stats.delivered || 0;
+                    document.getElementById('delayed').textContent = result.stats.delayed || 0;
+                }
+                
+                filterTrackings();
+                
+            } catch (error) {
+                console.error('Error loading trackings:', error);
+                showNotification('Errore nel caricamento dei tracking', 'error');
+                // Use empty array on error
+                trackings = [];
+                filterTrackings();
+            } finally {
+                showLoadingState(false);
+            }
+        }
+
+        // Filter trackings
+        function filterTrackings() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            filteredTrackings = trackings.filter(tracking => {
+                const matchesStatus = !statusFilter || tracking.status === statusFilter;
+                const matchesType = !typeFilter || tracking.tracking_type === typeFilter;
+                return matchesStatus && matchesType;
+            });
+            
+            renderTable();
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('trackingTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (filteredTrackings.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = filteredTrackings.map(tracking => `
+                <tr>
+                    <td><strong>${tracking.tracking_number}</strong></td>
+                    <td>${getTypeBadge(tracking.tracking_type)}</td>
+                    <td>${tracking.carrier_code}</td>
+                    <td>${getStatusBadge(tracking.status)}</td>
+                    <td>${formatDate(tracking.last_event_date || tracking.updated_at)}</td>
+                    <td>${tracking.last_event_location || '-'}</td>
+                    <td>${tracking.eta ? formatDate(tracking.eta) : '-'}</td>
+                    <td>
+                        <div style="display: flex; gap: var(--sol-space-xs);">
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" onclick="refreshTracking('${tracking.id}')" title="Aggiorna">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" onclick="viewTimeline('${tracking.id}')" title="Timeline">
+                                <i class="fas fa-history"></i>
+                            </button>
+                            <button class="sol-btn sol-btn-glass" style="padding: var(--sol-space-xs);" onclick="deleteTracking('${tracking.id}')" title="Elimina">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Helper functions
+        function getTypeBadge(type) {
+            const types = {
+                container: { icon: 'fa-cube', text: 'Container' },
+                bl: { icon: 'fa-file-alt', text: 'B/L' },
+                awb: { icon: 'fa-plane', text: 'AWB' },
+                parcel: { icon: 'fa-box', text: 'Parcel' }
+            };
+            const { icon, text } = types[type] || { icon: 'fa-question', text: type };
+            return `<span class="sol-badge sol-badge-info"><i class="fas ${icon}"></i> ${text}</span>`;
+        }
+
+        function getStatusBadge(status) {
+            const statuses = {
+                registered: { class: 'info', text: 'Registrato' },
+                in_transit: { class: 'warning', text: 'In Transito' },
+                delivered: { class: 'success', text: 'Consegnato' },
+                delayed: { class: 'error', text: 'In Ritardo' }
+            };
+            const { class: statusClass, text } = statuses[status] || { class: 'info', text: status };
+            return `<span class="sol-badge sol-badge-${statusClass}">${text}</span>`;
+        }
+
+        function formatDate(date) {
+            if (!date) return '-';
+            return new Date(date).toLocaleString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Refresh single tracking - INTEGRAZIONE API
+        async function refreshTracking(id) {
+            const row = event.target.closest('tr');
+            const originalContent = row.innerHTML;
+            
+            try {
+                // Show inline loading
+                const actionCell = row.querySelector('td:last-child');
+                actionCell.innerHTML = '<div class="loading-spinner"></div>';
+                
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const response = await fetch('/.netlify/functions/update-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ trackingId: id })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                }
+                
+                showNotification(
+                    result.success ? 
+                    `Tracking aggiornato! ${result.newEvents} nuovi eventi trovati` : 
+                    'Nessun nuovo aggiornamento disponibile',
+                    result.success ? 'success' : 'info'
+                );
+                
+                // Reload trackings to show updates
+                await loadTrackings();
+                
+            } catch (error) {
+                console.error('Error refreshing tracking:', error);
+                showNotification(error.message || 'Errore durante l\'aggiornamento', 'error');
+                // Restore original content
+                row.innerHTML = originalContent;
+            }
+        }
+
+        // View timeline - INTEGRAZIONE API CON EVENTI REALI
+        async function viewTimeline(id) {
+            const modal = document.getElementById('timelineModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            // Show loading in modal
+            modalBody.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner"></div><p style="margin-top: 20px;">Caricamento timeline...</p></div>';
+            modal.classList.add('active');
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                // Get tracking details with events
+                const response = await fetch(`/.netlify/functions/get-tracking-events?trackingId=${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Errore nel caricamento degli eventi');
+                }
+                
+                const result = await response.json();
+                const tracking = result.tracking;
+                const events = result.events || [];
+                
+                document.getElementById('modalTitle').textContent = `Timeline - ${tracking.tracking_number}`;
+                
+                // Render timeline with real events
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: var(--sol-space-xl);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sol-space-md);">
+                            <div>
+                                <p style="color: var(--sol-text-tertiary); font-size: 0.875rem; margin-bottom: 4px;">Tipo</p>
+                                <p style="font-weight: 600;">${getTypeBadge(tracking.tracking_type)}</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--sol-text-tertiary); font-size: 0.875rem; margin-bottom: 4px;">Carrier</p>
+                                <p style="font-weight: 600;">${tracking.carrier_name}</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--sol-text-tertiary); font-size: 0.875rem; margin-bottom: 4px;">Stato</p>
+                                <p style="font-weight: 600;">${getStatusBadge(tracking.status)}</p>
+                            </div>
+                            ${tracking.eta ? `
+                            <div>
+                                <p style="color: var(--sol-text-tertiary); font-size: 0.875rem; margin-bottom: 4px;">ETA</p>
+                                <p style="font-weight: 600;">${formatDate(tracking.eta)}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="timeline">
+                        ${events.length > 0 ? events.map(event => `
+                            <div class="timeline-item">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-date">${formatDate(event.event_date)}</div>
+                                    <div class="timeline-title">${formatEventType(event.event_type)}</div>
+                                    <div class="timeline-description">${event.description || event.event_code}</div>
+                                    ${event.location_name ? `
+                                    <div class="timeline-location" style="font-size: 0.75rem; color: var(--sol-text-tertiary); margin-top: var(--sol-space-xs);">
+                                        <i class="fas fa-map-marker-alt"></i> ${event.location_name}${event.location_code ? ` (${event.location_code})` : ''}
+                                    </div>
+                                    ` : ''}
+                                    ${event.vessel_name ? `
+                                    <div style="font-size: 0.75rem; color: var(--sol-text-tertiary); margin-top: var(--sol-space-xs);">
+                                        <i class="fas fa-ship"></i> ${event.vessel_name}${event.voyage_number ? ` - ${event.voyage_number}` : ''}
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <div style="text-align: center; padding: var(--sol-space-2xl); color: var(--sol-text-secondary);">
+                                <i class="fas fa-info-circle" style="font-size: 2rem; opacity: 0.5; margin-bottom: var(--sol-space-md);"></i>
+                                <p>Nessun evento disponibile per questo tracking.</p>
+                                <p style="font-size: 0.875rem;">Clicca su "Aggiorna" per recuperare gli ultimi eventi.</p>
+                            </div>
+                        `}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+                modalBody.innerHTML = `
+                    <div style="text-align: center; padding: var(--sol-space-2xl); color: var(--sol-text-secondary);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #FF3B30; margin-bottom: var(--sol-space-md);"></i>
+                        <p>Errore nel caricamento della timeline.</p>
+                        <p style="font-size: 0.875rem; margin-top: var(--sol-space-sm);">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Format event type
+        function formatEventType(type) {
+            const eventTypes = {
+                'REGISTERED': 'Registrato',
+                'GATE_IN': 'Ingresso Terminal',
+                'GATE_OUT': 'Uscita Terminal',
+                'LOADED_ON_VESSEL': 'Caricato su Nave',
+                'DISCHARGED_FROM_VESSEL': 'Scaricato da Nave',
+                'DELIVERED': 'Consegnato',
+                'EMPTY_RETURNED': 'Container Vuoto Restituito',
+                'DEPARTED': 'Partito',
+                'ARRIVED': 'Arrivato',
+                'RECEIVED_FROM_SHIPPER': 'Ricevuto dal Mittente',
+                'OTHER': 'Altro Evento'
+            };
+            return eventTypes[type] || type;
+        }
+
+        // Delete tracking - INTEGRAZIONE API
+        async function deleteTracking(id) {
+            if (!confirm('Sei sicuro di voler eliminare questo tracking?')) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const response = await fetch('/.netlify/functions/delete-tracking', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ trackingId: id })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Errore durante l\'eliminazione');
+                }
+                
+                showNotification('Tracking eliminato con successo', 'success');
+                await loadTrackings();
+                
+            } catch (error) {
+                console.error('Error deleting tracking:', error);
+                showNotification(error.message || 'Errore durante l\'eliminazione', 'error');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('timelineModal').classList.remove('active');
+        }
+
+        // Refresh all trackings - BATCH UPDATE
+        async function refreshAllTrackings() {
+            const activeTrackings = trackings.filter(t => t.status !== 'delivered');
+            
+            if (activeTrackings.length === 0) {
+                showNotification('Nessun tracking attivo da aggiornare', 'info');
+                return;
+            }
+            
+            // Create progress modal
+            const progressModal = document.createElement('div');
+            progressModal.className = 'modal-overlay active';
+            progressModal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Aggiornamento Tracking in Corso</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p id="progressText">Preparazione aggiornamento...</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="progressBar"></div>
+                        </div>
+                        <p style="text-align: center; margin-top: var(--sol-space-md); color: var(--sol-text-secondary);">
+                            <span id="progressCount">0</span> / ${activeTrackings.length} tracking aggiornati
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(progressModal);
+            
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressCount = document.getElementById('progressCount');
+            
+            let completed = 0;
+            let errors = 0;
+            let newEvents = 0;
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                // Process in batches to avoid rate limits
+                const batchSize = 5;
+                for (let i = 0; i < activeTrackings.length; i += batchSize) {
+                    const batch = activeTrackings.slice(i, i + batchSize);
+                    
+                    await Promise.all(batch.map(async (tracking) => {
+                        try {
+                            progressText.textContent = `Aggiornamento ${tracking.tracking_number}...`;
+                            
+                            const response = await fetch('/.netlify/functions/update-tracking', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ trackingId: tracking.id })
+                            });
+                            
+                            const result = await response.json();
+                            if (result.success && result.newEvents) {
+                                newEvents += result.newEvents;
+                            }
+                            
+                        } catch (error) {
+                            console.error(`Error updating tracking ${tracking.tracking_number}:`, error);
+                            errors++;
+                        } finally {
+                            completed++;
+                            progressCount.textContent = completed;
+                            progressBar.style.width = `${(completed / activeTrackings.length) * 100}%`;
+                        }
+                    }));
+                    
+                    // Small delay between batches
+                    if (i + batchSize < activeTrackings.length) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                // Show completion message
+                progressText.textContent = 'Aggiornamento completato!';
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Close modal and show notification
+                progressModal.remove();
+                
+                const message = errors > 0 ? 
+                    `Aggiornamento completato con ${errors} errori. ${newEvents} nuovi eventi trovati.` :
+                    `Tutti i tracking aggiornati con successo! ${newEvents} nuovi eventi trovati.`;
+                    
+                showNotification(message, errors > 0 ? 'warning' : 'success');
+                
+                // Reload trackings
+                await loadTrackings();
+                
+            } catch (error) {
+                progressModal.remove();
+                console.error('Error in batch update:', error);
+                showNotification('Errore durante l\'aggiornamento batch', 'error');
+            }
+        }
+
+        // Export to PDF
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.text('Supply Chain Hub - Report Tracking', 20, 20);
+            
+            // Add date
+            doc.setFontSize(10);
+            doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')}`, 20, 30);
+            
+            // Add stats
+            doc.setFontSize(14);
+            doc.text('Statistiche Tracking', 20, 45);
+            
+            doc.setFontSize(10);
+            doc.text(`Tracking Attivi: ${document.getElementById('activeTrackings').textContent}`, 20, 55);
+            doc.text(`In Transito: ${document.getElementById('inTransit').textContent}`, 20, 62);
+            doc.text(`Consegnati: ${document.getElementById('delivered').textContent}`, 20, 69);
+            doc.text(`In Ritardo: ${document.getElementById('delayed').textContent}`, 20, 76);
+            
+            // Add tracking table
+            doc.setFontSize(14);
+            doc.text('Lista Tracking', 20, 90);
+            
+            const tableData = filteredTrackings.map(t => [
+                t.tracking_number,
+                t.tracking_type.toUpperCase(),
+                t.carrier_code,
+                t.status.replace('_', ' ').toUpperCase(),
+                formatDate(t.last_event_date || t.updated_at),
+                t.last_event_location || '-'
+            ]);
+            
+            doc.autoTable({
+                startY: 95,
+                head: [['Tracking', 'Tipo', 'Carrier', 'Stato', 'Ultimo Aggiornamento', 'Posizione']],
+                body: tableData,
+                theme: 'grid',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [0, 122, 255] }
+            });
+            
+            // Save PDF
+            doc.save(`tracking-report-${new Date().toISOString().split('T')[0]}.pdf`);
+            showNotification('Report PDF generato con successo!', 'success');
+        }
+
+        // Export to Excel
+        async function exportToExcel() {
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Tracking Sheet
+            const trackingData = [
+                ['Tracking Number', 'Tipo', 'Carrier', 'Stato', 'Ultimo Aggiornamento', 'Posizione', 'ETA', 'Riferimento']
+            ];
+            
+            filteredTrackings.forEach(t => {
+                trackingData.push([
+                    t.tracking_number,
+                    t.tracking_type,
+                    t.carrier_code,
+                    t.status,
+                    formatDate(t.last_event_date || t.updated_at),
+                    t.last_event_location || '',
+                    t.eta ? formatDate(t.eta) : '',
+                    t.reference_number || ''
+                ]);
+            });
+            
+            const trackingSheet = XLSX.utils.aoa_to_sheet(trackingData);
+            XLSX.utils.book_append_sheet(wb, trackingSheet, 'Tracking');
+            
+            // Stats Sheet
+            const statsData = [
+                ['Metrica', 'Valore'],
+                ['Tracking Attivi', parseInt(document.getElementById('activeTrackings').textContent)],
+                ['In Transito', parseInt(document.getElementById('inTransit').textContent)],
+                ['Consegnati', parseInt(document.getElementById('delivered').textContent)],
+                ['In Ritardo', parseInt(document.getElementById('delayed').textContent)],
+                ['Data Export', new Date().toLocaleString('it-IT')]
+            ];
+            
+            const statsSheet = XLSX.utils.aoa_to_sheet(statsData);
+            XLSX.utils.book_append_sheet(wb, statsSheet, 'Statistiche');
+            
+            // Save file
+            XLSX.writeFile(wb, `tracking-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+            showNotification('Export Excel completato!', 'success');
+        }
+
+        // Show loading state
+        function showLoadingState(show) {
+            const overlay = document.getElementById('tableLoadingOverlay');
+            if (overlay) {
+                overlay.style.display = show ? 'flex' : 'none';
+            }
+        }
+
+        // Start auto refresh
+        function startAutoRefresh() {
+            // Auto refresh every 5 minutes
+            autoRefreshInterval = setInterval(() => {
+                loadTrackings();
+            }, 5 * 60 * 1000);
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--sol-glass-heavy);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 16px 24px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 3000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                max-width: 400px;
+            `;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : type === 'warning' ? '#FF9500' : '#007AFF';
+            icon.style.fontSize = '1.25rem';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            text.style.color = 'var(--sol-text-primary)';
+            
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Restore saved order on page load
+        function restoreOrder() {
+            const savedStatsOrder = localStorage.getItem('trackingStatsOrder');
+            if (savedStatsOrder) {
+                try {
+                    const order = JSON.parse(savedStatsOrder);
+                    const statsGrid = document.getElementById('statsGrid');
+                    const cards = Array.from(statsGrid.querySelectorAll('.sol-stat-card'));
+                    
+                    cards.sort((a, b) => {
+                        const aIndex = order.indexOf(a.dataset.id);
+                        const bIndex = order.indexOf(b.dataset.id);
+                        return aIndex - bIndex;
+                    });
+                    
+                    cards.forEach(card => statsGrid.appendChild(card));
+                } catch (e) {
+                    console.error('Error restoring stats order:', e);
+                }
+            }
+        }
+
+        setTimeout(restoreOrder, 100);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>
