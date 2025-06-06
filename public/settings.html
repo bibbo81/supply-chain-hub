@@ -5,19 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supply Chain Hub - Impostazioni</title>
     
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Solarium Design System -->
     <link rel="stylesheet" href="/solarium.css">
     
-    <!-- Auth System -->
     <script src="/auth.js"></script>
     
-    <!-- PROTEZIONE PAGINA -->
     <script>
         (function() {
             console.log('[Settings] Checking authentication...');
@@ -41,7 +36,6 @@
         })();
     </script>
     
-    <!-- Inizializza Supabase se non è già inizializzato -->
     <script>
         if (!window.supabase) {
             const { createClient } = window.supabase || {};
@@ -484,7 +478,6 @@
     </style>
 </head>
 <body>
-    <!-- HEADER UNIFICATO PER SUPPLY CHAIN HUB -->
     <header class="sol-header" style="overflow: visible;">
         <div class="sol-header-content">
             <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
@@ -505,13 +498,11 @@
             </div>
             
             <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-                <!-- Notification Button -->
                 <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
                     <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
                 </button>
                 
-                <!-- User Menu Button -->
                 <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
                     <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
                         <span id="userInitial">U</span>
@@ -520,7 +511,6 @@
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 
-                <!-- User Dropdown -->
                 <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                     <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                         <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
@@ -541,7 +531,6 @@
         </div>
     </header>
 
-    <!-- NOTIFICATION DROPDOWN -->
     <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
         <div style="padding: var(--sol-space-lg); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
             <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Notifiche</h3>
@@ -565,55 +554,12 @@
         </div>
     </div>
 
-    <!-- STYLE AGGIUNTIVI PER NOTIFICHE -->
     <style>
         .notification-item:hover {
             background: rgba(255, 255, 255, 0.03);
         }
-
-        #notificationBtn {
-            position: relative;
-            transition: var(--sol-transition-base);
-        }
-
-        #notificationBtn:hover {
-            transform: translateY(-1px);
-        }
-
-        #notificationBtn:active {
-            transform: translateY(0);
-        }
-
-        .sol-dropdown {
-            background: rgba(20, 20, 30, 0.95) !important;
-        }
-
-        /* Responsive notification button */
-        #notificationBtn {
-            width: 44px;
-            height: 44px;
-        }
-
-        @media (min-width: 768px) {
-            #notificationBtn {
-                width: 60px;
-                height: 60px;
-            }
-        }
-
-        /* Adjust badge position for mobile */
-        @media (max-width: 767px) {
-            #notificationBtn span {
-                width: 16px !important;
-                height: 16px !important;
-                font-size: 0.625rem !important;
-                top: 6px !important;
-                right: 4px !important;
-            }
-        }
     </style>
 
-    <!-- SCRIPT PER GESTIRE IL NOME UTENTE -->
     <script>
     (function() {
         function formatUserName(user) {
@@ -673,43 +619,28 @@
             if (userEmailEl) userEmailEl.textContent = user.email || '';
         }
         
+        function initAuthUI() {
+             if (window.auth && window.auth.getCurrentUser()) {
+                updateUserUI();
+            } else if (window.auth) {
+                 window.auth.onAuthStateChange((event, session) => {
+                    if (event === 'SIGNED_IN' || event === 'INITIAL_USER') {
+                        updateUserUI();
+                    }
+                });
+            } else {
+                setTimeout(initAuthUI, 100);
+            }
+        }
+
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(updateUserUI, 100);
-            });
+            document.addEventListener('DOMContentLoaded', initAuthUI);
         } else {
-            setTimeout(updateUserUI, 100);
+            initAuthUI();
         }
     })();
     </script>
 
-    <!-- SCRIPT PER GESTIRE NOTIFICHE -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const notificationBtn = document.getElementById('notificationBtn');
-        const notificationDropdown = document.getElementById('notificationDropdown');
-        
-        if (notificationBtn && notificationDropdown) {
-            notificationBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const userDropdown = document.getElementById('userDropdown');
-                if (userDropdown) userDropdown.style.display = 'none';
-                
-                notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
-                    notificationDropdown.style.display = 'none';
-                }
-            });
-        }
-    });
-    </script>
-
-    <!-- Sidebar -->
     <aside class="sol-sidebar" id="sidebar">
         <nav style="padding: var(--sol-space-lg) 0;">
             <div style="margin-bottom: var(--sol-space-xl);">
@@ -766,15 +697,12 @@
         </nav>
     </aside>
 
-    <!-- Main Content -->
     <main class="sol-main-content">
-        <!-- Page Header -->
         <div style="margin-bottom: var(--sol-space-2xl);">
             <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: var(--sol-space-xs);">Impostazioni</h1>
             <p style="font-size: 1rem; color: var(--sol-text-tertiary);">Gestisci le configurazioni del tuo account e dell'applicazione</p>
         </div>
 
-        <!-- Settings Navigation -->
         <nav class="settings-nav">
             <div class="settings-nav-list">
                 <button class="settings-nav-item active" data-section="general">
@@ -804,7 +732,6 @@
             </div>
         </nav>
 
-        <!-- General Settings Section -->
         <section class="settings-section active" id="general-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -965,7 +892,6 @@
             </div>
         </section>
 
-        <!-- Import/Export Settings Section -->
         <section class="settings-section" id="import-export-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -1082,7 +1008,6 @@
             </div>
         </section>
 
-        <!-- Integrations Section -->
         <section class="settings-section" id="integrations-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -1141,7 +1066,6 @@
                 </button>
             </div>
 
-            <!-- ShipsGo API Settings -->
             <div class="settings-card">
                 <div class="settings-card-header">
                     <h2 class="settings-card-title">
@@ -1205,8 +1129,7 @@
                 </div>
                 
                 <div id="shipsgoTestResult" style="margin-top: var(--sol-space-md); display: none;">
-                    <!-- Test results will appear here -->
-                </div>
+                    </div>
             </div>
 
             <div class="settings-card">
@@ -1261,7 +1184,6 @@
             </div>
         </section>
 
-        <!-- Notifications Section -->
         <section class="settings-section" id="notifications-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -1361,7 +1283,6 @@
             </div>
         </section>
 
-        <!-- Security Section -->
         <section class="settings-section" id="security-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -1462,7 +1383,6 @@
             </div>
         </section>
 
-        <!-- Advanced Section -->
         <section class="settings-section" id="advanced-section">
             <div class="settings-card">
                 <div class="settings-card-header">
@@ -1578,35 +1498,71 @@
         </section>
     </main>
 
-    <!-- Backdrop -->
     <div class="sol-backdrop" id="backdrop"></div>
 
     <script>
-        // Settings navigation
-        document.querySelectorAll('.settings-nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const targetSection = this.dataset.section;
-                
-                // Update nav items
-                document.querySelectorAll('.settings-nav-item').forEach(navItem => {
-                    navItem.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                // Update sections
-                document.querySelectorAll('.settings-section').forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById(`${targetSection}-section`).classList.add('active');
-            });
-        });
+        // Funzione per mostrare le notifiche a schermo
+        function showNotification(message, type = 'info') {
+            const existingNotif = document.querySelector('.sol-notification-container');
+            if (existingNotif) {
+                existingNotif.remove();
+            }
 
-        // Toggle API key visibility
+            const notification = document.createElement('div');
+            notification.className = `sol-notification-container sol-notification-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 9999;
+                animation: slideInFromRight 0.5s ease-out forwards;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                padding: 16px 24px;
+                background: var(--sol-glass-heavy, rgba(30, 30, 40, 0.8));
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                display: flex; align-items: center; gap: 12px;
+                max-width: 400px; color: var(--sol-text-primary, white);
+            `;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? 'var(--sol-color-success, #34C759)' : type === 'error' ? 'var(--sol-color-danger, #FF3B30)' : 'var(--sol-color-info, #007AFF)';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            content.appendChild(icon);
+            content.appendChild(text);
+            notification.appendChild(content);
+            document.body.appendChild(notification);
+            
+            if (!document.getElementById('sol-notification-styles')) {
+                const styleSheet = document.createElement("style");
+                styleSheet.id = 'sol-notification-styles';
+                styleSheet.innerText = `
+                    @keyframes slideInFromRight { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                    @keyframes slideOutToRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(110%); opacity: 0; } }
+                `;
+                document.head.appendChild(styleSheet);
+            }
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutToRight 0.5s ease-in forwards';
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        }
+
+        // Toggle della visibilità delle API key
         function toggleApiKeyVisibility(inputId) {
             const input = document.getElementById(inputId);
             const button = event.currentTarget;
             const icon = button.querySelector('i');
-            
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'fas fa-eye-slash';
@@ -1616,614 +1572,191 @@
             }
         }
 
-        // Save ShipsGo API settings
+        // Salva le impostazioni API di ShipsGo
         async function saveShipsGoSettings() {
             const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
             const v2Token = document.getElementById('shipsgoV2Token').value.trim();
             
             if (!v1Key && !v2Token) {
-                showNotification('Inserisci almeno una API key', 'warning');
+                showNotification('Inserisci almeno una API key o un Token', 'warning');
                 return;
             }
             
             try {
-                // Usa auth.js per ottenere il token
                 const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user) {
-                    showNotification('Devi essere autenticato', 'error');
-                    return;
-                }
-                
-                // Ottieni il token dalla sessione
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    showNotification('Sessione scaduta, rieffettua il login', 'error');
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                // Prepara le API settings con encoding base64
+                if (!user) throw new Error('Devi essere autenticato per salvare le impostazioni.');
+
+                const token = await window.auth.getSessionToken();
+                if (!token) throw new Error('Sessione non valida o scaduta. Ricarica la pagina.');
+
                 const apiSettings = {};
-                if (v1Key) {
-                    apiSettings.shipsgo_v1_key = btoa(v1Key);
-                }
-                if (v2Token) {
-                    apiSettings.shipsgo_v2_token = btoa(v2Token);
-                }
+                if (v1Key) apiSettings.shipsgo_v1_key = btoa(v1Key);
+                if (v2Token) apiSettings.shipsgo_v2_token = btoa(v2Token);
                 
-                console.log('Saving API settings:', { 
-                    hasV1: !!apiSettings.shipsgo_v1_key, 
-                    hasV2: !!apiSettings.shipsgo_v2_token 
-                });
-                
-                // Salva le API keys nel profilo utente
                 const response = await fetch('/.netlify/functions/update-profile', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'update_api_settings',
-                        data: {
-                            api_settings: apiSettings
-                        }
+                        data: { api_settings: apiSettings }
                     })
                 });
                 
                 const result = await response.json();
-                console.log('Save response:', result);
+                if (!response.ok || !result.success) throw new Error(result.error || 'Errore nel salvataggio della configurazione.');
                 
-                if (response.ok && result.success) {
-                    showNotification('Configurazione API salvata con successo!', 'success');
-                    
-                    // Salva anche in localStorage per uso immediato
-                    if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
-                    if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
-                } else {
-                    throw new Error(result.error || 'Errore salvataggio configurazione');
-                }
+                showNotification('Configurazione API salvata con successo!', 'success');
             } catch (error) {
                 console.error('Error saving API settings:', error);
-                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
+                showNotification(error.message, 'error');
             }
         }
-            
-            try {
-                // Usa auth.js per ottenere il token
-                const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user) {
-                    showNotification('Devi essere autenticato', 'error');
-                    return;
-                }
-                
-                // Ottieni il token dalla sessione
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    showNotification('Sessione scaduta, rieffettua il login', 'error');
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                // Prepara le API settings con encoding base64
-                const apiSettings = {};
-                if (v1Key) {
-                    apiSettings.shipsgo_v1_key = btoa(v1Key);
-                }
-                if (v2Token) {
-                    apiSettings.shipsgo_v2_token = btoa(v2Token);
-                }
-                
-                console.log('Saving API settings:', { 
-                    hasV1: !!apiSettings.shipsgo_v1_key, 
-                    hasV2: !!apiSettings.shipsgo_v2_token 
-                });
-                
-                // Salva le API keys nel profilo utente
-                const response = await fetch('/.netlify/functions/update-profile', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        action: 'update_api_settings',
-                        data: {
-                            api_settings: apiSettings
-                        }
-                    })
-                });
-                
-                const result = await response.json();
-                console.log('Save response:', result);
-                
-                if (response.ok && result.success) {
-                    showNotification('Configurazione API salvata con successo!', 'success');
-                    
-                    // Salva anche in localStorage per uso immediato
-                    if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
-                    if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
-                } else {
-                    throw new Error(result.error || 'Errore salvataggio configurazione');
-                }
-            } catch (error) {
-                console.error('Error saving API settings:', error);
-                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
-            }
-
-        // Test ShipsGo connection
+        
+        // Testa la connessione con le API ShipsGo
         async function testShipsGoConnection() {
             const resultDiv = document.getElementById('shipsgoTestResult');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test connessione in corso...';
+            resultDiv.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-spinner fa-spin"></i> Test connessione in corso...</div>';
             
             try {
-                // Ottieni il token
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                const token = await window.auth.getSessionToken();
+                 if (!token) throw new Error('Sessione non valida o scaduta. Ricarica la pagina.');
                 
                 const response = await fetch('/.netlify/functions/test-shipsgo-connection', {
-                    headers: {
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Test connection failed');
-                }
-                
+
                 const data = await response.json();
-                const { results } = data;
+                if (!response.ok) throw new Error(data.error || 'Test di connessione fallito');
                 
+                const { results } = data;
                 resultDiv.innerHTML = `
                     <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
-                        <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
-                        <div style="margin-bottom: var(--sol-space-xs);">
-                            <strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}
-                        </div>
-                        <div>
-                            <strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}
-                        </div>
-                    </div>
-                `;
-                
+                        <h4 style="margin: 0 0 var(--sol-space-sm) 0;">Risultati Test Connessione</h4>
+                        <p style="margin: 0 0 var(--sol-space-xs) 0;"><strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}</p>
+                        <p style="margin: 0;"><strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}</p>
+                    </div>`;
             } catch (error) {
                 console.error('Test connection error:', error);
                 resultDiv.innerHTML = `
                     <div style="background: rgba(255, 59, 48, 0.1); padding: var(--sol-space-md); border-radius: var(--sol-radius-md); border: 1px solid rgba(255, 59, 48, 0.3);">
-                        <h4 style="color: #FF3B30; margin-bottom: var(--sol-space-xs);">
-                            <i class="fas fa-exclamation-circle"></i> Errore Test Connessione
-                        </h4>
-                        <p style="color: var(--sol-text-secondary); margin: 0;">
-                            ${error.message || 'Impossibile testare la connessione'}
-                        </p>
-                    </div>
-                `;
+                        <h4 style="color: #FF3B30; margin: 0 0 var(--sol-space-xs) 0;"><i class="fas fa-exclamation-circle"></i> Errore Test Connessione</h4>
+                        <p style="color: var(--sol-text-secondary); margin: 0;">${error.message}</p>
+                    </div>`;
             }
         }
 
-        // Load saved API settings on page load
+        // Carica le impostazioni API di ShipsGo al caricamento della pagina
         async function loadShipsGoSettings() {
-            console.log('Loading ShipsGo settings...');
-            
             try {
-                // Ottieni utente corrente
                 const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user || !user.id) {
-                    console.log('No user logged in');
-                    return;
-                }
+                if (!user || !user.id) return;
                 
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    console.log('No auth token found');
-                    return;
-                }
-                
-                // Usa ID utente dalla sessione
+                const token = await window.auth.getSessionToken();
+                if (!token) return;
+
                 const response = await fetch('/.netlify/functions/get-profile?id=' + user.id, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
-                
-                console.log('Profile response status:', response.status);
-                
+
                 if (response.ok) {
                     const profileData = await response.json();
-                    console.log('Profile loaded, has api_settings:', !!profileData.api_settings);
-                    
-                    // Leggi SOLO da api_settings
                     if (profileData.api_settings && typeof profileData.api_settings === 'object') {
-                        // ShipsGo v1 key
                         if (profileData.api_settings.shipsgo_v1_key) {
-                            try {
-                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
-                                // Verifica che non sia una password
-                                var dollarSign = String.fromCharCode(36); // $
-                                var atSign = String.fromCharCode(64); // @
-                                if (v1Key && v1Key.indexOf(dollarSign) === -1 && v1Key.indexOf(atSign) === -1) {
-                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                                }
-                            } catch (e) {
-                                console.error('Error decoding v1 key');
-                            }
+                            try { document.getElementById('shipsgoV1ApiKey').value = atob(profileData.api_settings.shipsgo_v1_key); }
+                            catch (e) { console.error('Error decoding v1 key.'); }
                         }
-                        
-                        // ShipsGo v2 token
                         if (profileData.api_settings.shipsgo_v2_token) {
-                            try {
-                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
-                                document.getElementById('shipsgoV2Token').value = v2Token;
-                            } catch (e) {
-                                console.error('Error decoding v2 token');
-                            }
+                            try { document.getElementById('shipsgoV2Token').value = atob(profileData.api_settings.shipsgo_v2_token); }
+                            catch (e) { console.error('Error decoding v2 token.'); }
                         }
                     }
-                    
-                    // NON leggere MAI da altri campi come password, email, etc
                 } else {
-                    console.error('Failed to load profile');
-                }
-            } catch (error) {
-                console.error('Error loading API settings:', error);
-            }
-        }
-                
-                console.log('Profile response status:', response.status);
-                
-                if (response.ok) {
-                    const profileData = await response.json();
-                    console.log('Profile loaded, has api_settings:', !!profileData.api_settings);
-                    
-                    // IMPORTANTE: Leggi SOLO da api_settings, MAI da altri campi!
-                            if (profileData.api_settings && typeof profileData.api_settings === 'object') {
-                        // ShipsGo v1 key
-                        if (profileData.api_settings.shipsgo_v1_key) {
-                            try {
-                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
-                                // Verifica che non sia una password
-                                var dollarSign = String.fromCharCode(36); // $
-                                var atSign = String.fromCharCode(64); // @
-                                if (v1Key && v1Key.indexOf(dollarSign) === -1 && v1Key.indexOf(atSign) === -1) {
-                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                                }
-                            } catch (e) {
-                                console.error('Error decoding v1 key');
-                            }
-                        }
-                        
-                        // ShipsGo v2 token
-                        if (profileData.api_settings.shipsgo_v2_token) {
-                            try {
-                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
-                                document.getElementById('shipsgoV2Token').value = v2Token;
-                            } catch (e) {
-                                console.error('Error decoding v2 token');
-                            }
-                        }
-                    }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load ShipsGo settings
-            loadShipsGoSettings();
-            
-            // Menu toggle
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
-            
-            menuToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('active');
-                backdrop.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
-            });
-
-            backdrop.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-
-            // User dropdown - FIX APPLICATO
-            const userMenuBtn = document.getElementById('userMenuBtn');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (userMenuBtn && userDropdown) {
-                userMenuBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-                });
-                
-                // Previeni la chiusura del dropdown quando si clicca su un link
-                userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-                
-                document.addEventListener('click', function() {
-                    userDropdown.style.display = 'none';
-                });
-            }
-
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.auth && window.auth.logout) {
-                    window.auth.logout();
-                } else {
-                    localStorage.removeItem('sb-access-token');
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.replace('/login.html');
-                }
-            });
-
-            // Form submissions
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    showNotification('Impostazioni salvate con successo!', 'success');
-                });
-            });
-
-            // Toggle switches
-            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
-                toggle.addEventListener('change', function() {
-                    const setting = this.id;
-                    const value = this.checked;
-                    console.log(`Setting ${setting} changed to ${value}`);
-                    // Qui salveresti l'impostazione nel database
-                });
-            });
-
-            // Dangerous zone buttons
-            document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (confirm('Sei sicuro? Questa azione è irreversibile!')) {
-                        showNotification('Operazione completata', 'info');
-                    }
-                });
-            });
-            
-            // Carica le impostazioni ShipsGo
-            setTimeout(function() {
-                if (typeof loadShipsGoSettings === 'function') {
-                    loadShipsGoSettings();
-                }
-            }, 500);
-        });
-
-        // Helper function: Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                padding: 16px 24px;
-                background: var(--sol-glass-heavy);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                z-index: 3000;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                max-width: 400px;
-            `;
-            
-            const icon = document.createElement('i');
-            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
-            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
-            
-            const text = document.createElement('span');
-            text.textContent = message;
-            
-            notification.appendChild(icon);
-            notification.appendChild(text);
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100px)';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-    }; // Chiusura del secondo DOMContentLoaded
-    </script>
-</body>
-</html>
-                ) && !v1Key.includes('@')) {
-                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                                }
-                            } catch (e) {
-                                console.error('Error decoding v1 key');
-                            }
-                        }
-                        
-                        // ShipsGo v2 token
-                        if (profileData.api_settings.shipsgo_v2_token) {
-                            try {
-                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
-                                document.getElementById('shipsgoV2Token').value = v2Token;
-                            } catch (e) {
-                                console.error('Error decoding v2 token');
-                            }
-                        }
-                    }
-                    
-                    // NON leggere MAI da altri campi come password, email, etc!
-                } else {
-                    console.error('Failed to load profile');
+                    console.error('Failed to load profile for API settings.');
                 }
             } catch (error) {
                 console.error('Error loading API settings:', error);
             }
         }
 
-        // Funzione di verifica per debug
-        function debugCheckProfile() {
-            const user = window.auth ? window.auth.getCurrentUser() : null;
-            if (!user) {
-                console.log('No user');
-                return;
-            }
-            
-            const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-            
-            fetch('/.netlify/functions/get-profile?id=' + user.id, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            })
-            .then(r => r.json())
-            .then(data => {
-                console.log('=== PROFILE DEBUG ===');
-                console.log('User ID:', user.id);
-                console.log('Has api_settings:', !!data.api_settings);
-                console.log('api_settings keys:', data.api_settings ? Object.keys(data.api_settings) : 'none');
-                console.log('Other profile keys:', Object.keys(data).filter(k => k !== 'api_settings'));
-                console.log('===================');
-            });
-        }
-
-        // Event Listeners
+        // Event listener principale al caricamento del DOM
         document.addEventListener('DOMContentLoaded', function() {
-            // Load ShipsGo settings
-            loadShipsGoSettings();
-            
-            // Menu toggle
+            // Navigazione tra le sezioni delle impostazioni
+            const navItems = document.querySelectorAll('.settings-nav-item');
+            const sections = document.querySelectorAll('.settings-section');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const targetSectionId = `${this.dataset.section}-section`;
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    sections.forEach(sec => sec.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(targetSectionId).classList.add('active');
+                });
+            });
+
+            // Gestione del menu laterale (sidebar)
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
             
-            menuToggle.addEventListener('click', function(e) {
-                e.preventDefault();
+            menuToggle.addEventListener('click', e => {
                 e.stopPropagation();
                 sidebar.classList.toggle('active');
                 backdrop.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
             });
-
-            backdrop.addEventListener('click', function() {
+            backdrop.addEventListener('click', () => {
                 sidebar.classList.remove('active');
                 backdrop.classList.remove('active');
-                document.body.style.overflow = '';
             });
 
-            // User dropdown - FIX APPLICATO
+            // Gestione dei menù a tendina (utente e notifiche)
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
             
-            if (userMenuBtn && userDropdown) {
-                userMenuBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-                });
-                
-                // Previeni la chiusura del dropdown quando si clicca su un link
-                userDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-                
-                document.addEventListener('click', function() {
-                    userDropdown.style.display = 'none';
-                });
-            }
-
+            userMenuBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                notificationDropdown.style.display = 'none';
+                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+            notificationBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                userDropdown.style.display = 'none';
+                notificationDropdown.style.display = notificationDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                userDropdown.style.display = 'none';
+                notificationDropdown.style.display = 'none';
+            });
+            
             // Logout
-            document.getElementById('logoutBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.auth && window.auth.logout) {
-                    window.auth.logout();
-                } else {
-                    localStorage.removeItem('sb-access-token');
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.replace('/login.html');
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (window.auth) window.auth.logout();
+            });
+
+            // Gestione generica dei form (non API)
+            document.querySelectorAll('form').forEach(form => {
+                if (!form.querySelector('#shipsgoV1ApiKey')) {
+                    form.addEventListener('submit', e => {
+                        e.preventDefault();
+                        showNotification('Impostazioni salvate con successo!', 'success');
+                    });
                 }
             });
 
-            // Form submissions
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    showNotification('Impostazioni salvate con successo!', 'success');
-                });
-            });
-
-            // Toggle switches
-            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
-                toggle.addEventListener('change', function() {
-                    const setting = this.id;
-                    const value = this.checked;
-                    console.log(`Setting ${setting} changed to ${value}`);
-                    // Qui salveresti l'impostazione nel database
-                });
-            });
-
-            // Dangerous zone buttons
+            // Gestione dei pulsanti nella "Zona Pericolosa"
             document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (confirm('Sei sicuro? Questa azione è irreversibile!')) {
-                        showNotification('Operazione completata', 'info');
+                btn.addEventListener('click', () => {
+                    if (confirm('Sei assolutamente sicuro? Questa azione è irreversibile!')) {
+                        showNotification('Operazione non implementata in questa demo.', 'info');
                     }
                 });
             });
             
-            // Carica le impostazioni ShipsGo
-            setTimeout(function() {
-                if (typeof loadShipsGoSettings === 'function') {
-                    loadShipsGoSettings();
-                }
-            }, 500);
+            // Carica le impostazioni API dopo un breve ritardo per assicurarsi che l'autenticazione sia inizializzata
+            setTimeout(loadShipsGoSettings, 500);
         });
-
-        // Helper function: Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                padding: 16px 24px;
-                background: var(--sol-glass-heavy);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                z-index: 3000;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                max-width: 400px;
-            `;
-            
-            const icon = document.createElement('i');
-            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
-            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
-            
-            const text = document.createElement('span');
-            text.textContent = message;
-            
-            notification.appendChild(icon);
-            notification.appendChild(text);
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100px)';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
     </script>
 </body>
 </html>
-                
