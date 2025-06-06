@@ -6,7 +6,6 @@ const DHLProvider = require('./providers/dhl');
 const FedExProvider = require('./providers/fedex');
 const UPSProvider = require('./providers/ups');
 
-// Initialize Supabase
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -14,330 +13,186 @@ const supabase = createClient(
 
 // Initialize providers
 const providers = {
-  'DHL': new DHLProvider(),
-  'FEDEX': new FedExProvider(),
-  'UPS': new UPSProvider()
+  DHL: new DHLProvider(),
+  FEDEX: new FedExProvider(),
+  UPS: new UPSProvider()
 };
 
-// Carrier detection patterns
-const CARRIER_PATTERNS = {
-  'DHL': [
-    /^\d{10}$/,                    // 10 digits
-    /^\d{12}$/,                    // 12 digits
-    /^JD\d{18}$/,                  // JD + 18 digits
-    /^[A-Z]{3}\d{7}$/              // 3 letters + 7 digits
-  ],
-  'FEDEX': [
-    /^\d{12}$/,                    // 12 digits
-    /^\d{15}$/,                    // 15 digits
-    /^DT\d{12}$/,                  // DT + 12 digits
-    /^\d{20}$/                     // 20 digits
-  ],
-  'UPS': [
-    /^1Z[A-Z0-9]{16}$/,           // 1Z + 16 alphanumeric
-    /^T\d{10}$/,                   // T + 10 digits
-    /^\d{9}$/,                     // 9 digits
-    /^\d{26}$/                     // 26 digits
-  ]
-};
-
-// Detect carrier from tracking number
-function detectCarrier(trackingNumber) {
-  const cleanNumber = trackingNumber.trim().toUpperCase();
-  
-  for (const [carrier, patterns] of Object.entries(CARRIER_PATTERNS)) {
-    for (const pattern of patterns) {
-      if (pattern.test(cleanNumber)) {
-        return carrier;
-      }
-    }
-  }
-  
-  return null;
-}
-
-// Check cache freshness (6 hours for delivered, 1 hour for in transit)
-function isCacheStale(cachedData) {
-  if (!cachedData || !cachedData.cached_at) return true;
-  
-  const cacheAge = Date.now() - new Date(cachedData.cached_at).getTime();
-  const maxAge = cachedData.status === 'delivered' ? 6 * 60 * 60 * 1000 : 60 * 60 * 1000;
-  
-  return cacheAge > maxAge;
-}
-
-// Get cached tracking data
-async function getCachedTracking(trackingNumber, organizationId) {
-  const { data, error } = await supabase
-    .from('trackings')
-    .select('*, tracking_events(*)')
-    .eq('tracking_number', trackingNumber)
-    .eq('organizzazione_id', organizationId)
-    .eq('tracking_type', 'parcel')
-    .single();
-    
-  if (error || !data) return null;
-  
+// TNT Provider (placeholder for now)
+async function trackTNT(trackingNumber) {
+  console.log('Tracking TNT:', trackingNumber);
   return {
-    ...data,
-    cached_at: data.updated_at
+    success: true,
+    data: {
+      tracking_number: trackingNumber,
+      status: 'in_transit',
+      carrier_code: 'TNT',
+      carrier_name: 'TNT Express',
+      last_event_date: new Date().toISOString(),
+      events: []
+    }
   };
 }
 
-// Save tracking to database
-async function saveTracking(trackingData, organizationId, userId) {
-  // Check if exists
-  const { data: existing } = await supabase
-    .from('trackings')
-    .select('id')
-    .eq('tracking_number', trackingData.tracking_number)
-    .eq('organizzazione_id', organizationId)
-    .single();
-    
-  let trackingId;
-  
-  if (existing) {
-    // Update existing
-    const { data: updated, error } = await supabase
-      .from('trackings')
-      .update({
-        status: trackingData.status,
-        carrier_name: trackingData.carrier_name,
-        last_event_date: trackingData.last_event_date,
-        last_event_location: trackingData.last_event_location,
-        last_event_description: trackingData.last_event_description,
-        eta: trackingData.eta,
-        metadata: {
-          ...trackingData.metadata,
-          last_api_update: new Date().toISOString()
-        },
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existing.id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    trackingId = existing.id;
-  } else {
-    // Create new
-    const { data: created, error } = await supabase
-      .from('trackings')
-      .insert({
-        organizzazione_id: organizationId,
-        tracking_number: trackingData.tracking_number,
-        tracking_type: 'parcel',
-        carrier_code: trackingData.carrier_code,
-        carrier_name: trackingData.carrier_name,
-        status: trackingData.status,
-        last_event_date: trackingData.last_event_date,
-        last_event_location: trackingData.last_event_location,
-        last_event_description: trackingData.last_event_description,
-        eta: trackingData.eta,
-        active: true,
-        metadata: {
-          ...trackingData.metadata,
-          added_by: userId,
-          added_at: new Date().toISOString()
-        }
-      })
-      .select()
-      .single();
-      
-    if (error) throw error;
-    trackingId = created.id;
-  }
-  
-  // Save events
-  if (trackingData.events && trackingData.events.length > 0) {
-    // Get existing events to avoid duplicates
-    const { data: existingEvents } = await supabase
-      .from('tracking_events')
-      .select('event_date, event_code, location_name')
-      .eq('tracking_id', trackingId);
-      
-    const existingKeys = new Set(
-      existingEvents?.map(e => `${e.event_date}_${e.event_code}_${e.location_name}`) || []
-    );
-    
-    // Filter new events
-    const newEvents = trackingData.events.filter(event => {
-      const key = `${event.event_date}_${event.event_code}_${event.location_name}`;
-      return !existingKeys.has(key);
-    });
-    
-    if (newEvents.length > 0) {
-      const eventsToInsert = newEvents.map(event => ({
-        ...event,
-        tracking_id: trackingId
-      }));
-      
-      await supabase
-        .from('tracking_events')
-        .insert(eventsToInsert);
+// GLS Provider (placeholder for now)
+async function trackGLS(trackingNumber) {
+  console.log('Tracking GLS:', trackingNumber);
+  return {
+    success: true,
+    data: {
+      tracking_number: trackingNumber,
+      status: 'in_transit',
+      carrier_code: 'GLS',
+      carrier_name: 'GLS',
+      last_event_date: new Date().toISOString(),
+      events: []
     }
-  }
-  
-  return trackingId;
+  };
 }
 
 exports.handler = async (event, context) => {
-  // Only allow POST
+  // Handle CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
   try {
-    // Get auth token
-    const token = event.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Missing authorization token' })
-      };
-    }
-
-    // Verify user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid token' })
-      };
-    }
-
-    // Get user's organization
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('organizzazione_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.organizzazione_id) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User profile not found' })
-      };
-    }
-
-    // Parse request
     const { trackingNumber, carrier } = JSON.parse(event.body);
-    
-    if (!trackingNumber) {
+
+    if (!trackingNumber || !carrier) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Tracking number required' })
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: 'Missing tracking number or carrier' })
       };
     }
 
-    // Detect carrier if not provided
-    const detectedCarrier = carrier || detectCarrier(trackingNumber);
+    let result;
+    const carrierUpper = carrier.toUpperCase();
     
-    if (!detectedCarrier || !providers[detectedCarrier]) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ 
-          error: 'Unable to detect carrier. Please specify DHL, FEDEX, or UPS.' 
-        })
-      };
-    }
-
-    // Check cache first
-    const cached = await getCachedTracking(trackingNumber, profile.organizzazione_id);
-    
-    if (cached && !isCacheStale(cached)) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
+    // Route to appropriate carrier
+    if (providers[carrierUpper]) {
+      try {
+        const trackingData = await providers[carrierUpper].track(trackingNumber);
+        result = {
           success: true,
-          data: cached,
-          source: 'cache'
-        })
-      };
-    }
-
-    // Fetch from provider
-    const provider = providers[detectedCarrier];
-    let trackingData;
-    
-    try {
-      trackingData = await provider.track(trackingNumber);
-    } catch (providerError) {
-      console.error(`Provider ${detectedCarrier} error:`, providerError);
-      
-      // If we have cached data, return it even if stale
-      if (cached) {
-        return {
-          statusCode: 200,
-          body: JSON.stringify({
-            success: true,
-            data: cached,
-            source: 'cache',
-            warning: 'Unable to fetch latest updates, showing cached data'
-          })
+          data: trackingData
+        };
+      } catch (error) {
+        console.error(`${carrierUpper} tracking error:`, error);
+        result = {
+          success: false,
+          error: error.message
         };
       }
-      
+    } else if (carrierUpper === 'TNT') {
+      result = await trackTNT(trackingNumber);
+    } else if (carrierUpper === 'GLS') {
+      result = await trackGLS(trackingNumber);
+    } else {
       return {
-        statusCode: 503,
-        body: JSON.stringify({
-          error: `${detectedCarrier} service temporarily unavailable`,
-          details: providerError.message
-        })
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: `Unsupported carrier: ${carrier}` })
       };
     }
 
-    // Add carrier info
-    trackingData.carrier_code = detectedCarrier;
-    trackingData.carrier_name = detectedCarrier;
-
-    // Save to database
-    try {
-      const trackingId = await saveTracking(
-        trackingData, 
-        profile.organizzazione_id,
-        user.email
-      );
-      
-      // Get full tracking with events
-      const { data: fullTracking } = await supabase
-        .from('trackings')
-        .select('*, tracking_events(*)')
-        .eq('id', trackingId)
-        .single();
-      
+    if (!result.success) {
       return {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          data: fullTracking,
-          source: 'api'
-        })
-      };
-      
-    } catch (dbError) {
-      console.error('Database error:', dbError);
-      
-      // Return API data even if save failed
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          data: trackingData,
-          source: 'api',
-          warning: 'Failed to cache data'
-        })
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: result.error || 'Tracking failed' })
       };
     }
+
+    // Save to database if we have user context
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser(token);
+        
+        if (user) {
+          // Get user's organization
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('organizzazione_id')
+            .eq('id', user.id)
+            .single();
+
+          if (profile?.organizzazione_id) {
+            // Save tracking to database
+            const { error: saveError } = await supabase
+              .from('trackings')
+              .upsert({
+                organizzazione_id: profile.organizzazione_id,
+                tracking_number: trackingNumber,
+                tracking_type: 'parcel',
+                carrier_code: carrierUpper,
+                carrier_name: carrier,
+                status: result.data.status,
+                last_event_date: result.data.last_event_date,
+                last_event_location: result.data.last_event_location,
+                last_event_description: result.data.last_event_description,
+                eta: result.data.eta,
+                active: true,
+                metadata: result.data.metadata || {},
+                events: result.data.events || []
+              }, {
+                onConflict: 'tracking_number,organizzazione_id'
+              });
+
+            if (saveError) {
+              console.error('Error saving tracking:', saveError);
+            }
+          }
+        }
+      } catch (authError) {
+        console.error('Auth error:', authError);
+        // Continue anyway - tracking still works without saving
+      }
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(result)
+    };
 
   } catch (error) {
     console.error('Handler error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' })
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
