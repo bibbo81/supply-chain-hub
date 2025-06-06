@@ -1371,11 +1371,11 @@ MSCU7654321,MSC,container,PO123457
                 const parts = line.split(',').map(p => p.trim());
                 if (parts[0]) {
                     trackingList.push({
-    trackingNumber: parts[0].toUpperCase(),    // NOTA: camelCase!
-    carrierCode: parts[1] || detectCarrierFromNumber(parts[0]),
-    trackingType: parts[2] || detectTypeFromNumber(parts[0]),
-    description: `Import batch ${new Date().toLocaleDateString()}`
-});
+                        trackingNumber: parts[0].toUpperCase(),
+                        carrierCode: parts[1] || detectCarrierFromNumber(parts[0]),
+                        trackingType: parts[2] || detectTypeFromNumber(parts[0]),
+                        description: `Import batch ${new Date().toLocaleDateString()}`
+                    });
                 }
             });
             
@@ -1412,9 +1412,9 @@ MSCU7654321,MSC,container,PO123457
                             });
                             
                             trackingList.push({
-                                tracking_number: item.tracking_number || item['tracking number'] || values[0],
-                                carrier_code: item.carrier_code || item.carrier || values[1],
-                                tracking_type: item.tracking_type || item.type || detectTypeFromNumber(values[0]),
+                                trackingNumber: item.tracking_number || item['tracking number'] || values[0],
+                                carrierCode: item.carrier_code || item.carrier || values[1],
+                                trackingType: item.tracking_type || item.type || detectTypeFromNumber(values[0]),
                                 description: `Import da ${file.name}`
                             });
                         }
@@ -1431,11 +1431,11 @@ MSCU7654321,MSC,container,PO123457
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                     
                     const trackingList = jsonData.map(row => ({
-                        tracking_number: row.tracking_number || row['Tracking Number'] || '',
-                        carrier_code: row.carrier_code || row.Carrier || '',
-                        tracking_type: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                        trackingNumber: row.tracking_number || row['Tracking Number'] || '',
+                        carrierCode: row.carrier_code || row.Carrier || '',
+                        trackingType: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
                         description: `Import da ${file.name}`
-                    })).filter(item => item.tracking_number);
+                    })).filter(item => item.trackingNumber);
                     
                     await importTrackingBatch(trackingList);
                 };
@@ -1489,14 +1489,14 @@ MSCU7654321,MSC,container,PO123457
                         } else {
                             errorCount++;
                             errors.push({
-                                tracking: tracking.tracking_number,
+                                tracking: tracking.trackingNumber,
                                 error: result.error || 'Errore sconosciuto'
                             });
                         }
                     } catch (error) {
                         errorCount++;
                         errors.push({
-                            tracking: tracking.tracking_number,
+                            tracking: tracking.trackingNumber,
                             error: error.message
                         });
                     }
@@ -1821,8 +1821,6 @@ MSCU7654321,MSC,container,PO123457
                 });
                 
                 const result = await response.json();
-console.log('DEBUG - Struttura risposta:', result); // Aggiungi questo per debug
-ttrackings = result.trackings || result.data || result || [];
                 
                 if (!response.ok) {
                     throw new Error(result.error || 'Errore durante l\'aggiornamento');
@@ -2304,6 +2302,52 @@ ttrackings = result.trackings || result.data || result || [];
                 clearInterval(autoRefreshInterval);
             }
         });
+
+        // Open Sync Wizard in modal
+        function openSyncWizard() {
+            // Crea modal per sync wizard
+            const syncModal = document.createElement('div');
+            syncModal.className = 'modal-overlay active';
+            syncModal.id = 'syncWizardModal';
+            syncModal.innerHTML = `
+                <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Sincronizzazione ShipsGo</h2>
+                        <button class="modal-close" onclick="closeSyncWizard()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="padding: 0;">
+                        <iframe 
+                            src="/shipsgo-sync-wizard.html" 
+                            style="width: 100%; height: 600px; border: none; border-radius: var(--sol-radius-lg);"
+                            title="ShipsGo Sync Wizard">
+                        </iframe>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(syncModal);
+            
+            // Listener per messaggi dall'iframe
+            window.addEventListener('message', function(event) {
+                if (event.data.action === 'closeSyncWizard') {
+                    closeSyncWizard();
+                } else if (event.data.action === 'syncComplete') {
+                    closeSyncWizard();
+                    showNotification('Sincronizzazione completata!', 'success');
+                    loadTrackings(); // Ricarica tracking
+                }
+            });
+        }
+
+        // Close Sync Wizard
+        function closeSyncWizard() {
+            const modal = document.getElementById('syncWizardModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
     </script>
 </body>
 </html>
