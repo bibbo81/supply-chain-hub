@@ -41,6 +41,19 @@
         })();
     </script>
     
+    <!-- Inizializza Supabase se non è già inizializzato -->
+    <script>
+        if (!window.supabase) {
+            const { createClient } = window.supabase || {};
+            if (createClient) {
+                window.supabase = createClient(
+                    'https://vlymirmvksnuvcswucsm.supabase.co', // Sostituisci con il tuo URL
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // Sostituisci con la tua ANON KEY
+                );
+            }
+        }
+    </script>
+    
     <style>
         /* Page Specific Styles */
         .sol-main-content {
@@ -1614,9 +1627,36 @@
             }
             
             try {
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                // Usa auth.js per ottenere il token
+                const user = window.auth ? window.auth.getCurrentUser() : null;
+                if (!user) {
+                    showNotification('Devi essere autenticato', 'error');
+                    return;
+                }
                 
-                // Salva le API keys nel profilo utente (encrypted)
+                // Ottieni il token dalla sessione
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    showNotification('Sessione scaduta, rieffettua il login', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Prepara le API settings con encoding base64
+                const apiSettings = {};
+                if (v1Key) {
+                    apiSettings.shipsgo_v1_key = btoa(v1Key);
+                }
+                if (v2Token) {
+                    apiSettings.shipsgo_v2_token = btoa(v2Token);
+                }
+                
+                console.log('Saving API settings:', { 
+                    hasV1: !!apiSettings.shipsgo_v1_key, 
+                    hasV2: !!apiSettings.shipsgo_v2_token 
+                });
+                
+                // Salva le API keys nel profilo utente
                 const response = await fetch('/.netlify/functions/update-profile', {
                     method: 'POST',
                     headers: {
@@ -1624,28 +1664,28 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        action: 'update_api_settings',  // IMPORTANTE!
+                        action: 'update_api_settings',
                         data: {
-                            api_settings: {
-                                shipsgo_v1_key: v1Key ? btoa(v1Key) : null, // Base64 encode
-                                shipsgo_v2_token: v2Token ? btoa(v2Token) : null
-                            }
+                            api_settings: apiSettings
                         }
                     })
                 });
                 
-                if (response.ok) {
+                const result = await response.json();
+                console.log('Save response:', result);
+                
+                if (response.ok && result.success) {
                     showNotification('Configurazione API salvata con successo!', 'success');
                     
                     // Salva anche in localStorage per uso immediato
                     if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
                     if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
                 } else {
-                    throw new Error('Errore salvataggio configurazione');
+                    throw new Error(result.error || 'Errore salvataggio configurazione');
                 }
             } catch (error) {
                 console.error('Error saving API settings:', error);
-                showNotification('Errore nel salvataggio delle API keys', 'error');
+                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
             }
         }
 
@@ -1655,92 +1695,105 @@
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test connessione in corso...';
             
-            const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
-            const v2Token = document.getElementById('shipsgoV2Token').value.trim();
-            
-            let v1Status = '⏭️ Non configurato';
-            let v2Status = '⏭️ Non configurato';
-            
             try {
-                // Test v1.2 API
-                if (v1Key) {
-                    const v1Response = await fetch(`https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo/?authCode=${v1Key}`, {
-                        method: 'GET'
-                    });
-                    
-                    if (v1Response.status === 401) {
-                        v1Status = '❌ API Key non valida';
-                    } else if (v1Response.status === 400 || v1Response.status === 404) {
-                        v1Status = '✅ API Key valida (test richiede container ID)';
-                    } else if (v1Response.ok) {
-                        v1Status = '✅ Connessione OK';
-                    } else {
-                        v1Status = '⚠️ Errore connessione';
+                // Ottieni il token
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                const response = await fetch('/.netlify/functions/test-shipsgo-connection', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
                     }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Test connection failed');
                 }
                 
-                // Test v2.0 API
-                if (v2Token) {
-                    const v2Response = await fetch('https://api.shipsgo.com/v2/air/shipments?take=1', {
-                        headers: {
-                            'Authorization': `Bearer ${v2Token}`
-                        }
-                    });
-                    
-                    if (v2Response.status === 401) {
-                        v2Status = '❌ Bearer Token non valido';
-                    } else if (v2Response.ok) {
-                        v2Status = '✅ Connessione OK';
-                    } else {
-                        v2Status = '⚠️ Errore connessione';
-                    }
-                }
+                const data = await response.json();
+                const { results } = data;
+                
+                resultDiv.innerHTML = `
+                    <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
+                        <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
+                        <div style="margin-bottom: var(--sol-space-xs);">
+                            <strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}
+                        </div>
+                        <div>
+                            <strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}
+                        </div>
+                    </div>
+                `;
                 
             } catch (error) {
                 console.error('Test connection error:', error);
+                resultDiv.innerHTML = `
+                    <div style="background: rgba(255, 59, 48, 0.1); padding: var(--sol-space-md); border-radius: var(--sol-radius-md); border: 1px solid rgba(255, 59, 48, 0.3);">
+                        <h4 style="color: #FF3B30; margin-bottom: var(--sol-space-xs);">
+                            <i class="fas fa-exclamation-circle"></i> Errore Test Connessione
+                        </h4>
+                        <p style="color: var(--sol-text-secondary); margin: 0;">
+                            ${error.message || 'Impossibile testare la connessione'}
+                        </p>
+                    </div>
+                `;
             }
-            
-            resultDiv.innerHTML = `
-                <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
-                    <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
-                    <div style="margin-bottom: var(--sol-space-xs);">
-                        <strong>ShipsGo v1.2 (Maritime):</strong> ${v1Status}
-                    </div>
-                    <div>
-                        <strong>ShipsGo v2.0 (Air):</strong> ${v2Status}
-                    </div>
-                </div>
-            `;
         }
 
         // Load saved API settings on page load
         async function loadShipsGoSettings() {
+            console.log('Loading ShipsGo settings...');
+            
             try {
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                // Ottieni l'utente corrente
+                const user = window.auth ? window.auth.getCurrentUser() : null;
+                if (!user) {
+                    console.log('No user logged in');
+                    return;
+                }
                 
-                const response = await fetch('/.netlify/functions/get-profile', {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    console.log('No auth token found');
+                    return;
+                }
+                
+                // Usa l'ID utente per la query
+                const response = await fetch(`/.netlify/functions/get-profile?id=${user.id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
+                console.log('Profile response status:', response.status);
+                
                 if (response.ok) {
-                    const { data } = await response.json();
+                    const data = await response.json();
+                    console.log('Profile data:', data);
                     
                     if (data.api_settings) {
-                        // Decode and set values
+                        // Decodifica e mostra le API keys
                         if (data.api_settings.shipsgo_v1_key) {
-                            const v1Key = atob(data.api_settings.shipsgo_v1_key);
-                            document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                            localStorage.setItem('shipsgo_v1_key', v1Key);
+                            try {
+                                const v1Key = atob(data.api_settings.shipsgo_v1_key);
+                                document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                                localStorage.setItem('shipsgo_v1_key', v1Key);
+                            } catch (e) {
+                                console.error('Error decoding v1 key:', e);
+                            }
                         }
                         
                         if (data.api_settings.shipsgo_v2_token) {
-                            const v2Token = atob(data.api_settings.shipsgo_v2_token);
-                            document.getElementById('shipsgoV2Token').value = v2Token;
-                            localStorage.setItem('shipsgo_v2_token', v2Token);
+                            try {
+                                const v2Token = atob(data.api_settings.shipsgo_v2_token);
+                                document.getElementById('shipsgoV2Token').value = v2Token;
+                                localStorage.setItem('shipsgo_v2_token', v2Token);
+                            } catch (e) {
+                                console.error('Error decoding v2 token:', e);
+                            }
                         }
                     }
+                } else {
+                    console.error('Failed to load profile:', await response.text());
                 }
             } catch (error) {
                 console.error('Error loading API settings:', error);
@@ -1831,6 +1884,13 @@
                     }
                 });
             });
+            
+            // Carica le impostazioni ShipsGo
+            setTimeout(function() {
+                if (typeof loadShipsGoSettings === 'function') {
+                    loadShipsGoSettings();
+                }
+            }, 500);
         });
 
         // Helper function: Show notification
