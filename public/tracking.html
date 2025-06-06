@@ -1320,7 +1320,15 @@ MSCU7654321, MSC
             document.querySelectorAll('.form-tab').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.closest('.form-tab').classList.add('active');
+            
+            // Find and activate the correct tab button
+            const tabButtons = document.querySelectorAll('.form-tab');
+            tabButtons.forEach(btn => {
+                if ((tab === 'single' && btn.textContent.includes('Singolo')) || 
+                    (tab === 'import' && btn.textContent.includes('Import'))) {
+                    btn.classList.add('active');
+                }
+            });
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -2439,8 +2447,11 @@ MSCU7654321,MSC,container,PO123457
             closeSyncWizard();
             // Apri direttamente il tab di import multiplo
             toggleAddForm();
-            switchFormTab('import');
-            showNotification('Usa il tab "Import Multiplo" per caricare la tua lista', 'info');
+            // Assicurati che il form sia visibile prima di switchare tab
+            setTimeout(() => {
+                switchFormTab('import');
+                showNotification('Usa il tab "Import Multiplo" per caricare la tua lista', 'info');
+            }, 100);
         }
     </script>
 </body>
