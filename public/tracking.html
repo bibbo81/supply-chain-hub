@@ -1346,6 +1346,18 @@ MSCU7654321, MSC
 
         // Download CSV template
         function downloadTemplate() {
+            // Check if user wants ShipsGo template
+            const useShipsGoTemplate = confirm('Vuoi scaricare il template in formato ShipsGo?\n\nOK = Template ShipsGo\nAnnulla = Template Standard');
+            
+            if (useShipsGoTemplate) {
+                downloadShipsGoTemplate();
+            } else {
+                downloadStandardTemplate();
+            }
+        }
+        
+        // Standard template
+        function downloadStandardTemplate() {
             const csvContent = `tracking_number,carrier_code,tracking_type,reference
 MRKU1234567,MAERSK,container,PO123456
 MSCU7654321,MSC,container,PO123457
@@ -1358,7 +1370,23 @@ MSCU7654321,MSC,container,PO123457
             link.download = 'tracking_import_template.csv';
             link.click();
             
-            showNotification('Template CSV scaricato!', 'success');
+            showNotification('Template CSV standard scaricato!', 'success');
+        }
+        
+        // Template CSV ottimizzato per ShipsGo
+        function downloadShipsGoTemplate() {
+            const csvContent = `Container,Carrier,Status,Reference,Booking,Port Of Loading,Port Of Discharge,Date Of Loading,Date Of Discharge,CO₂ Emission (Tons),Tags
+MRKU1234567,MAERSK LINE,In Transit,PO123456,BKG789,SHANGHAI,ROTTERDAM,15/06/2025,30/06/2025,1.5,Urgent
+MSCU7654321,MSC,Loaded,INV456789,-,NINGBO,GENOVA,20/06/2025,15/07/2025,2.1,Regular
+HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/07/2025,1.8,-`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'shipsgo_import_template.csv';
+            link.click();
+            
+            showNotification('Template ShipsGo scaricato!', 'success');
         }
 
         // Process manual import
@@ -1408,47 +1436,182 @@ MSCU7654321,MSC,container,PO123457
                 reader.onload = async (e) => {
                     const text = e.target.result;
                     const lines = text.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    const headers = lines[0].split(',').map(h => h.trim());
                     
-                    const trackingList = [];
+                    // Parse CSV to objects
+                    const data = [];
                     for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
                         const values = lines[i].split(',').map(v => v.trim());
-                        if (values[0]) {
-                            const item = {};
-                            headers.forEach((header, index) => {
-                                item[header] = values[index];
-                            });
-                            
-                            trackingList.push({
-                                trackingNumber: item.tracking_number || item['tracking number'] || values[0],
-                                carrierCode: item.carrier_code || item.carrier || values[1],
-                                trackingType: item.tracking_type || item.type || detectTypeFromNumber(values[0]),
-                                description: `Import da ${file.name}`
-                            });
-                        }
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] || '';
+                        });
+                        data.push(row);
                     }
                     
-                    await importTrackingBatch(trackingList);
+                    // Check if it's a ShipsGo export
+                    const isShipsGoExport = data.length > 0 && 
+                        'Container' in data[0] && 
+                        'Carrier' in data[0];
+                    
+                    if (isShipsGoExport) {
+                        const { trackingList, errors } = await processShipsGoFile(data);
+                        if (errors.length > 0) {
+                            showNotification(`Import completato con ${errors.length} errori. Controlla la console.`, 'warning');
+                        }
+                        await importTrackingBatch(trackingList);
+                    } else {
+                        // Standard CSV processing
+                        const trackingList = [];
+                        for (let i = 0; i < data.length; i++) {
+                            const row = data[i];
+                            if (row.tracking_number || row['tracking number'] || row['Tracking Number']) {
+                                trackingList.push({
+                                    trackingNumber: row.tracking_number || row['tracking number'] || row['Tracking Number'] || '',
+                                    carrierCode: row.carrier_code || row.carrier || row.Carrier || '',
+                                    trackingType: row.tracking_type || row.type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                                    description: `Import da ${file.name}`
+                                });
+                            }
+                        }
+                        await importTrackingBatch(trackingList);
+                    }
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                 reader.onload = async (e) => {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
                     
-                    const trackingList = jsonData.map(row => ({
-                        trackingNumber: row.tracking_number || row['Tracking Number'] || '',
-                        carrierCode: row.carrier_code || row.Carrier || '',
-                        trackingType: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
-                        description: `Import da ${file.name}`
-                    })).filter(item => item.trackingNumber);
+                    // Check if it's a ShipsGo export
+                    const isShipsGoExport = jsonData.length > 0 && 
+                        'Container' in jsonData[0] && 
+                        'Carrier' in jsonData[0];
                     
-                    await importTrackingBatch(trackingList);
+                    if (isShipsGoExport) {
+                        const { trackingList, errors } = await processShipsGoFile(jsonData);
+                        if (errors.length > 0) {
+                            showNotification(`Import completato con ${errors.length} errori. Controlla la console.`, 'warning');
+                        }
+                        await importTrackingBatch(trackingList);
+                    } else {
+                        // Standard Excel processing
+                        const trackingList = jsonData.map(row => ({
+                            trackingNumber: row.tracking_number || row['Tracking Number'] || '',
+                            carrierCode: row.carrier_code || row.Carrier || '',
+                            trackingType: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                            description: `Import da ${file.name}`
+                        })).filter(item => item.trackingNumber);
+                        
+                        await importTrackingBatch(trackingList);
+                    }
                 };
                 reader.readAsArrayBuffer(file);
             }
+        }
+
+        // Mappatura carrier names ShipsGo → nostri codici
+        const SHIPSGO_CARRIER_MAPPING = {
+            'MAERSK LINE': 'MAERSK',
+            'MSC': 'MSC',
+            'CMA CGM': 'CMA-CGM',
+            'COSCO': 'COSCO',
+            'HAPAG-LLOYD': 'HAPAG-LLOYD',
+            'ONE': 'ONE',
+            'EVERGREEN': 'EVERGREEN',
+            'YANG MING': 'YANG-MING',
+            'ZIM': 'ZIM',
+            'HMM': 'HMM',
+            'OOCL': 'OOCL',
+            'APL': 'APL',
+            'NYK': 'NYK',
+            'MOL': 'MOL',
+            'K LINE': 'K-LINE'
+        };
+
+        // Mappatura status ShipsGo → nostri status
+        const SHIPSGO_STATUS_MAPPING = {
+            'Gate In': 'in_transit',
+            'Gate Out': 'in_transit', 
+            'Loaded': 'in_transit',
+            'Discharged': 'in_transit',
+            'In Transit': 'in_transit',
+            'Delivered': 'delivered',
+            'Empty': 'delivered',
+            'Registered': 'registered',
+            'Pending': 'registered'
+        };
+
+        // Funzione per parsare date formato DD/MM/YYYY
+        function parseShipsGoDate(dateStr) {
+            if (!dateStr || dateStr === '-') return null;
+            
+            // Gestisci anche formato con ora: "08/01/2024 13:32:37"
+            const cleanDate = dateStr.split(' ')[0];
+            const [day, month, year] = cleanDate.split('/');
+            
+            // Crea data in formato ISO
+            return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
+        }
+
+        // Funzione principale per processare file ShipsGo
+        async function processShipsGoFile(fileData) {
+            const trackingList = [];
+            const errors = [];
+            
+            console.log('Rilevato file ShipsGo, applicazione mappatura ottimizzata...');
+            
+            fileData.forEach((row, index) => {
+                try {
+                    // Salta righe vuote
+                    if (!row.Container) return;
+                    
+                    // Determina il tipo di tracking
+                    let trackingType = 'container'; // Default per ShipsGo
+                    const containerNum = row.Container.toUpperCase();
+                    
+                    // Rileva se è un BL number (più lungo del normale container)
+                    if (containerNum.length > 11) {
+                        trackingType = 'bl';
+                    }
+                    
+                    // Mappa il carrier
+                    const carrierCode = SHIPSGO_CARRIER_MAPPING[row.Carrier] || row.Carrier;
+                    
+                    // Mappa lo status
+                    const status = SHIPSGO_STATUS_MAPPING[row.Status] || 'registered';
+                    
+                    // Costruisci oggetto tracking
+                    const tracking = {
+                        trackingNumber: containerNum,
+                        trackingType: trackingType,
+                        carrierCode: carrierCode,
+                        referenceNumber: row.Reference !== '-' ? row.Reference : null,
+                        description: `Import ShipsGo - ${row.Carrier}`
+                    };
+                    
+                    trackingList.push(tracking);
+                    
+                } catch (error) {
+                    errors.push({
+                        row: index + 2, // +2 per header e indice 0-based
+                        container: row.Container || 'UNKNOWN',
+                        error: error.message
+                    });
+                }
+            });
+            
+            // Mostra riepilogo
+            console.log(`ShipsGo Import completato: ${trackingList.length} tracking pronti, ${errors.length} errori`);
+            
+            if (errors.length > 0) {
+                console.warn('Errori durante import:', errors);
+            }
+            
+            return { trackingList, errors };
         }
 
         // Import tracking batch
