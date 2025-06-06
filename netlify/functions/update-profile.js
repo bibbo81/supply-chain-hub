@@ -78,6 +78,9 @@ exports.handler = async (event, context) => {
       case 'update_preferences':
         return await handleUpdatePreferences(user, data);
       
+      case 'update_api_settings':
+        return await handleUpdateApiSettings(user, data);
+      
       default:
         return {
           statusCode: 400,
@@ -411,6 +414,61 @@ async function handleUpdatePreferences(user, data) {
 
   } catch (error) {
     console.error('Preferences update error:', error);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: error.message })
+    };
+  }
+}
+
+// Handle API settings update
+async function handleUpdateApiSettings(user, data) {
+  try {
+    const { api_settings } = data;
+    
+    if (!api_settings || typeof api_settings !== 'object') {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'API settings non valide' })
+      };
+    }
+
+    // Update profiles table with api_settings
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        api_settings: api_settings,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('API settings update error:', updateError);
+      return {
+        statusCode: 500,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Errore durante l\'aggiornamento delle API settings' })
+      };
+    }
+
+    // Log the update
+    await logActivity(user.id, 'api_settings_updated', {
+      keys_updated: Object.keys(api_settings)
+    });
+
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        success: true,
+        message: 'API settings aggiornate con successo'
+      })
+    };
+
+  } catch (error) {
+    console.error('API settings update error:', error);
     return {
       statusCode: 500,
       headers: corsHeaders,
