@@ -1556,80 +1556,144 @@
 
     <script>
         // Settings navigation
-        document.querySelectorAll('.settings-nav-item').forEach(item => {
+        document.querySelectorAll('.settings-nav-item').forEach(function(item) {
             item.addEventListener('click', function() {
-                const targetSection = this.dataset.section;
-
-                // Update nav items
-                document.querySelectorAll('.settings-nav-item').forEach(navItem => {
+                var targetSection = this.dataset.section;
+                document.querySelectorAll('.settings-nav-item').forEach(function(navItem) {
                     navItem.classList.remove('active');
                 });
                 this.classList.add('active');
-
-                // Update sections
-                document.querySelectorAll('.settings-section').forEach(section => {
+                document.querySelectorAll('.settings-section').forEach(function(section) {
                     section.classList.remove('active');
                 });
-                document.getElementById(`${targetSection}-section`).classList.add('active');
+                document.getElementById(targetSection + '-section').classList.add('active');
             });
         });
 
-        // Toggle API key visibility
-        function toggleApiKeyVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            const button = event.currentTarget;
-            const icon = button.querySelector('i');
+        // ==========================================
+        // API KEYS FUNCTIONS
+        // ==========================================
+        function editApiKey(keyId) {
+            alert('Edit API Key: ' + keyId);
+        }
 
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fas fa-eye';
+        function deleteApiKey(keyId) {
+            if (confirm('Sei sicuro di voler eliminare questa API key?')) {
+                alert('Delete API Key: ' + keyId);
             }
         }
 
-        // Save ShipsGo API settings
+        function viewApiKey(keyId) {
+            alert('View API Key: ' + keyId);
+        }
+
+        function addApiKey() {
+            alert('Aggiungi nuova API Key - Da implementare');
+        }
+
+        // ==========================================
+        // SHIPSGO SETTINGS FUNCTIONS
+        // ==========================================
+        async function loadShipsGoSettings() {
+            console.log('Loading ShipsGo settings...');
+            
+            // Pulisci i campi prima di caricare
+            document.getElementById('shipsgoV1ApiKey').value = '';
+            document.getElementById('shipsgoV2Token').value = '';
+            
+            try {
+                const user = window.auth ? window.auth.getCurrentUser() : null;
+                if (!user || !user.id) {
+                    console.log('No user logged in');
+                    return;
+                }
+                
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    console.log('No auth token found');
+                    return;
+                }
+                
+                const response = await fetch(`/.netlify/functions/get-profile?id=${user.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const profileData = await response.json();
+                    console.log('Profile loaded successfully');
+                    
+                    // IMPORTANTE: Verifica che api_settings esista e sia un oggetto
+                    if (profileData && profileData.api_settings && typeof profileData.api_settings === 'object') {
+                        // Carica SOLO le API keys, NON altri campi
+                        
+                        // ShipsGo v1 key
+                        if (profileData.api_settings.shipsgo_v1_key && profileData.api_settings.shipsgo_v1_key !== '') {
+                            try {
+                                const decodedV1 = atob(profileData.api_settings.shipsgo_v1_key);
+                                // Verifica che non sia una password
+                                if (decodedV1 && decodedV1.length === 32 && /^[a-f0-9]+$/i.test(decodedV1)) {
+                                    document.getElementById('shipsgoV1ApiKey').value = decodedV1;
+                                }
+                            } catch (e) {
+                                console.error('Invalid v1 key encoding');
+                            }
+                        }
+                        
+                        // ShipsGo v2 token
+                        if (profileData.api_settings.shipsgo_v2_token && profileData.api_settings.shipsgo_v2_token !== '') {
+                            try {
+                                const decodedV2 = atob(profileData.api_settings.shipsgo_v2_token);
+                                // Verifica formato UUID
+                                if (decodedV2 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedV2)) {
+                                    document.getElementById('shipsgoV2Token').value = decodedV2;
+                                }
+                            } catch (e) {
+                                console.error('Invalid v2 token encoding');
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
         async function saveShipsGoSettings() {
             const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
             const v2Token = document.getElementById('shipsgoV2Token').value.trim();
-
+            
             if (!v1Key && !v2Token) {
                 showNotification('Inserisci almeno una API key', 'warning');
                 return;
             }
-
+            
+            // Validazione formato
+            if (v1Key && !/^[a-f0-9]{32}$/i.test(v1Key)) {
+                showNotification('API Key v1.2 non valida. Deve essere 32 caratteri hex.', 'error');
+                return;
+            }
+            
+            if (v2Token && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v2Token)) {
+                showNotification('Bearer Token v2.0 non valido. Deve essere formato UUID.', 'error');
+                return;
+            }
+            
             try {
-                // Usa auth.js per ottenere il token
                 const user = window.auth ? window.auth.getCurrentUser() : null;
                 if (!user) {
                     showNotification('Devi essere autenticato', 'error');
                     return;
                 }
-
-                // Ottieni il token dalla sessione
+                
                 const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    showNotification('Sessione scaduta, rieffettua il login', 'error');
-                    window.location.href = '/login.html';
-                    return;
-                }
-
-                // Prepara le API settings con encoding base64
+                
+                // Prepara SOLO le API settings (NON includere password!)
                 const apiSettings = {};
-                if (v1Key) {
-                    apiSettings.shipsgo_v1_key = btoa(v1Key);
-                }
-                if (v2Token) {
-                    apiSettings.shipsgo_v2_token = btoa(v2Token);
-                }
-
-                console.log('Saving API settings:', {
-                    hasV1: !!apiSettings.shipsgo_v1_key,
-                    hasV2: !!apiSettings.shipsgo_v2_token
-                });
-
-                // Salva le API keys nel profilo utente
+                if (v1Key) apiSettings.shipsgo_v1_key = btoa(v1Key);
+                if (v2Token) apiSettings.shipsgo_v2_token = btoa(v2Token);
+                
                 const response = await fetch('/.netlify/functions/update-profile', {
                     method: 'POST',
                     headers: {
@@ -1643,247 +1707,222 @@
                         }
                     })
                 });
-
-                const result = await response.json();
-                console.log('Save response:', result);
-
-                if (response.ok && result.success) {
-                    showNotification('Configurazione API salvata con successo!', 'success');
-
-                    // Salva anche in localStorage per uso immediato
-                    if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
-                    if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
-                } else {
-                    throw new Error(result.error || 'Errore salvataggio configurazione');
-                }
-            } catch (error) {
-                console.error('Error saving API settings:', error);
-                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
-            }
-        }
-
-        // Test ShipsGo connection
-        async function testShipsGoConnection() {
-            const resultDiv = document.getElementById('shipsgoTestResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test connessione in corso...';
-
-            try {
-                // Ottieni il token
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-
-                const response = await fetch('/.netlify/functions/test-shipsgo-connection', {
-                    headers: {
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Test connection failed');
-                }
-
-                const data = await response.json();
-                const {
-                    results
-                } = data;
-
-                resultDiv.innerHTML = `
-                <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
-                    <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
-                    <div style="margin-bottom: var(--sol-space-xs);">
-                        <strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}
-                    </div>
-                    <div>
-                        <strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}
-                    </div>
-                </div>
-            `;
-
-            } catch (error) {
-                console.error('Test connection error:', error);
-                resultDiv.innerHTML = `
-                <div style="background: rgba(255, 59, 48, 0.1); padding: var(--sol-space-md); border-radius: var(--sol-radius-md); border: 1px solid rgba(255, 59, 48, 0.3);">
-                    <h4 style="color: #FF3B30; margin-bottom: var(--sol-space-xs);">
-                        <i class="fas fa-exclamation-circle"></i> Errore Test Connessione
-                    </h4>
-                    <p style="color: var(--sol-text-secondary); margin: 0;">
-                        ${error.message || 'Impossibile testare la connessione'}
-                    </p>
-                </div>
-            `;
-            }
-        }
-
-        // Load saved API settings on page load
-        async function loadShipsGoSettings() {
-            console.log('Loading ShipsGo settings...');
-
-            try {
-                // Ottieni l'utente corrente
-                const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user || !user.id) {
-                    console.log('No user logged in');
-                    return;
-                }
-
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    console.log('No auth token found');
-                    return;
-                }
-
-                // IMPORTANTE: Usa l'ID utente dalla sessione, non altri campi!
-                const response = await fetch(`/.netlify/functions/get-profile?id=${user.id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                console.log('Profile response status:', response.status);
-
+                
                 if (response.ok) {
-                    const profileData = await response.json();
-                    console.log('Profile loaded, has api_settings:', !!profileData.api_settings);
-
-                    // IMPORTANTE: Leggi SOLO da api_settings, MAI da altri campi!
-                    if (profileData.api_settings && typeof profileData.api_settings === 'object') {
-                        // ShipsGo v1 key
-                        if (profileData.api_settings.shipsgo_v1_key) {
-                            try {
-                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
-                                // Verifica che non sia una password (non dovrebbe contenere caratteri speciali tipici)
-                                if (v1Key && v1Key.indexOf('$') === -1 && v1Key.indexOf('@') === -1) {
-                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                                    localStorage.setItem('shipsgo_v1_key', v1Key);
-                                }
-                            } catch (e) {
-                                console.error('Error decoding v1 key');
-                            }
-                        }
-
-                        // ShipsGo v2 token
-                        if (profileData.api_settings.shipsgo_v2_token) {
-                            try {
-                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
-                                document.getElementById('shipsgoV2Token').value = v2Token;
-                                localStorage.setItem('shipsgo_v2_token', v2Token);
-                            } catch (e) {
-                                console.error('Error decoding v2 token');
-                            }
-                        }
-                    }
-                    // NON leggere MAI da altri campi come password, email, etc!
+                    showNotification('Configurazione API salvata con successo!', 'success');
+                    
+                    // Ricarica per verificare
+                    setTimeout(() => {
+                        loadShipsGoSettings();
+                    }, 1000);
                 } else {
-                    console.error('Failed to load profile');
+                    const error = await response.json();
+                    throw new Error(error.message || 'Errore salvataggio');
                 }
             } catch (error) {
-                console.error('Error loading API settings:', error);
+                console.error('Save error:', error);
+                showNotification('Errore: ' + error.message, 'error');
             }
         }
 
-        // Aggiungi anche questa funzione di verifica per debug
+        // ==========================================
+        // WEBHOOKS FUNCTIONS
+        // ==========================================
+        function editWebhook(webhookId) {
+            alert('Edit webhook: ' + webhookId);
+        }
+
+        function deleteWebhook(webhookId) {
+            if (confirm('Eliminare questo webhook?')) {
+                alert('Delete webhook: ' + webhookId);
+            }
+        }
+
+        function addWebhook() {
+            // Mostra modal per aggiungere webhook
+            const modal = document.createElement('div');
+            modal.className = 'sol-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: var(--sol-glass-heavy); padding: var(--sol-space-2xl); border-radius: var(--sol-radius-xl); max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: var(--sol-space-xl);">Configurazione Webhook ShipsGo</h3>
+                    
+                    <div class="form-group" style="margin-bottom: var(--sol-space-lg);">
+                        <label class="form-label">URL Webhook per ShipsGo:</label>
+                        <div style="display: flex; gap: var(--sol-space-sm);">
+                            <input type="text" class="form-input" value="https://supply-chain-hub-test.netlify.app/.netlify/functions/webhook-tracking" readonly>
+                            <button class="sol-btn sol-btn-glass" onclick="copyToClipboard('https://supply-chain-hub-test.netlify.app/.netlify/functions/webhook-tracking')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--sol-glass-medium); padding: var(--sol-space-lg); border-radius: var(--sol-radius-md); margin-bottom: var(--sol-space-lg);">
+                        <h4 style="margin-bottom: var(--sol-space-md);">Istruzioni:</h4>
+                        <ol style="margin: 0; padding-left: var(--sol-space-lg);">
+                            <li>Copia l'URL sopra</li>
+                            <li>Accedi a ShipsGo Dashboard</li>
+                            <li>Vai su Settings → Webhooks</li>
+                            <li>Incolla l'URL e attiva il webhook</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="display: flex; gap: var(--sol-space-md); justify-content: flex-end;">
+                        <button class="sol-btn sol-btn-glass" onclick="this.closest('.sol-modal').remove()">
+                            Chiudi
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('URL copiato negli appunti!', 'success');
+            });
+        }
+        
+        // ==========================================
+        // OTHER HELPER FUNCTIONS
+        // ==========================================
+        function toggleApiKeyVisibility(inputId) {
+            var input = document.getElementById(inputId);
+            var button = event.currentTarget;
+            var icon = button.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function testShipsGoConnection() {
+            // Placeholder per la funzione di test
+            alert('Funzione Test Connessione da implementare');
+        }
+
         function debugCheckProfile() {
-            const user = window.auth ? window.auth.getCurrentUser() : null;
-            if (!user) {
-                console.log('No user');
-                return;
-            }
-
-            const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-            fetch(`/.netlify/functions/get-profile?id=${user.id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    console.log('=== PROFILE DEBUG ===');
-                    console.log('User ID:', user.id);
-                    console.log('Has api_settings:', !!data.api_settings);
-                    console.log('api_settings keys:', data.api_settings ? Object.keys(data.api_settings) : 'none');
-                    console.log('Other profile keys:', Object.keys(data).filter(k => k !== 'api_settings'));
-                    console.log('===================');
-                });
+            // Placeholder per la funzione di debug
         }
 
-        // Event Listeners
+        function showNotification(message, type) {
+            if (!type) {
+                type = 'info';
+            }
+            var notification = document.createElement('div');
+            notification.className = 'sol-notification sol-notification-' + type + ' sol-animate-in';
+            notification.style.cssText = 'position: fixed; top: 100px; right: 20px; padding: 16px 24px; background: var(--sol-glass-heavy); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); z-index: 3000; display: flex; align-items: center; gap: 12px; max-width: 400px;';
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + (type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
+            var text = document.createElement('span');
+            text.textContent = message;
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            document.body.appendChild(notification);
+            setTimeout(function() {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(function() {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // ==========================================
+        // INIT - DOM CONTENT LOADED
+        // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Load ShipsGo settings
-            loadShipsGoSettings();
-
             // Menu toggle
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('backdrop');
+            var menuToggle = document.getElementById('menuToggle');
+            var sidebar = document.getElementById('sidebar');
+            var backdrop = document.getElementById('backdrop');
+            if(menuToggle) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('active');
+                    backdrop.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+            if(backdrop) {
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
 
-            menuToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                sidebar.classList.toggle('active');
-                backdrop.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
-            });
-
-            backdrop.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-
-            // User dropdown - FIX APPLICATO
-            const userMenuBtn = document.getElementById('userMenuBtn');
-            const userDropdown = document.getElementById('userDropdown');
-
+            // User dropdown
+            var userMenuBtn = document.getElementById('userMenuBtn');
+            var userDropdown = document.getElementById('userDropdown');
             if (userMenuBtn && userDropdown) {
                 userMenuBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
                 });
-
-                // Previeni la chiusura del dropdown quando si clicca su un link
                 userDropdown.addEventListener('click', function(e) {
                     e.stopPropagation();
                 });
-
                 document.addEventListener('click', function() {
                     userDropdown.style.display = 'none';
                 });
             }
 
             // Logout
-            document.getElementById('logoutBtn').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.auth && window.auth.logout) {
-                    window.auth.logout();
-                } else {
-                    localStorage.removeItem('sb-access-token');
-                    localStorage.removeItem('supabase.auth.token');
-                    localStorage.removeItem('user');
-                    window.location.replace('/login.html');
-                }
-            });
-
+            var logoutBtn = document.getElementById('logoutBtn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (window.auth && window.auth.logout) {
+                        window.auth.logout();
+                    } else {
+                        localStorage.removeItem('sb-access-token');
+                        localStorage.removeItem('supabase.auth.token');
+                        localStorage.removeItem('user');
+                        window.location.replace('/login.html');
+                    }
+                });
+            }
+            
             // Form submissions
-            document.querySelectorAll('form').forEach(form => {
+            document.querySelectorAll('form').forEach(function(form) {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    showNotification('Impostazioni salvate con successo!', 'success');
+                    // Non mostrare notifica qui, gestita da funzioni specifiche come saveShipsGoSettings
                 });
             });
 
             // Toggle switches
-            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+            document.querySelectorAll('.toggle-switch input').forEach(function(toggle) {
                 toggle.addEventListener('change', function() {
-                    const setting = this.id;
-                    const value = this.checked;
-                    console.log(`Setting ${setting} changed to ${value}`);
-                    // Qui salveresti l'impostazione nel database
+                    var setting = this.id;
+                    var value = this.checked;
+                    console.log('Setting ' + setting + ' changed to ' + value);
                 });
             });
 
             // Dangerous zone buttons
-            document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(btn => {
+            document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     if (confirm('Sei sicuro? Questa azione è irreversibile!')) {
                         showNotification('Operazione completata', 'info');
@@ -1891,53 +1930,54 @@
                 });
             });
 
-            // Carica le impostazioni ShipsGo
-            setTimeout(function() {
-                if (typeof loadShipsGoSettings === 'function') {
+            // Carica settings ShipsGo dopo auth check
+            setTimeout(() => {
+                if (window.auth && window.auth.isAuthenticated()) {
                     loadShipsGoSettings();
                 }
-            }, 500);
+            }, 1000);
+            
+            // API Keys buttons
+            document.querySelectorAll('.api-key-item .sol-btn').forEach(btn => {
+                const icon = btn.querySelector('i');
+                const parent = btn.closest('.api-key-item');
+                const keyId = parent.querySelector('.api-key-name').textContent;
+                
+                if (icon.classList.contains('fa-eye')) {
+                    btn.onclick = () => viewApiKey(keyId);
+                } else if (icon.classList.contains('fa-edit')) {
+                    btn.onclick = () => editApiKey(keyId);
+                } else if (icon.classList.contains('fa-trash')) {
+                    btn.onclick = () => deleteApiKey(keyId);
+                }
+            });
+            
+            // Add API Key button
+            const addApiKeyBtn = Array.from(document.querySelectorAll('.sol-btn-primary')).find(btn => btn.textContent.includes('Aggiungi API Key'));
+            if (addApiKeyBtn) {
+                addApiKeyBtn.onclick = addApiKey;
+            }
+            
+            // Webhook buttons
+            document.querySelectorAll('.webhook-item .sol-btn').forEach(btn => {
+                const icon = btn.querySelector('i');
+                const parent = btn.closest('.webhook-item');
+                const webhookName = parent.querySelector('.webhook-name').textContent;
+                
+                if (icon.classList.contains('fa-edit')) {
+                    btn.onclick = () => editWebhook(webhookName);
+                } else if (icon.classList.contains('fa-trash')) {
+                    btn.onclick = () => deleteWebhook(webhookName);
+                }
+            });
+            
+            // Add Webhook button
+            const addWebhookBtn = Array.from(document.querySelectorAll('.sol-btn-primary'))
+                .find(btn => btn.textContent.includes('Aggiungi Webhook'));
+            if (addWebhookBtn) {
+                addWebhookBtn.onclick = addWebhook;
+            }
         });
-
-        // Helper function: Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
-            notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            padding: 16px 24px;
-            background: var(--sol-glass-heavy);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            z-index: 3000;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            max-width: 400px;
-        `;
-
-            const icon = document.createElement('i');
-            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
-            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
-
-            const text = document.createElement('span');
-            text.textContent = message;
-
-            notification.appendChild(icon);
-            notification.appendChild(text);
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100px)';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
     </script>
 </body>
 </html>
