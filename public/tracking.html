@@ -645,59 +645,65 @@
     </style>
 </head>
 <body>
-    <!-- HEADER UNIFICATO STANDARD -->
-    <header class="sol-header" style="overflow: visible;">
-        <div class="sol-header-content">
-            <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
-                <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <a href="/dashboard.html" class="sol-logo">
-                    <div class="sol-logo-icon">SCH</div>
-                    <span class="sol-logo-text">Supply Chain Hub</span>
-                </a>
-            </div>
+   <!-- HEADER UNIFICATO STANDARD -->
+<header class="sol-header" style="overflow: visible;">
+    <div class="sol-header-content">
+        <div class="sol-header-left" style="display: flex; align-items: center; gap: var(--sol-space-lg);">
+            <button class="sol-btn sol-btn-glass" id="menuToggle" style="padding: var(--sol-space-sm);">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="/dashboard.html" class="sol-logo">
+                <div class="sol-logo-icon">SCH</div>
+                <span class="sol-logo-text">Supply Chain Hub</span>
+            </a>
+        </div>
 
-            <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
-                <div style="position: relative;">
-                    <input type="search" class="sol-search" placeholder="Cerca tracking, container..." style="padding-left: 2.5rem;">
-                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
-                </div>
-            </div>
-            
-            <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
-                <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
-                    <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
-                </button>
-                
-                <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
-                    <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                        <span id="userInitial">U</span>
-                    </div>
-                    <span id="userName">Utente</span>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                
-                <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-                    <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                        <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
-                        <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
-                    </div>
-                    <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-user"></i> Profilo
-                    </a>
-                    <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
-                        <i class="fas fa-cog"></i> Impostazioni
-                    </a>
-                    <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
-                    <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
-                        <i class="fas fa-sign-out-alt"></i> Esci
-                    </button>
-                </div>
+        <div class="sol-header-center" style="flex: 1; max-width: 500px; margin: 0 var(--sol-space-xl);">
+            <div style="position: relative;">
+                <input type="search" class="sol-search" placeholder="Cerca tracking, container..." style="padding-left: 2.5rem;">
+                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--sol-text-tertiary);"></i>
             </div>
         </div>
-    </header>
+        
+        <div class="sol-header-right" style="display: flex; align-items: center; gap: var(--sol-space-md);">
+            <!-- BOTTONE SINCRONIZZA SHIPSGO -->
+            <button class="sol-btn sol-btn-glass" onclick="openSyncWizard()">
+                <i class="fas fa-cloud-download-alt"></i>
+                <span>Sincronizza ShipsGo</span>
+            </button>
+            
+            <button class="sol-btn sol-btn-glass" id="notificationBtn" style="position: relative; padding: var(--sol-space-sm); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                <span style="position: absolute; top: 9px; right: 6px; background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);">3</span>
+            </button>
+            
+            <button class="sol-btn sol-btn-glass" id="userMenuBtn" style="display: flex; align-items: center; gap: var(--sol-space-sm);">
+                <div style="width: 32px; height: 32px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                    <span id="userInitial">U</span>
+                </div>
+                <span id="userName">Utente</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            
+            <div class="sol-dropdown" id="userDropdown" style="position: absolute; top: 70px; right: var(--sol-space-xl); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); padding: var(--sol-space-sm); min-width: 200px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                <div style="padding: var(--sol-space-md); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <p style="font-weight: 600; color: var(--sol-text-primary); margin: 0;" id="userFullName">Nome Utente</p>
+                    <p style="font-size: 0.75rem; color: var(--sol-text-secondary); margin: 0; margin-top: 2px;" id="userEmail">email@example.com</p>
+                </div>
+                <a href="/profile.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                    <i class="fas fa-user"></i> Profilo
+                </a>
+                <a href="/settings.html" class="sol-dropdown-item" style="display: block; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base);">
+                    <i class="fas fa-cog"></i> Impostazioni
+                </a>
+                <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin: var(--sol-space-sm) 0;"></div>
+                <button class="sol-dropdown-item" id="logoutBtn" style="display: block; width: 100%; padding: var(--sol-space-sm) var(--sol-space-md); color: var(--sol-text-primary); text-decoration: none; border-radius: var(--sol-radius-sm); transition: var(--sol-transition-base); background: none; border: none; text-align: left; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i> Esci
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
 
     <!-- NOTIFICATION DROPDOWN -->
     <div class="sol-dropdown" id="notificationDropdown" style="position: absolute; top: 70px; right: calc(var(--sol-space-xl) + 200px); background: rgba(20, 20, 30, 0.95); backdrop-filter: var(--sol-blur-xl); -webkit-backdrop-filter: var(--sol-blur-xl); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--sol-radius-lg); min-width: 320px; max-width: 400px; display: none; z-index: 1000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
@@ -1314,7 +1320,15 @@ MSCU7654321, MSC
             document.querySelectorAll('.form-tab').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.closest('.form-tab').classList.add('active');
+            
+            // Find and activate the correct tab button
+            const tabButtons = document.querySelectorAll('.form-tab');
+            tabButtons.forEach(btn => {
+                if ((tab === 'single' && btn.textContent.includes('Singolo')) || 
+                    (tab === 'import' && btn.textContent.includes('Import'))) {
+                    btn.classList.add('active');
+                }
+            });
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -1332,6 +1346,18 @@ MSCU7654321, MSC
 
         // Download CSV template
         function downloadTemplate() {
+            // Check if user wants ShipsGo template
+            const useShipsGoTemplate = confirm('Vuoi scaricare il template in formato ShipsGo?\n\nOK = Template ShipsGo\nAnnulla = Template Standard');
+            
+            if (useShipsGoTemplate) {
+                downloadShipsGoTemplate();
+            } else {
+                downloadStandardTemplate();
+            }
+        }
+        
+        // Standard template
+        function downloadStandardTemplate() {
             const csvContent = `tracking_number,carrier_code,tracking_type,reference
 MRKU1234567,MAERSK,container,PO123456
 MSCU7654321,MSC,container,PO123457
@@ -1344,7 +1370,23 @@ MSCU7654321,MSC,container,PO123457
             link.download = 'tracking_import_template.csv';
             link.click();
             
-            showNotification('Template CSV scaricato!', 'success');
+            showNotification('Template CSV standard scaricato!', 'success');
+        }
+        
+        // Template CSV ottimizzato per ShipsGo
+        function downloadShipsGoTemplate() {
+            const csvContent = `Container,Carrier,Status,Reference,Booking,Port Of Loading,Port Of Discharge,Date Of Loading,Date Of Discharge,CO₂ Emission (Tons),Tags
+MRKU1234567,MAERSK LINE,In Transit,PO123456,BKG789,SHANGHAI,ROTTERDAM,15/06/2025,30/06/2025,1.5,Urgent
+MSCU7654321,MSC,Loaded,INV456789,-,NINGBO,GENOVA,20/06/2025,15/07/2025,2.1,Regular
+HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/07/2025,1.8,-`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'shipsgo_import_template.csv';
+            link.click();
+            
+            showNotification('Template ShipsGo scaricato!', 'success');
         }
 
         // Process manual import
@@ -1365,9 +1407,10 @@ MSCU7654321,MSC,container,PO123457
                 const parts = line.split(',').map(p => p.trim());
                 if (parts[0]) {
                     trackingList.push({
-                        tracking_number: parts[0].toUpperCase(),
-                        carrier_code: parts[1] || detectCarrierFromNumber(parts[0]),
-                        tracking_type: parts[2] || detectTypeFromNumber(parts[0]),
+                        trackingNumber: parts[0].toUpperCase(),
+                        carrierCode: parts[1] || detectCarrierFromNumber(parts[0]),
+                        trackingType: parts[2] || detectTypeFromNumber(parts[0]),
+                        referenceNumber: parts[3] || null,
                         description: `Import batch ${new Date().toLocaleDateString()}`
                     });
                 }
@@ -1378,12 +1421,11 @@ MSCU7654321,MSC,container,PO123457
                 return;
             }
             
-            // Start import
-            await importTrackingBatch(trackingList);
+            // USA LA NUOVA VERSIONE
+            await importTrackingBatchWithEvents(trackingList);
         }
 
         // Handle file import
-        let fileData = null;
         function handleFileImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1394,51 +1436,312 @@ MSCU7654321,MSC,container,PO123457
                 reader.onload = async (e) => {
                     const text = e.target.result;
                     const lines = text.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    const headers = lines[0].split(',').map(h => h.trim());
                     
-                    const trackingList = [];
+                    const data = [];
                     for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
                         const values = lines[i].split(',').map(v => v.trim());
-                        if (values[0]) {
-                            const item = {};
-                            headers.forEach((header, index) => {
-                                item[header] = values[index];
-                            });
-                            
-                            trackingList.push({
-                                tracking_number: item.tracking_number || item['tracking number'] || values[0],
-                                carrier_code: item.carrier_code || item.carrier || values[1],
-                                tracking_type: item.tracking_type || item.type || detectTypeFromNumber(values[0]),
-                                description: `Import da ${file.name}`
-                            });
-                        }
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] || '';
+                        });
+                        data.push(row);
                     }
                     
-                    await importTrackingBatch(trackingList);
+                    // USA LA VERSIONE ENHANCED
+                    const { trackingList, errors, summary } = await processShipsGoFileEnhanced(data);
+                    
+                    if (errors.length > 0) {
+                        showNotification(`Import con ${errors.length} errori. Controlla la console.`, 'warning');
+                        console.error('Errori import:', errors);
+                    }
+                    
+                    // USA LA VERSIONE CON EVENTI
+                    await importTrackingBatchWithEvents(trackingList);
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                 reader.onload = async (e) => {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
                     
-                    const trackingList = jsonData.map(row => ({
-                        tracking_number: row.tracking_number || row['Tracking Number'] || '',
-                        carrier_code: row.carrier_code || row.Carrier || '',
-                        tracking_type: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
-                        description: `Import da ${file.name}`
-                    })).filter(item => item.tracking_number);
+                    // USA LA VERSIONE ENHANCED
+                    const { trackingList, errors, summary } = await processShipsGoFileEnhanced(jsonData);
                     
-                    await importTrackingBatch(trackingList);
+                    if (errors.length > 0) {
+                        showNotification(`Import con ${errors.length} errori. Controlla la console.`, 'warning');
+                        console.error('Errori import:', errors);
+                    }
+                    
+                    // USA LA VERSIONE CON EVENTI
+                    await importTrackingBatchWithEvents(trackingList);
                 };
                 reader.readAsArrayBuffer(file);
             }
         }
 
-        // Import tracking batch
-        async function importTrackingBatch(trackingList) {
+        // Mappatura carrier names ShipsGo → nostri codici
+        const SHIPSGO_CARRIER_MAPPING = {
+            'MAERSK LINE': 'MAERSK',
+            'MSC': 'MSC',
+            'CMA CGM': 'CMA-CGM',
+            'COSCO': 'COSCO',
+            'HAPAG-LLOYD': 'HAPAG-LLOYD',
+            'ONE': 'ONE',
+            'EVERGREEN': 'EVERGREEN',
+            'YANG MING': 'YANG-MING',
+            'ZIM': 'ZIM',
+            'HMM': 'HMM',
+            'OOCL': 'OOCL',
+            'APL': 'APL',
+            'NYK': 'NYK',
+            'MOL': 'MOL',
+            'K LINE': 'K-LINE'
+        };
+
+        // Mappatura status ShipsGo → nostri status
+        const SHIPSGO_STATUS_MAPPING = {
+            'Gate In': 'in_transit',
+            'Gate Out': 'in_transit', 
+            'Loaded': 'in_transit',
+            'Discharged': 'in_transit',
+            'In Transit': 'in_transit',
+            'Delivered': 'delivered',
+            'Empty': 'delivered',
+            'Registered': 'registered',
+            'Pending': 'registered'
+        };
+
+        // Funzione per parsare date formato DD/MM/YYYY
+        function parseShipsGoDate(dateStr) {
+            if (!dateStr || dateStr === '-') return null;
+            
+            // Gestisci anche formato con ora: "08/01/2024 13:32:37"
+            const cleanDate = dateStr.split(' ')[0];
+            const [day, month, year] = cleanDate.split('/');
+            
+            // Crea data in formato ISO
+            return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
+        }
+
+        // Process ShipsGo file enhanced version
+        async function processShipsGoFileEnhanced(fileData) {
+            const trackingList = [];
+            const errors = [];
+            const stats = {
+                total: 0,
+                delivered: 0,
+                in_transit: 0,
+                registered: 0,
+                with_transit_time: 0,
+                with_co2_data: 0
+            };
+            
+            // Identifica se è un export ShipsGo
+            const isShipsGoExport = fileData.length > 0 && 
+                'Container' in fileData[0] && 
+                'Carrier' in fileData[0];
+            
+            if (!isShipsGoExport) {
+                // Fallback al processo standard
+                return processStandardFile(fileData);
+            }
+            
+            console.log('Rilevato file ShipsGo Enhanced, processamento avanzato...');
+            
+            fileData.forEach((row, index) => {
+                try {
+                    // Salta righe vuote
+                    if (!row.Container || row.Container === '-') return;
+                    
+                    stats.total++;
+                    
+                    // Determina il tipo di tracking
+                    let trackingType = 'container';
+                    const containerNum = row.Container.toUpperCase();
+                    
+                    // Rileva se è un BL number
+                    if (containerNum.length > 11) {
+                        trackingType = 'bl';
+                    }
+                    
+                    // Mappa il carrier
+                    const carrierCode = SHIPSGO_CARRIER_MAPPING[row.Carrier] || 
+                                      Object.keys(SHIPSGO_CARRIER_MAPPING).find(key => 
+                                          row.Carrier.toUpperCase().includes(key.toUpperCase())
+                                      ) || row.Carrier;
+                    
+                    // Mappa lo status
+                    const status = SHIPSGO_STATUS_MAPPING[row.Status] || 'registered';
+                    
+                    // Aggiorna stats
+                    if (status === 'delivered') stats.delivered++;
+                    else if (status === 'in_transit') stats.in_transit++;
+                    else stats.registered++;
+                    
+                    // Parse date
+                    const loadingDate = parseShipsGoDate(row['Date Of Loading']);
+                    const dischargeDate = parseShipsGoDate(row['Date Of Discharge']);
+                    
+                    // Calcola giorni di transito se disponibili
+                    let transitTimeDays = null;
+                    if (loadingDate && dischargeDate) {
+                        const diff = new Date(dischargeDate) - new Date(loadingDate);
+                        transitTimeDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        stats.with_transit_time++;
+                    }
+                    
+                    // CO2 data
+                    if (row['CO₂ Emission (Tons)'] && row['CO₂ Emission (Tons)'] !== '-') {
+                        stats.with_co2_data++;
+                    }
+                    
+                    // Costruisci oggetto tracking
+                    const tracking = {
+                        trackingNumber: containerNum,
+                        trackingType: trackingType,
+                        carrierCode: carrierCode,
+                        referenceNumber: row.Reference !== '-' ? row.Reference : null,
+                        description: `Import ShipsGo - ${row.Carrier}`,
+                        // Dati aggiuntivi per timeline eventi
+                        metadata: {
+                            source: 'shipsgo_export',
+                            import_date: new Date().toISOString(),
+                            booking_number: row.Booking !== '-' ? row.Booking : null,
+                            co2_emissions: row['CO₂ Emission (Tons)'] !== '-' ? parseFloat(row['CO₂ Emission (Tons)']) : null,
+                            pol: row['Port Of Loading'],
+                            pod: row['Port Of Discharge'],
+                            pol_country: row['POL Country'],
+                            pod_country: row['POD Country'],
+                            loading_date: loadingDate,
+                            discharge_date: dischargeDate,
+                            transit_time_days: transitTimeDays,
+                            tags: row.Tags !== '-' ? row.Tags : null,
+                            container_count: parseInt(row['Container Count']) || 1,
+                            status: status,
+                            last_status: row.Status
+                        }
+                    };
+                    
+                    trackingList.push(tracking);
+                    
+                } catch (error) {
+                    errors.push({
+                        row: index + 2,
+                        container: row.Container || 'UNKNOWN',
+                        error: error.message
+                    });
+                }
+            });
+            
+            // Calcola tempo medio di transito
+            const avgTransitTime = calculateAverageTransitTime(trackingList);
+            
+            const summary = {
+                total: stats.total,
+                delivered: stats.delivered,
+                in_transit: stats.in_transit,
+                registered: stats.registered,
+                avg_transit_time: avgTransitTime,
+                with_co2_data: stats.with_co2_data
+            };
+            
+            // Mostra riepilogo
+            console.log(`ShipsGo Enhanced Import:
+                - Totale: ${stats.total}
+                - Consegnati: ${stats.delivered}
+                - In Transito: ${stats.in_transit}
+                - Con dati CO2: ${stats.with_co2_data}
+                - Tempo medio transito: ${avgTransitTime || 'N/A'} giorni
+                - Errori: ${errors.length}`);
+            
+            if (errors.length > 0) {
+                console.warn('Errori durante import:', errors);
+            }
+            
+            // Mostra riepilogo visuale
+            showImportSummary(summary);
+            
+            return { trackingList, errors, summary };
+        }
+        
+        // Calcola tempo medio di transito
+        function calculateAverageTransitTime(trackingList) {
+            const withTransitTime = trackingList.filter(t => t.metadata && t.metadata.transit_time_days);
+            if (withTransitTime.length === 0) return null;
+            
+            const total = withTransitTime.reduce((sum, t) => sum + t.metadata.transit_time_days, 0);
+            return Math.round(total / withTransitTime.length);
+        }
+        
+        // Mostra riepilogo import
+        function showImportSummary(summary) {
+            const summaryHtml = `
+                <div style="background: var(--sol-glass-medium); padding: var(--sol-space-lg); border-radius: var(--sol-radius-lg); margin-bottom: var(--sol-space-lg);">
+                    <h4 style="margin-bottom: var(--sol-space-md);">📊 Riepilogo Import ShipsGo</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sol-space-md);">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--sol-text-primary);">${summary.total}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Tracking Totali</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #34C759;">${summary.delivered}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Consegnati</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #FF9500;">${summary.in_transit}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">In Transito</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #007AFF;">${summary.avg_transit_time || 'N/A'}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Giorni Medi Transito</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const importProgress = document.getElementById('importProgress');
+            if (importProgress && importProgress.parentElement) {
+                // Inserisci prima del progress div
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = summaryHtml;
+                importProgress.parentElement.insertBefore(tempDiv.firstChild, importProgress);
+            }
+        }
+        
+        // Process standard file (fallback)
+        function processStandardFile(fileData) {
+            const trackingList = [];
+            
+            fileData.forEach(row => {
+                if (row.tracking_number || row['tracking number'] || row['Tracking Number']) {
+                    trackingList.push({
+                        trackingNumber: (row.tracking_number || row['tracking number'] || row['Tracking Number']).toUpperCase(),
+                        carrierCode: row.carrier_code || row.carrier || row.Carrier || '',
+                        trackingType: row.tracking_type || row.type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                        referenceNumber: row.reference || row.Reference || null,
+                        description: 'Import standard'
+                    });
+                }
+            });
+            
+            return { 
+                trackingList, 
+                errors: [], 
+                summary: { 
+                    total: trackingList.length,
+                    delivered: 0,
+                    in_transit: 0,
+                    registered: trackingList.length
+                }
+            };
+        }
+
+        // Import tracking batch with events generation
+        async function importTrackingBatchWithEvents(trackingList) {
             const progressDiv = document.getElementById('importProgress');
             const progressBar = document.getElementById('importProgressBar');
             const importedCount = document.getElementById('importedCount');
@@ -1452,6 +1755,7 @@ MSCU7654321,MSC,container,PO123457
             
             let successCount = 0;
             let errorCount = 0;
+            let eventsCreated = 0;
             const errors = [];
             
             const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
@@ -1467,30 +1771,112 @@ MSCU7654321,MSC,container,PO123457
                 
                 await Promise.all(batch.map(async (tracking) => {
                     try {
+                        // Prepara il payload base
+                        const payload = {
+                            trackingNumber: tracking.trackingNumber,
+                            trackingType: tracking.trackingType,
+                            carrierCode: tracking.carrierCode,
+                            referenceNumber: tracking.referenceNumber,
+                            description: tracking.description
+                        };
+                        
+                        // 1. Crea il tracking
                         const response = await fetch('/.netlify/functions/add-tracking', {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(tracking)
+                            body: JSON.stringify(payload)
                         });
                         
                         const result = await response.json();
                         
-                        if (response.ok) {
+                        if (response.ok && result.data) {
                             successCount++;
+                            
+                            // 2. Se ci sono eventi da metadata ShipsGo, creali
+                            if (tracking.metadata && tracking.metadata.loading_date) {
+                                const events = [];
+                                
+                                // Evento di carico
+                                if (tracking.metadata.loading_date) {
+                                    events.push({
+                                        event_date: tracking.metadata.loading_date,
+                                        event_type: 'LOADED_ON_VESSEL',
+                                        event_code: 'LOD',
+                                        description: 'Container loaded on vessel',
+                                        location_name: tracking.metadata.pol || 'Loading Port',
+                                        location_code: tracking.metadata.pol_country_code || ''
+                                    });
+                                }
+                                
+                                // Evento di scarico (se già avvenuto)
+                                if (tracking.metadata.discharge_date && new Date(tracking.metadata.discharge_date) < new Date()) {
+                                    events.push({
+                                        event_date: tracking.metadata.discharge_date,
+                                        event_type: 'DISCHARGED_FROM_VESSEL',
+                                        event_code: 'DIS',
+                                        description: 'Container discharged from vessel',
+                                        location_name: tracking.metadata.pod || 'Discharge Port',
+                                        location_code: tracking.metadata.pod_country_code || ''
+                                    });
+                                    
+                                    // Se è stato scaricato e lo status è delivered
+                                    if (tracking.metadata.status === 'delivered') {
+                                        const deliveryDate = new Date(tracking.metadata.discharge_date);
+                                        deliveryDate.setDate(deliveryDate.getDate() + 2);
+                                        
+                                        events.push({
+                                            event_date: deliveryDate.toISOString(),
+                                            event_type: 'DELIVERED',
+                                            event_code: 'DEL',
+                                            description: 'Container delivered to consignee',
+                                            location_name: tracking.metadata.pod || 'Delivery Location'
+                                        });
+                                    }
+                                }
+                                
+                                if (events.length > 0) {
+                                    try {
+                                        // Chiama la nuova function per creare eventi
+                                        const eventsResponse = await fetch('/.netlify/functions/create-tracking-events', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`,
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                trackingId: result.data.id,
+                                                events: events,
+                                                updateTracking: true // Aggiorna anche il tracking con l'ultimo evento
+                                            })
+                                        });
+                                        
+                                        const eventsResult = await eventsResponse.json();
+                                        
+                                        if (eventsResponse.ok) {
+                                            eventsCreated += eventsResult.data.events_added;
+                                            console.log(`✅ ${eventsResult.data.events_added} eventi creati per ${tracking.trackingNumber}`);
+                                        } else {
+                                            console.error(`❌ Errore creazione eventi per ${tracking.trackingNumber}:`, eventsResult.error);
+                                        }
+                                    } catch (eventError) {
+                                        console.error('Errore chiamata create-tracking-events:', eventError);
+                                    }
+                                }
+                            }
                         } else {
                             errorCount++;
                             errors.push({
-                                tracking: tracking.tracking_number,
+                                tracking: tracking.trackingNumber,
                                 error: result.error || 'Errore sconosciuto'
                             });
                         }
                     } catch (error) {
                         errorCount++;
                         errors.push({
-                            tracking: tracking.tracking_number,
+                            tracking: tracking.trackingNumber,
                             error: error.message
                         });
                     }
@@ -1508,7 +1894,10 @@ MSCU7654321,MSC,container,PO123457
             }
             
             // Show results
-            let message = `Import completato: ${successCount} successi`;
+            let message = `Import completato: ${successCount} tracking importati`;
+            if (eventsCreated > 0) {
+                message += `, ${eventsCreated} eventi creati`;
+            }
             if (errorCount > 0) {
                 message += `, ${errorCount} errori`;
                 console.error('Errori import:', errors);
@@ -1531,6 +1920,11 @@ MSCU7654321,MSC,container,PO123457
             // Hide progress after 3 seconds
             setTimeout(() => {
                 progressDiv.style.display = 'none';
+                // Rimuovi anche il summary
+                const summaryDiv = progressDiv.previousElementSibling;
+                if (summaryDiv && summaryDiv.innerHTML.includes('Riepilogo Import')) {
+                    summaryDiv.remove();
+                }
             }, 3000);
         }
 
@@ -1680,7 +2074,7 @@ MSCU7654321,MSC,container,PO123457
                 }
                 
                 const result = await response.json();
-                trackings = result.data || [];
+                trackings = result.trackings || result.data || [];
                 
                 // Update stats with API data
                 if (result.stats) {
@@ -1955,7 +2349,7 @@ MSCU7654321,MSC,container,PO123457
             return eventTypes[type] || type;
         }
 
-        // Delete tracking - INTEGRAZIONE API
+        // Delete tracking - INTEGRAZIONE API CORRETTA
         async function deleteTracking(id) {
             if (!confirm('Sei sicuro di voler eliminare questo tracking?')) {
                 return;
@@ -1967,8 +2361,9 @@ MSCU7654321,MSC,container,PO123457
                     throw new Error('Token di autenticazione non trovato');
                 }
                 
+                // Usa POST invece di DELETE per compatibilità
                 const response = await fetch('/.netlify/functions/delete-tracking', {
-                    method: 'DELETE',
+                    method: 'POST', // Cambiato da DELETE a POST
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -2296,6 +2691,149 @@ MSCU7654321,MSC,container,PO123457
                 clearInterval(autoRefreshInterval);
             }
         });
+
+        // Open Sync Wizard in modal
+        function openSyncWizard() {
+            // Crea modal per sync wizard
+            const syncModal = document.createElement('div');
+            syncModal.className = 'modal-overlay active';
+            syncModal.id = 'syncWizardModal';
+            
+            // Invece di iframe, integriamo direttamente il contenuto
+            syncModal.innerHTML = `
+                <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Sincronizzazione ShipsGo</h2>
+                        <button class="modal-close" onclick="closeSyncWizard()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="padding: 0;">
+                        <div class="sync-wizard-container">
+                            <div class="wizard-header" style="text-align: center; padding: var(--sol-space-2xl);">
+                                <div style="width: 80px; height: 80px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem;">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <h3 style="font-size: 1.5rem; margin-bottom: var(--sol-space-sm);">Importa tutto il tuo storico tracking</h3>
+                                <p style="color: var(--sol-text-secondary);">Recupera automaticamente i tracking dal tuo account ShipsGo</p>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sol-space-lg); padding: var(--sol-space-xl);">
+                                <!-- Opzione 1: Auto Sync -->
+                                <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
+                                     onclick="startAutoSync()">
+                                    <i class="fas fa-magic" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Sincronizzazione Automatica</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Recupera automaticamente tutti i tracking attivi dal tuo account ShipsGo</p>
+                                    <ul style="text-align: left; list-style: none; padding: 0;">
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import tracking aerei (AWB)</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Timeline eventi completa</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Aggiornamento real-time</li>
+                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Zero configurazione</li>
+                                    </ul>
+                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
+                                        <i class="fas fa-cloud-download-alt"></i> Avvia Sync Automatico
+                                    </button>
+                                </div>
+                                
+                                <!-- Opzione 2: Batch Import -->
+                                <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
+                                     onclick="startBatchImport()">
+                                    <i class="fas fa-file-import" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Import Batch Container</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Importa una lista di container marittime da sincronizzare</p>
+                                    <ul style="text-align: left; list-style: none; padding: 0;">
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import da Excel/CSV</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Migliaia di container</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Storico completo</li>
+                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Report dettagliato</li>
+                                    </ul>
+                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
+                                        <i class="fas fa-upload"></i> Carica Lista Container
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(0, 122, 255, 0.1); border: 1px solid rgba(0, 122, 255, 0.3); border-radius: var(--sol-radius-lg); padding: var(--sol-space-lg); margin: var(--sol-space-xl); margin-top: 0;">
+                                <h4 style="color: #007AFF; margin-bottom: var(--sol-space-md);"><i class="fas fa-info-circle"></i> Come Funziona</h4>
+                                <ol style="margin: 0; padding-left: var(--sol-space-lg); color: var(--sol-text-secondary);">
+                                    <li style="margin-bottom: var(--sol-space-sm);">Utilizziamo le tue credenziali API ShipsGo esistenti</li>
+                                    <li style="margin-bottom: var(--sol-space-sm);">Recuperiamo tutti i tracking attivi o la lista fornita</li>
+                                    <li style="margin-bottom: var(--sol-space-sm);">Salviamo tracking e timeline nel database locale</li>
+                                    <li>Aggiornamenti automatici ogni 4-6 ore per tracking attivi</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(syncModal);
+        }
+
+        // Close Sync Wizard
+        function closeSyncWizard() {
+            const modal = document.getElementById('syncWizardModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Start Auto Sync
+        async function startAutoSync() {
+            closeSyncWizard();
+            
+            // Show progress modal
+            showNotification('Avvio sincronizzazione automatica...', 'info');
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const response = await fetch('/.netlify/functions/sync-shipsgo-bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mode: 'auto',
+                        types: ['awb', 'container', 'bl']
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Sincronizzazione completata! ${result.imported} tracking importati.`, 'success');
+                    loadTrackings(); // Ricarica la lista
+                } else {
+                    throw new Error(result.error || 'Errore durante la sincronizzazione');
+                }
+                
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Funzionalità in arrivo. Nel frattempo usa l\'import manuale.', 'warning');
+            }
+        }
+
+        // Start Batch Import
+        function startBatchImport() {
+            closeSyncWizard();
+            // Apri direttamente il tab di import multiplo
+            toggleAddForm();
+            // Assicurati che il form sia visibile prima di switchare tab
+            setTimeout(() => {
+                switchFormTab('import');
+                showNotification('Usa il tab "Import Multiplo" per caricare la tua lista', 'info');
+            }, 100);
+        }
     </script>
 </body>
 </html>
