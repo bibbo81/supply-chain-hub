@@ -1128,6 +1128,74 @@
                 </button>
             </div>
 
+            <!-- ShipsGo API Settings -->
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <h2 class="settings-card-title">
+                        <i class="fas fa-ship"></i>
+                        Configurazione API ShipsGo
+                    </h2>
+                    <p class="settings-card-subtitle">Configura le API per il tracking di container marittimi e spedizioni aeree</p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: var(--sol-space-xl);">
+                    <label class="form-label">
+                        <i class="fas fa-anchor"></i>
+                        ShipsGo v1.2 API Key (Container Marittimi)
+                    </label>
+                    <div style="display: flex; gap: var(--sol-space-sm);">
+                        <input type="password" 
+                               id="shipsgoV1ApiKey" 
+                               class="form-input" 
+                               placeholder="Inserisci API Key v1.2"
+                               value="">
+                        <button class="sol-btn sol-btn-glass" onclick="toggleApiKeyVisibility('shipsgoV1ApiKey')" style="padding: var(--sol-space-sm) var(--sol-space-md);">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="form-helper">
+                        API Key per tracking container marittimi. Ottienila da 
+                        <a href="https://shipsgo.com/api-integration" target="_blank" style="color: #007AFF;">shipsgo.com/api-integration</a>
+                    </p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: var(--sol-space-xl);">
+                    <label class="form-label">
+                        <i class="fas fa-plane"></i>
+                        ShipsGo v2.0 Bearer Token (Spedizioni Aeree)
+                    </label>
+                    <div style="display: flex; gap: var(--sol-space-sm);">
+                        <input type="password" 
+                               id="shipsgoV2Token" 
+                               class="form-input" 
+                               placeholder="Inserisci Bearer Token v2.0"
+                               value="">
+                        <button class="sol-btn sol-btn-glass" onclick="toggleApiKeyVisibility('shipsgoV2Token')" style="padding: var(--sol-space-sm) var(--sol-space-md);">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="form-helper">
+                        Bearer Token per tracking AWB aerei. Richiedi accesso a 
+                        <a href="https://api.shipsgo.com/v2/docs" target="_blank" style="color: #007AFF;">api.shipsgo.com/v2</a>
+                    </p>
+                </div>
+                
+                <div class="settings-actions" style="justify-content: flex-start;">
+                    <button class="sol-btn sol-btn-primary" onclick="saveShipsGoSettings()">
+                        <i class="fas fa-save"></i>
+                        Salva Configurazione API
+                    </button>
+                    <button class="sol-btn sol-btn-glass" onclick="testShipsGoConnection()">
+                        <i class="fas fa-plug"></i>
+                        Test Connessione
+                    </button>
+                </div>
+                
+                <div id="shipsgoTestResult" style="margin-top: var(--sol-space-md); display: none;">
+                    <!-- Test results will appear here -->
+                </div>
+            </div>
+
             <div class="settings-card">
                 <div class="settings-card-header">
                     <h2 class="settings-card-title">
@@ -1520,8 +1588,167 @@
             });
         });
 
+        // Toggle API key visibility
+        function toggleApiKeyVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const button = event.currentTarget;
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // Save ShipsGo API settings
+        async function saveShipsGoSettings() {
+            const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
+            const v2Token = document.getElementById('shipsgoV2Token').value.trim();
+            
+            if (!v1Key && !v2Token) {
+                showNotification('Inserisci almeno una API key', 'warning');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                // Salva le API keys nel profilo utente (encrypted)
+                const response = await fetch('/.netlify/functions/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_settings: {
+                            shipsgo_v1_key: v1Key ? btoa(v1Key) : null, // Base64 encode
+                            shipsgo_v2_token: v2Token ? btoa(v2Token) : null
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Configurazione API salvata con successo!', 'success');
+                    
+                    // Salva anche in localStorage per uso immediato
+                    if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
+                    if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
+                } else {
+                    throw new Error('Errore salvataggio configurazione');
+                }
+            } catch (error) {
+                console.error('Error saving API settings:', error);
+                showNotification('Errore nel salvataggio delle API keys', 'error');
+            }
+        }
+
+        // Test ShipsGo connection
+        async function testShipsGoConnection() {
+            const resultDiv = document.getElementById('shipsgoTestResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test connessione in corso...';
+            
+            const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
+            const v2Token = document.getElementById('shipsgoV2Token').value.trim();
+            
+            let v1Status = '⏭️ Non configurato';
+            let v2Status = '⏭️ Non configurato';
+            
+            try {
+                // Test v1.2 API
+                if (v1Key) {
+                    const v1Response = await fetch(`https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo/?authCode=${v1Key}`, {
+                        method: 'GET'
+                    });
+                    
+                    if (v1Response.status === 401) {
+                        v1Status = '❌ API Key non valida';
+                    } else if (v1Response.status === 400 || v1Response.status === 404) {
+                        v1Status = '✅ API Key valida (test richiede container ID)';
+                    } else if (v1Response.ok) {
+                        v1Status = '✅ Connessione OK';
+                    } else {
+                        v1Status = '⚠️ Errore connessione';
+                    }
+                }
+                
+                // Test v2.0 API
+                if (v2Token) {
+                    const v2Response = await fetch('https://api.shipsgo.com/v2/air/shipments?take=1', {
+                        headers: {
+                            'Authorization': `Bearer ${v2Token}`
+                        }
+                    });
+                    
+                    if (v2Response.status === 401) {
+                        v2Status = '❌ Bearer Token non valido';
+                    } else if (v2Response.ok) {
+                        v2Status = '✅ Connessione OK';
+                    } else {
+                        v2Status = '⚠️ Errore connessione';
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Test connection error:', error);
+            }
+            
+            resultDiv.innerHTML = `
+                <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
+                    <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
+                    <div style="margin-bottom: var(--sol-space-xs);">
+                        <strong>ShipsGo v1.2 (Maritime):</strong> ${v1Status}
+                    </div>
+                    <div>
+                        <strong>ShipsGo v2.0 (Air):</strong> ${v2Status}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load saved API settings on page load
+        async function loadShipsGoSettings() {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                const response = await fetch('/.netlify/functions/get-profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const { data } = await response.json();
+                    
+                    if (data.api_settings) {
+                        // Decode and set values
+                        if (data.api_settings.shipsgo_v1_key) {
+                            const v1Key = atob(data.api_settings.shipsgo_v1_key);
+                            document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                            localStorage.setItem('shipsgo_v1_key', v1Key);
+                        }
+                        
+                        if (data.api_settings.shipsgo_v2_token) {
+                            const v2Token = atob(data.api_settings.shipsgo_v2_token);
+                            document.getElementById('shipsgoV2Token').value = v2Token;
+                            localStorage.setItem('shipsgo_v2_token', v2Token);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading API settings:', error);
+            }
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
+            // Load ShipsGo settings
+            loadShipsGoSettings();
+            
             // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');

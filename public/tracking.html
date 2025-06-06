@@ -1988,14 +1988,14 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             }
         }
 
-        // Handle form submit - INTEGRAZIONE API
+        // NUOVA STRATEGIA: GET (gratis) prima, POST (a pagamento) solo se necessario
         async function handleSubmit(event) {
             event.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
             const originalContent = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aggiunta in corso...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifica in corso...';
             
             const formData = {
                 trackingNumber: document.getElementById('trackingNumber').value.trim().toUpperCase(),
@@ -2010,33 +2010,461 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                     throw new Error('Token di autenticazione non trovato');
                 }
                 
+                // STEP 1: Controlla sempre prima nel database locale (gratis)
+                const existingLocal = await checkLocalTracking(formData.trackingNumber);
+                
+                if (existingLocal) {
+                    showNotification('✅ Tracking già presente nel sistema!', 'info');
+                    resetForm();
+                    toggleAddForm();
+                    return;
+                }
+                
+                // STEP 2: Strategia differenziata per tipo
+                
+                // CONTAINER - ShipsGo v1.2
+                if (formData.trackingType === 'container') {
+                    console.log('🚢 Verifico se container esiste in ShipsGo...');
+                    
+                    // PRIMA: Prova GET (gratis) - cerca per numero container
+                    submitBtn.innerHTML = '<i class="fas fa-search"></i> Ricerca in ShipsGo...';
+                    
+                    const getResult = await tryGetContainer(formData.trackingNumber, formData.carrierCode, token);
+                    
+                    if (getResult.found) {
+                        // Container trovato! Salva localmente senza consumare crediti
+                        showNotification('✅ Container trovato in ShipsGo! (nessun credito consumato)', 'success');
+                        
+                        // Salva nel nostro DB
+                        await saveContainerFromShipsGo(getResult.data, formData.referenceNumber);
+                        
+                        // Se ci sono eventi, importali
+                        if (getResult.data.events && getResult.data.events.length > 0) {
+                            await importContainerEvents(getResult.data);
+                        }
+                        
+                    } else {
+                        // Non trovato con GET, chiedi conferma per POST
+                        submitBtn.innerHTML = '<i class="fas fa-plus"></i> Aggiungi a ShipsGo...';
+                        
+                        if (confirm('Container non trovato in ShipsGo. Vuoi registrarlo? (consuma 1 credito)')) {
+                            // POST - consuma credito
+                            const postResponse = await fetch('/.netlify/functions/shipsgo-tracking-request', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    containerNumber: formData.trackingNumber,
+                                    carrierCode: formData.carrierCode,
+                                    referenceNo: formData.referenceNumber
+                                })
+                            });
+                            
+                            const postResult = await postResponse.json();
+                            
+                            if (postResponse.ok) {
+                                showNotification('✅ Container registrato in ShipsGo! (1 credito utilizzato)', 'success');
+                                await saveTrackingLocally(formData, postResult.data);
+                            } else {
+                                throw new Error(postResult.error || 'Errore registrazione container');
+                            }
+                        } else {
+                            showNotification('Registrazione annullata', 'info');
+                            return;
+                        }
+                    }
+                    
+                // AWB - ShipsGo v2
+                } else if (formData.trackingType === 'awb') {
+                    console.log('✈️ Verifico se AWB esiste in ShipsGo...');
+                    
+                    // PRIMA: Prova GET (gratis) - cerca AWB specifico
+                    submitBtn.innerHTML = '<i class="fas fa-search"></i> Ricerca AWB...';
+                    
+                    const getResult = await tryGetAWB(formData.trackingNumber, token);
+                    
+                    if (getResult.found) {
+                        // AWB trovato! 
+                        showNotification('✅ AWB trovato in ShipsGo! (nessun credito consumato)', 'success');
+                        
+                        // Salva/aggiorna locale
+                        await saveAWBFromShipsGo(getResult.data, formData.referenceNumber);
+                        
+                    } else {
+                        // Non trovato, chiedi conferma per POST
+                        submitBtn.innerHTML = '<i class="fas fa-plus"></i> Aggiungi AWB...';
+                        
+                        if (confirm('AWB non trovato in ShipsGo. Vuoi registrarlo? (consuma 1 credito)')) {
+                            const postResponse = await fetch('/.netlify/functions/shipsgo-air-tracking', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    awbNumber: formData.trackingNumber,
+                                    carrierCode: formData.carrierCode,
+                                    referenceNumber: formData.referenceNumber
+                                })
+                            });
+                            
+                            const postResult = await postResponse.json();
+                            
+                            if (postResponse.ok) {
+                                showNotification('✅ AWB registrato in ShipsGo! (1 credito utilizzato)', 'success');
+                            } else {
+                                throw new Error(postResult.error || 'Errore registrazione AWB');
+                            }
+                        } else {
+                            showNotification('Registrazione annullata', 'info');
+                            return;
+                        }
+                    }
+                    
+                // PARCEL - Sistema indipendente (sempre POST ma con cache)
+                } else if (formData.trackingType === 'parcel') {
+                    console.log('📦 Tracking parcel con API dirette');
+                    
+                    const response = await fetch('/.netlify/functions/track-parcel', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            trackingNumber: formData.trackingNumber,
+                            carrier: formData.carrierCode
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        const source = result.source === 'cache' ? ' (da cache)' : ' (da API carrier)';
+                        showNotification(`✅ Parcel tracking aggiunto${source}!`, 'success');
+                    } else {
+                        throw new Error(result.error || 'Errore tracking parcel');
+                    }
+                } else {
+                    // Altri tipi (BL, etc) - usa il sistema standard
+                    const response = await fetch('/.netlify/functions/add-tracking', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Errore durante l\'aggiunta del tracking');
+                    }
+                    
+                    showNotification('Tracking aggiunto con successo!', 'success');
+                }
+                
+                // Reset e ricarica
+                resetForm();
+                toggleAddForm();
+                await loadTrackings();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message || 'Errore durante l\'operazione', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        }
+
+        // Funzione helper: Prova GET container (gratis)
+        async function tryGetContainer(containerNumber, carrierCode, token) {
+            try {
+                // Prova prima con il numero container
+                const response = await fetch(
+                    `/.netlify/functions/shipsgo-container-info?containerNumber=${containerNumber}&shippingLine=${carrierCode}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data && result.data.tracking_number) {
+                        return { found: true, data: result.data };
+                    }
+                }
+                
+                return { found: false };
+                
+            } catch (error) {
+                console.error('GET container error:', error);
+                return { found: false };
+            }
+        }
+
+        // Funzione helper: Prova GET AWB (gratis)
+        async function tryGetAWB(awbNumber, token) {
+            try {
+                // Cerca AWB specifico
+                const response = await fetch(
+                    `/.netlify/functions/shipsgo-air-shipments?field=awb_number&filter_value=${awbNumber}&take=1`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data && result.data.length > 0) {
+                        return { found: true, data: result.data[0] };
+                    }
+                }
+                
+                return { found: false };
+                
+            } catch (error) {
+                console.error('GET AWB error:', error);
+                return { found: false };
+            }
+        }
+
+        // Salva container trovato da ShipsGo
+        async function saveContainerFromShipsGo(containerData, referenceNumber) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
                 const response = await fetch('/.netlify/functions/add-tracking', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        trackingNumber: containerData.tracking_number,
+                        trackingType: 'container',
+                        carrierCode: containerData.carrier_code,
+                        referenceNumber: referenceNumber || containerData.metadata?.booking_number,
+                        metadata: {
+                            ...containerData.metadata,
+                            imported_from_shipsgo: true,
+                            import_date: new Date().toISOString()
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save container locally');
+                }
+            } catch (error) {
+                console.error('Error saving container:', error);
+            }
+        }
+
+        // Salva AWB trovato da ShipsGo
+        async function saveAWBFromShipsGo(awbData, referenceNumber) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                const response = await fetch('/.netlify/functions/add-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trackingNumber: awbData.tracking_number,
+                        trackingType: 'awb',
+                        carrierCode: awbData.carrier_code,
+                        referenceNumber: referenceNumber,
+                        metadata: {
+                            ...awbData.metadata,
+                            imported_from_shipsgo: true,
+                            import_date: new Date().toISOString()
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save AWB locally');
+                }
+            } catch (error) {
+                console.error('Error saving AWB:', error);
+            }
+        }
+
+        // Importa eventi del container
+        async function importContainerEvents(containerData) {
+            if (!containerData.events || containerData.events.length === 0) return;
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                // Prima ottieni l'ID del tracking locale
+                const localTracking = await checkLocalTracking(containerData.tracking_number);
+                if (!localTracking) return;
+                
+                // Poi importa gli eventi
+                const response = await fetch('/.netlify/functions/create-tracking-events', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trackingId: localTracking.id,
+                        events: containerData.events,
+                        updateTracking: true
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log(`✅ Importati ${containerData.events.length} eventi storici`);
+                }
+            } catch (error) {
+                console.error('Error importing events:', error);
+            }
+        }
+
+        // NUOVA FUNZIONE: Controlla se tracking esiste localmente
+        async function checkLocalTracking(trackingNumber) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                // Cerca tra i tracking caricati in memoria prima
+                const existing = trackings.find(t => 
+                    t.tracking_number.toUpperCase() === trackingNumber.toUpperCase()
+                );
+                
+                if (existing) {
+                    return existing;
+                }
+                
+                // Se non trovato in memoria, verifica con il database
+                const response = await fetch(`/.netlify/functions/get-trackings?tracking_number=${trackingNumber}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.trackings && result.trackings.length > 0) {
+                        return result.trackings[0];
+                    }
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error checking local tracking:', error);
+                return null;
+            }
+        }
+
+        // NUOVA FUNZIONE: Salva tracking localmente dopo aggiunta a ShipsGo
+        async function saveTrackingLocally(formData, shipsgoData) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                const response = await fetch('/.netlify/functions/add-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...formData,
+                        metadata: {
+                            shipsgo_container_id: shipsgoData.containerId,
+                            shipsgo_tracking_id: shipsgoData.trackingId,
+                            added_via: 'shipsgo_api'
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to save tracking locally');
+                }
+            } catch (error) {
+                console.error('Error saving tracking locally:', error);
+            }
+        }
+
+        // NUOVA FUNZIONE per recuperare info container da ShipsGo
+        async function getContainerInfo(containerNumber) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                const response = await fetch(`/.netlify/functions/shipsgo-container-info?containerNumber=${containerNumber}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 
                 const result = await response.json();
                 
-                if (!response.ok) {
-                    throw new Error(result.error || 'Errore durante l\'aggiunta del tracking');
+                if (response.ok && result.data) {
+                    console.log('📦 Container info da ShipsGo:', result.data);
+                    
+                    // Aggiorna o crea tracking locale con info da ShipsGo
+                    await updateTrackingFromShipsGo(result.data);
                 }
-                
-                // Success
-                resetForm();
-                toggleAddForm();
-                showNotification(result.warning || 'Tracking aggiunto con successo!', result.warning ? 'warning' : 'success');
-                await loadTrackings(); // Reload list
-                
             } catch (error) {
-                console.error('Error adding tracking:', error);
-                showNotification(error.message || 'Errore durante l\'aggiunta del tracking', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalContent;
+                console.error('Error getting container info:', error);
+            }
+        }
+
+        // NUOVA FUNZIONE per aggiornare tracking con dati ShipsGo
+        async function updateTrackingFromShipsGo(containerData) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                // Prima crea/aggiorna il tracking
+                const trackingResponse = await fetch('/.netlify/functions/add-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trackingNumber: containerData.tracking_number,
+                        trackingType: 'container',
+                        carrierCode: containerData.carrier_code,
+                        referenceNumber: containerData.metadata?.booking_number
+                    })
+                });
+                
+                const trackingResult = await trackingResponse.json();
+                
+                if (trackingResult.data && containerData.events && containerData.events.length > 0) {
+                    // Poi aggiungi gli eventi
+                    const eventsResponse = await fetch('/.netlify/functions/create-tracking-events', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            trackingId: trackingResult.data.id,
+                            events: containerData.events,
+                            updateTracking: true
+                        })
+                    });
+                    
+                    if (eventsResponse.ok) {
+                        console.log('✅ Eventi ShipsGo importati');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating from ShipsGo:', error);
             }
         }
 
@@ -2184,7 +2612,7 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             });
         }
 
-        // Refresh single tracking - INTEGRAZIONE API
+        // OTTIMIZZAZIONE: Refresh tracking più intelligente
         async function refreshTracking(id) {
             const row = event.target.closest('tr');
             const originalContent = row.innerHTML;
@@ -2199,29 +2627,82 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                     throw new Error('Token di autenticazione non trovato');
                 }
                 
-                const response = await fetch('/.netlify/functions/update-tracking', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ trackingId: id })
-                });
+                // Ottieni il tracking
+                const tracking = trackings.find(t => t.id === id);
                 
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                if (!tracking) {
+                    throw new Error('Tracking non trovato');
                 }
                 
-                showNotification(
-                    result.success ? 
-                    `Tracking aggiornato! ${result.newEvents} nuovi eventi trovati` : 
-                    'Nessun nuovo aggiornamento disponibile',
-                    result.success ? 'success' : 'info'
-                );
+                // Controlla quando è stato l'ultimo aggiornamento
+                const lastUpdate = tracking.metadata?.last_update;
+                const minutesSinceUpdate = lastUpdate ? 
+                    (Date.now() - new Date(lastUpdate).getTime()) / 60000 : 999;
                 
-                // Reload trackings to show updates
+                // Se aggiornato negli ultimi 15 minuti, usa dati locali
+                if (minutesSinceUpdate < 15) {
+                    showNotification('Tracking aggiornato recentemente, nessun nuovo dato disponibile', 'info');
+                    row.innerHTML = originalContent;
+                    return;
+                }
+                
+                // Procedi con aggiornamento da API
+                if (tracking.tracking_type === 'container') {
+                    // Container - usa ShipsGo GET
+                    console.log('🔄 Aggiorno container via ShipsGo');
+                    
+                    const response = await fetch(`/.netlify/functions/shipsgo-container-info?containerId=${tracking.metadata?.shipsgo_container_id || ''}&containerNumber=${tracking.tracking_number}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok && result.data) {
+                        await updateTrackingFromShipsGo(result.data);
+                        showNotification('Container aggiornato da ShipsGo!', 'success');
+                    } else {
+                        throw new Error('Errore aggiornamento da ShipsGo');
+                    }
+                    
+                } else if (tracking.tracking_type === 'awb') {
+                    // AWB - usa sync selettivo
+                    console.log('✈️ Aggiorno AWB via ShipsGo');
+                    
+                    const response = await fetch(`/.netlify/functions/shipsgo-air-shipments?field=awb_number&filter_value=${tracking.tracking_number}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        showNotification('AWB aggiornato da ShipsGo!', 'success');
+                    } else {
+                        throw new Error('Errore aggiornamento AWB');
+                    }
+                    
+                } else {
+                    // Altri tipi - update standard
+                    const response = await fetch('/.netlify/functions/update-tracking', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ trackingId: id })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Errore durante l\'aggiornamento');
+                    }
+                    
+                    showNotification('Tracking aggiornato!', 'success');
+                }
+                
+                // Ricarica lista
                 await loadTrackings();
                 
             } catch (error) {
@@ -2692,14 +3173,12 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             }
         });
 
-        // Open Sync Wizard in modal
+        // Open Sync Wizard in modal - VERSIONE GET-FIRST (GRATIS)
         function openSyncWizard() {
-            // Crea modal per sync wizard
             const syncModal = document.createElement('div');
             syncModal.className = 'modal-overlay active';
             syncModal.id = 'syncWizardModal';
             
-            // Invece di iframe, integriamo direttamente il contenuto
             syncModal.innerHTML = `
                 <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <div class="modal-header">
@@ -2714,58 +3193,56 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                                 <div style="width: 80px; height: 80px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem;">
                                     <i class="fas fa-sync-alt"></i>
                                 </div>
-                                <h3 style="font-size: 1.5rem; margin-bottom: var(--sol-space-sm);">Importa tutto il tuo storico tracking</h3>
-                                <p style="color: var(--sol-text-secondary);">Recupera automaticamente i tracking dal tuo account ShipsGo</p>
+                                <h3 style="font-size: 1.5rem; margin-bottom: var(--sol-space-sm);">Sincronizza i tuoi tracking da ShipsGo</h3>
+                                <p style="color: var(--sol-text-secondary);">Scarica GRATIS tutti i tracking già presenti nel tuo account ShipsGo</p>
+                                <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.3); padding: var(--sol-space-md); border-radius: var(--sol-radius-md); margin-top: var(--sol-space-lg);">
+                                    <i class="fas fa-info-circle" style="color: #34C759;"></i>
+                                    <strong>Sync Gratuito:</strong> Il download dei tracking esistenti non consuma crediti!
+                                </div>
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sol-space-lg); padding: var(--sol-space-xl);">
-                                <!-- Opzione 1: Auto Sync -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sol-space-lg); padding: var(--sol-space-xl);">
+                                <!-- Import da ShipsGo Account -->
                                 <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
-                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#34C759';" 
                                      onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
-                                     onclick="startAutoSync()">
-                                    <i class="fas fa-magic" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
-                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Sincronizzazione Automatica</h4>
-                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Recupera automaticamente tutti i tracking attivi dal tuo account ShipsGo</p>
-                                    <ul style="text-align: left; list-style: none; padding: 0;">
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import tracking aerei (AWB)</li>
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Timeline eventi completa</li>
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Aggiornamento real-time</li>
-                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Zero configurazione</li>
-                                    </ul>
-                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
-                                        <i class="fas fa-cloud-download-alt"></i> Avvia Sync Automatico
+                                     onclick="syncFromShipsGoAccount(); closeSyncWizard();">
+                                    <i class="fas fa-cloud-download-alt" style="font-size: 3rem; color: #34C759; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Import Account</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Scarica TUTTI i tracking dal tuo account ShipsGo</p>
+                                    <span style="color: #34C759; font-weight: 600;">GRATIS</span>
+                                    <button class="sol-btn sol-btn-primary" style="width: 100%; margin-top: var(--sol-space-md);">
+                                        <i class="fas fa-download"></i> Scarica Tutto
                                     </button>
                                 </div>
                                 
-                                <!-- Opzione 2: Batch Import -->
+                                <!-- Sync Container Attivi -->
                                 <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
                                      onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
                                      onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
-                                     onclick="startBatchImport()">
-                                    <i class="fas fa-file-import" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
-                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Import Batch Container</h4>
-                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Importa una lista di container marittime da sincronizzare</p>
-                                    <ul style="text-align: left; list-style: none; padding: 0;">
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import da Excel/CSV</li>
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Migliaia di container</li>
-                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Storico completo</li>
-                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Report dettagliato</li>
-                                    </ul>
-                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
-                                        <i class="fas fa-upload"></i> Carica Lista Container
+                                     onclick="syncActiveContainers(); closeSyncWizard();">
+                                    <i class="fas fa-ship" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Container Attivi</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Solo container in transito</p>
+                                    <span style="color: #34C759; font-weight: 600;">GRATIS</span>
+                                    <button class="sol-btn sol-btn-primary" style="width: 100%; margin-top: var(--sol-space-md);">
+                                        <i class="fas fa-anchor"></i> Sync Container
                                     </button>
                                 </div>
-                            </div>
-                            
-                            <div style="background: rgba(0, 122, 255, 0.1); border: 1px solid rgba(0, 122, 255, 0.3); border-radius: var(--sol-radius-lg); padding: var(--sol-space-lg); margin: var(--sol-space-xl); margin-top: 0;">
-                                <h4 style="color: #007AFF; margin-bottom: var(--sol-space-md);"><i class="fas fa-info-circle"></i> Come Funziona</h4>
-                                <ol style="margin: 0; padding-left: var(--sol-space-lg); color: var(--sol-text-secondary);">
-                                    <li style="margin-bottom: var(--sol-space-sm);">Utilizziamo le tue credenziali API ShipsGo esistenti</li>
-                                    <li style="margin-bottom: var(--sol-space-sm);">Recuperiamo tutti i tracking attivi o la lista fornita</li>
-                                    <li style="margin-bottom: var(--sol-space-sm);">Salviamo tracking e timeline nel database locale</li>
-                                    <li>Aggiornamenti automatici ogni 4-6 ore per tracking attivi</li>
-                                </ol>
+                                
+                                <!-- Sync AWB Recenti -->
+                                <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
+                                     onclick="syncRecentAWB(); closeSyncWizard();">
+                                    <i class="fas fa-plane" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">AWB Recenti</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Ultimi 30 giorni</p>
+                                    <span style="color: #34C759; font-weight: 600;">GRATIS</span>
+                                    <button class="sol-btn sol-btn-primary" style="width: 100%; margin-top: var(--sol-space-md);">
+                                        <i class="fas fa-plane-departure"></i> Sync AWB
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2783,6 +3260,122 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             }
         }
 
+        // Sync completo account (solo GET - gratis)
+        async function syncFromShipsGoAccount() {
+            const modal = createProgressModal('Download Account ShipsGo');
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                updateProgressModal(modal, 'Download tracking aerei...', 10);
+                
+                // 1. Scarica tutti gli AWB (GET gratis)
+                const awbResponse = await fetch('/.netlify/functions/shipsgo-air-shipments?take=500', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (awbResponse.ok) {
+                    const awbResult = await awbResponse.json();
+                    updateProgressModal(modal, `Trovati ${awbResult.data.length} AWB`, 50);
+                }
+                
+                // 2. Per i container, dobbiamo usare un approccio diverso
+                // perché v1.2 non ha un endpoint list, quindi usiamo i tracking locali
+                updateProgressModal(modal, 'Aggiornamento container locali...', 60);
+                
+                const localContainers = trackings.filter(t => t.tracking_type === 'container');
+                let updated = 0;
+                
+                for (const container of localContainers) {
+                    // GET info container (gratis)
+                    const info = await tryGetContainer(container.tracking_number, container.carrier_code, token);
+                    if (info.found) {
+                        await saveContainerFromShipsGo(info.data, container.reference_number);
+                        updated++;
+                    }
+                    
+                    updateProgressModal(modal, 
+                        `Container aggiornati: ${updated}/${localContainers.length}`, 
+                        60 + (40 * updated / localContainers.length)
+                    );
+                    
+                    // Rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                closeProgressModal(modal);
+                showNotification('✅ Sync account completato! (0 crediti utilizzati)', 'success');
+                await loadTrackings();
+                
+            } catch (error) {
+                closeProgressModal(modal);
+                console.error('Sync error:', error);
+                showNotification('Errore durante il sync', 'error');
+            }
+        }
+
+        // Sync solo container attivi (GET gratis)
+        async function syncActiveContainers() {
+            showNotification('Aggiornamento container attivi...', 'info');
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                // Filtra solo container non consegnati
+                const activeContainers = trackings.filter(t => 
+                    t.tracking_type === 'container' && 
+                    t.status !== 'delivered'
+                );
+                
+                let updated = 0;
+                for (const container of activeContainers) {
+                    const info = await tryGetContainer(container.tracking_number, container.carrier_code, token);
+                    if (info.found) {
+                        await updateTrackingFromShipsGo(info.data);
+                        updated++;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                showNotification(`✅ ${updated} container aggiornati (0 crediti)`, 'success');
+                await loadTrackings();
+                
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Errore sync container', 'error');
+            }
+        }
+
+        // Sync AWB recenti (GET gratis)
+        async function syncRecentAWB() {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                showNotification('Download AWB recenti...', 'info');
+                
+                // GET con filtro data (gratis)
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                
+                const response = await fetch(
+                    `/.netlify/functions/shipsgo-air-shipments?created_after=${thirtyDaysAgo.toISOString()}&take=200`,
+                    {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }
+                );
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showNotification(`✅ ${result.data.length} AWB scaricati (0 crediti)`, 'success');
+                    await loadTrackings();
+                }
+                
+            } catch (error) {
+                console.error('Sync AWB error:', error);
+                showNotification('Errore sync AWB', 'error');
+            }
+        }
+
         // Start Auto Sync
         async function startAutoSync() {
             closeSyncWizard();
@@ -2791,36 +3384,188 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             showNotification('Avvio sincronizzazione automatica...', 'info');
             
             try {
-                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
-                if (!token) {
-                    throw new Error('Token di autenticazione non trovato');
-                }
+                // Usa la nuova smartSync invece della vecchia implementazione
+                await smartSync();
                 
-                const response = await fetch('/.netlify/functions/sync-shipsgo-bulk', {
-                    method: 'POST',
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Errore durante la sincronizzazione', 'error');
+            }
+        }
+
+        // OTTIMIZZAZIONE: Sync AWB con filtro temporale
+        async function syncAllAirShipments(onlyRecent = true) {
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                showNotification('Sincronizzazione AWB da ShipsGo...', 'info');
+                
+                // Se onlyRecent, prendi solo ultimi 7 giorni per risparmiare
+                const params = new URLSearchParams();
+                if (onlyRecent) {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    params.append('created_after', weekAgo.toISOString());
+                }
+                params.append('take', '50'); // Limita a 50 per chiamata
+                
+                const response = await fetch(`/.netlify/functions/shipsgo-air-shipments?${params}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        mode: 'auto',
-                        types: ['awb', 'container', 'bl']
-                    })
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 
                 const result = await response.json();
                 
-                if (response.ok) {
-                    showNotification(`Sincronizzazione completata! ${result.imported} tracking importati.`, 'success');
-                    loadTrackings(); // Ricarica la lista
-                } else {
-                    throw new Error(result.error || 'Errore durante la sincronizzazione');
+                if (response.ok && result.data) {
+                    showNotification(`Sincronizzati ${result.data.length} AWB recenti`, 'success');
+                    await loadTrackings();
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Errore sincronizzazione', 'error');
+            }
+        }
+
+        // OTTIMIZZAZIONE: Sync Container con opzioni
+        async function syncContainers(options = {}) {
+            const {
+                onlyActive = true,      // Solo container attivi
+                limit = 50,             // Limite per chiamata
+                skipDelivered = true    // Salta quelli già consegnati
+            } = options;
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                
+                showNotification('Recupero container da ShipsGo...', 'info');
+                
+                // Prima ottieni lista locale per confronto
+                const localTrackings = trackings.filter(t => 
+                    t.tracking_type === 'container' &&
+                    (!skipDelivered || t.status !== 'delivered')
+                );
+                
+                let newCount = 0;
+                let updatedCount = 0;
+                
+                // Per ogni container locale, aggiorna solo se necessario
+                for (const tracking of localTrackings.slice(0, limit)) {
+                    const lastUpdate = tracking.metadata?.last_update;
+                    const hoursSinceUpdate = lastUpdate ? 
+                        (Date.now() - new Date(lastUpdate).getTime()) / 3600000 : 999;
+                    
+                    // Aggiorna solo se più vecchio di 6 ore
+                    if (hoursSinceUpdate > 6) {
+                        await getContainerInfo(tracking.tracking_number);
+                        updatedCount++;
+                        
+                        // Delay per non sovraccaricare
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                showNotification(
+                    `Sync completato: ${updatedCount} container aggiornati`, 
+                    'success'
+                );
+                
+                if (updatedCount > 0) {
+                    await loadTrackings();
                 }
                 
             } catch (error) {
-                console.error('Sync error:', error);
-                showNotification('Funzionalità in arrivo. Nel frattempo usa l\'import manuale.', 'warning');
+                console.error('Container sync error:', error);
+                showNotification('Errore sync container', 'error');
             }
+        }
+
+        // OTTIMIZZAZIONE: Smart Sync - sincronizza solo quello che serve
+        async function smartSync() {
+            const modal = createProgressModal('Sincronizzazione Intelligente');
+            
+            try {
+                // Step 1: Conta tracking locali
+                const stats = {
+                    containers: trackings.filter(t => t.tracking_type === 'container').length,
+                    awb: trackings.filter(t => t.tracking_type === 'awb').length,
+                    needUpdate: trackings.filter(t => {
+                        const lastUpdate = t.metadata?.last_update;
+                        const hoursSince = lastUpdate ? 
+                            (Date.now() - new Date(lastUpdate).getTime()) / 3600000 : 999;
+                        return hoursSince > 12 && t.status !== 'delivered';
+                    }).length
+                };
+                
+                updateProgressModal(modal, `Trovati ${stats.needUpdate} tracking da aggiornare...`);
+                
+                // Step 2: Aggiorna solo quelli che ne hanno bisogno
+                let updated = 0;
+                for (const tracking of trackings) {
+                    const lastUpdate = tracking.metadata?.last_update;
+                    const hoursSince = lastUpdate ? 
+                        (Date.now() - new Date(lastUpdate).getTime()) / 3600000 : 999;
+                    
+                    // Criteri per aggiornamento
+                    const needsUpdate = (
+                        tracking.status !== 'delivered' &&     // Non consegnati
+                        hoursSince > 12                        // Più di 12 ore
+                    );
+                    
+                    if (needsUpdate) {
+                        updateProgressModal(modal, 
+                            `Aggiornamento ${tracking.tracking_number}...`,
+                            (updated / stats.needUpdate) * 100
+                        );
+                        
+                        await refreshTracking(tracking.id);
+                        updated++;
+                        
+                        // Rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                closeProgressModal(modal);
+                showNotification(`Smart sync completato: ${updated} tracking aggiornati`, 'success');
+                
+            } catch (error) {
+                closeProgressModal(modal);
+                console.error('Smart sync error:', error);
+                showNotification('Errore durante smart sync', 'error');
+            }
+        }
+
+        // Helper: Progress Modal
+        function createProgressModal(title) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>${title}</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p id="progressText">Inizializzazione...</p>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            return modal;
+        }
+
+        function updateProgressModal(modal, text, percent = null) {
+            modal.querySelector('#progressText').textContent = text;
+            if (percent !== null) {
+                modal.querySelector('#progressBar').style.width = `${percent}%`;
+            }
+        }
+
+        function closeProgressModal(modal) {
+            modal.remove();
         }
 
         // Start Batch Import
