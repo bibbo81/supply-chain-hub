@@ -619,24 +619,12 @@
             if (userEmailEl) userEmailEl.textContent = user.email || '';
         }
         
-        function initAuthUI() {
-             if (window.auth && window.auth.getCurrentUser()) {
-                updateUserUI();
-            } else if (window.auth) {
-                 window.auth.onAuthStateChange((event, session) => {
-                    if (event === 'SIGNED_IN' || event === 'INITIAL_USER') {
-                        updateUserUI();
-                    }
-                });
-            } else {
-                setTimeout(initAuthUI, 100);
-            }
-        }
-
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initAuthUI);
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(updateUserUI, 100);
+            });
         } else {
-            initAuthUI();
+            setTimeout(updateUserUI, 100);
         }
     })();
     </script>
@@ -1501,68 +1489,31 @@
     <div class="sol-backdrop" id="backdrop"></div>
 
     <script>
-        // Funzione per mostrare le notifiche a schermo
-        function showNotification(message, type = 'info') {
-            const existingNotif = document.querySelector('.sol-notification-container');
-            if (existingNotif) {
-                existingNotif.remove();
-            }
+        // Settings navigation
+        document.querySelectorAll('.settings-nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const targetSection = this.dataset.section;
+                
+                // Update nav items
+                document.querySelectorAll('.settings-nav-item').forEach(navItem => {
+                    navItem.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Update sections
+                document.querySelectorAll('.settings-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(`${targetSection}-section`).classList.add('active');
+            });
+        });
 
-            const notification = document.createElement('div');
-            notification.className = `sol-notification-container sol-notification-${type}`;
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                z-index: 9999;
-                animation: slideInFromRight 0.5s ease-out forwards;
-            `;
-            
-            const content = document.createElement('div');
-            content.style.cssText = `
-                padding: 16px 24px;
-                background: var(--sol-glass-heavy, rgba(30, 30, 40, 0.8));
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-                display: flex; align-items: center; gap: 12px;
-                max-width: 400px; color: var(--sol-text-primary, white);
-            `;
-            
-            const icon = document.createElement('i');
-            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : 'fa-info-circle'}`;
-            icon.style.color = type === 'success' ? 'var(--sol-color-success, #34C759)' : type === 'error' ? 'var(--sol-color-danger, #FF3B30)' : 'var(--sol-color-info, #007AFF)';
-            
-            const text = document.createElement('span');
-            text.textContent = message;
-            
-            content.appendChild(icon);
-            content.appendChild(text);
-            notification.appendChild(content);
-            document.body.appendChild(notification);
-            
-            if (!document.getElementById('sol-notification-styles')) {
-                const styleSheet = document.createElement("style");
-                styleSheet.id = 'sol-notification-styles';
-                styleSheet.innerText = `
-                    @keyframes slideInFromRight { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-                    @keyframes slideOutToRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(110%); opacity: 0; } }
-                `;
-                document.head.appendChild(styleSheet);
-            }
-
-            setTimeout(() => {
-                notification.style.animation = 'slideOutToRight 0.5s ease-in forwards';
-                setTimeout(() => notification.remove(), 500);
-            }, 4000);
-        }
-
-        // Toggle della visibilità delle API key
+        // Toggle API key visibility
         function toggleApiKeyVisibility(inputId) {
             const input = document.getElementById(inputId);
             const button = event.currentTarget;
             const icon = button.querySelector('i');
+            
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'fas fa-eye-slash';
@@ -1572,191 +1523,306 @@
             }
         }
 
-        // Salva le impostazioni API di ShipsGo
+        // Save ShipsGo API settings
         async function saveShipsGoSettings() {
             const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
             const v2Token = document.getElementById('shipsgoV2Token').value.trim();
             
             if (!v1Key && !v2Token) {
-                showNotification('Inserisci almeno una API key o un Token', 'warning');
+                showNotification('Inserisci almeno una API key', 'warning');
                 return;
             }
             
             try {
                 const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user) throw new Error('Devi essere autenticato per salvare le impostazioni.');
-
-                const token = await window.auth.getSessionToken();
-                if (!token) throw new Error('Sessione non valida o scaduta. Ricarica la pagina.');
-
+                if (!user) {
+                    showNotification('Devi essere autenticato', 'error');
+                    return;
+                }
+                
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    showNotification('Sessione scaduta, rieffettua il login', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
                 const apiSettings = {};
-                if (v1Key) apiSettings.shipsgo_v1_key = btoa(v1Key);
-                if (v2Token) apiSettings.shipsgo_v2_token = btoa(v2Token);
+                if (v1Key) {
+                    apiSettings.shipsgo_v1_key = btoa(v1Key);
+                }
+                if (v2Token) {
+                    apiSettings.shipsgo_v2_token = btoa(v2Token);
+                }
                 
                 const response = await fetch('/.netlify/functions/update-profile', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         action: 'update_api_settings',
-                        data: { api_settings: apiSettings }
+                        data: {
+                            api_settings: apiSettings
+                        }
                     })
                 });
                 
                 const result = await response.json();
-                if (!response.ok || !result.success) throw new Error(result.error || 'Errore nel salvataggio della configurazione.');
                 
-                showNotification('Configurazione API salvata con successo!', 'success');
+                if (response.ok && result.success) {
+                    showNotification('Configurazione API salvata con successo!', 'success');
+                } else {
+                    throw new Error(result.error || 'Errore salvataggio configurazione');
+                }
             } catch (error) {
                 console.error('Error saving API settings:', error);
-                showNotification(error.message, 'error');
+                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
             }
         }
-        
-        // Testa la connessione con le API ShipsGo
+
+        // Test ShipsGo connection
         async function testShipsGoConnection() {
             const resultDiv = document.getElementById('shipsgoTestResult');
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-spinner fa-spin"></i> Test connessione in corso...</div>';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Test connessione in corso...';
             
             try {
-                const token = await window.auth.getSessionToken();
-                 if (!token) throw new Error('Sessione non valida o scaduta. Ricarica la pagina.');
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
                 
                 const response = await fetch('/.netlify/functions/test-shipsgo-connection', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
                 });
-
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Test di connessione fallito');
                 
+                if (!response.ok) {
+                    throw new Error('Test connection failed');
+                }
+                
+                const data = await response.json();
                 const { results } = data;
+                
                 resultDiv.innerHTML = `
                     <div style="background: var(--sol-glass-medium); padding: var(--sol-space-md); border-radius: var(--sol-radius-md);">
-                        <h4 style="margin: 0 0 var(--sol-space-sm) 0;">Risultati Test Connessione</h4>
-                        <p style="margin: 0 0 var(--sol-space-xs) 0;"><strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}</p>
-                        <p style="margin: 0;"><strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}</p>
-                    </div>`;
+                        <h4 style="margin-bottom: var(--sol-space-sm);">Risultati Test Connessione</h4>
+                        <div style="margin-bottom: var(--sol-space-xs);">
+                            <strong>ShipsGo v1.2 (Maritime):</strong> ${results.v1.status}
+                        </div>
+                        <div>
+                            <strong>ShipsGo v2.0 (Air):</strong> ${results.v2.status}
+                        </div>
+                    </div>
+                `;
+                
             } catch (error) {
                 console.error('Test connection error:', error);
                 resultDiv.innerHTML = `
                     <div style="background: rgba(255, 59, 48, 0.1); padding: var(--sol-space-md); border-radius: var(--sol-radius-md); border: 1px solid rgba(255, 59, 48, 0.3);">
-                        <h4 style="color: #FF3B30; margin: 0 0 var(--sol-space-xs) 0;"><i class="fas fa-exclamation-circle"></i> Errore Test Connessione</h4>
-                        <p style="color: var(--sol-text-secondary); margin: 0;">${error.message}</p>
-                    </div>`;
+                        <h4 style="color: #FF3B30; margin-bottom: var(--sol-space-xs);">
+                            <i class="fas fa-exclamation-circle"></i> Errore Test Connessione
+                        </h4>
+                        <p style="color: var(--sol-text-secondary); margin: 0;">
+                            ${error.message || 'Impossibile testare la connessione'}
+                        </p>
+                    </div>
+                `;
             }
         }
 
-        // Carica le impostazioni API di ShipsGo al caricamento della pagina
+        // Load saved API settings on page load
         async function loadShipsGoSettings() {
+            console.log('Loading ShipsGo settings...');
+            
             try {
                 const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user || !user.id) return;
+                if (!user || !user.id) {
+                    console.log('No user logged in');
+                    return;
+                }
                 
-                const token = await window.auth.getSessionToken();
-                if (!token) return;
-
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    console.log('No auth token found');
+                    return;
+                }
+                
                 const response = await fetch('/.netlify/functions/get-profile?id=' + user.id, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
                 });
-
+                
                 if (response.ok) {
                     const profileData = await response.json();
+                    
                     if (profileData.api_settings && typeof profileData.api_settings === 'object') {
+                        // ShipsGo v1 key
                         if (profileData.api_settings.shipsgo_v1_key) {
-                            try { document.getElementById('shipsgoV1ApiKey').value = atob(profileData.api_settings.shipsgo_v1_key); }
-                            catch (e) { console.error('Error decoding v1 key.'); }
+                            try {
+                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
+                                var dollarSign = String.fromCharCode(36);
+                                var atSign = String.fromCharCode(64);
+                                if (v1Key && v1Key.indexOf(dollarSign) === -1 && v1Key.indexOf(atSign) === -1) {
+                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                                }
+                            } catch (e) {
+                                console.error('Error decoding v1 key');
+                            }
                         }
+                        
+                        // ShipsGo v2 token
                         if (profileData.api_settings.shipsgo_v2_token) {
-                            try { document.getElementById('shipsgoV2Token').value = atob(profileData.api_settings.shipsgo_v2_token); }
-                            catch (e) { console.error('Error decoding v2 token.'); }
+                            try {
+                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
+                                document.getElementById('shipsgoV2Token').value = v2Token;
+                            } catch (e) {
+                                console.error('Error decoding v2 token');
+                            }
                         }
                     }
                 } else {
-                    console.error('Failed to load profile for API settings.');
+                    console.error('Failed to load profile');
                 }
             } catch (error) {
                 console.error('Error loading API settings:', error);
             }
         }
 
-        // Event listener principale al caricamento del DOM
+        // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Navigazione tra le sezioni delle impostazioni
-            const navItems = document.querySelectorAll('.settings-nav-item');
-            const sections = document.querySelectorAll('.settings-section');
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const targetSectionId = `${this.dataset.section}-section`;
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    sections.forEach(sec => sec.classList.remove('active'));
-                    this.classList.add('active');
-                    document.getElementById(targetSectionId).classList.add('active');
+            // Dropdown Notifiche
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const userDropdown = document.getElementById('userDropdown');
+                    if (userDropdown) userDropdown.style.display = 'none';
+                    notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
                 });
-            });
+                document.addEventListener('click', function(e) {
+                    if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                        notificationDropdown.style.display = 'none';
+                    }
+                });
+            }
 
-            // Gestione del menu laterale (sidebar)
+            // Menu toggle
             const menuToggle = document.getElementById('menuToggle');
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('backdrop');
             
-            menuToggle.addEventListener('click', e => {
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
                 sidebar.classList.toggle('active');
                 backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
             });
-            backdrop.addEventListener('click', () => {
+
+            backdrop.addEventListener('click', function() {
                 sidebar.classList.remove('active');
                 backdrop.classList.remove('active');
+                document.body.style.overflow = '';
             });
 
-            // Gestione dei menù a tendina (utente e notifiche)
+            // User dropdown
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
-            const notificationBtn = document.getElementById('notificationBtn');
-            const notificationDropdown = document.getElementById('notificationDropdown');
             
-            userMenuBtn.addEventListener('click', e => {
-                e.stopPropagation();
-                notificationDropdown.style.display = 'none';
-                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
-            });
-            notificationBtn.addEventListener('click', e => {
-                e.stopPropagation();
-                userDropdown.style.display = 'none';
-                notificationDropdown.style.display = notificationDropdown.style.display === 'block' ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => {
-                userDropdown.style.display = 'none';
-                notificationDropdown.style.display = 'none';
-            });
-            
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                if (window.auth) window.auth.logout();
-            });
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
 
-            // Gestione generica dei form (non API)
-            document.querySelectorAll('form').forEach(form => {
-                if (!form.querySelector('#shipsgoV1ApiKey')) {
-                    form.addEventListener('submit', e => {
-                        e.preventDefault();
-                        showNotification('Impostazioni salvate con successo!', 'success');
-                    });
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.replace('/login.html');
                 }
             });
 
-            // Gestione dei pulsanti nella "Zona Pericolosa"
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    // Evita la notifica per il form delle API che ha la sua gestione
+                    if (!form.querySelector("#shipsgoV1ApiKey")) {
+                       showNotification('Impostazioni salvate con successo!', 'success');
+                    }
+                });
+            });
+
+            // Toggle switches
+            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const setting = this.id;
+                    const value = this.checked;
+                    console.log(`Setting ${setting} changed to ${value}`);
+                });
+            });
+
+            // Dangerous zone buttons
             document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (confirm('Sei assolutamente sicuro? Questa azione è irreversibile!')) {
-                        showNotification('Operazione non implementata in questa demo.', 'info');
+                btn.addEventListener('click', function() {
+                    if (confirm('Sei sicuro? Questa azione è irreversibile!')) {
+                        showNotification('Operazione completata (simulazione)', 'info');
                     }
                 });
             });
             
-            // Carica le impostazioni API dopo un breve ritardo per assicurarsi che l'autenticazione sia inizializzata
+            // Carica le impostazioni ShipsGo all'avvio
             setTimeout(loadShipsGoSettings, 500);
         });
+
+        // Helper function: Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
+            notification.style.cssText = `
+                position: fixed; top: 100px; right: 20px;
+                padding: 16px 24px; background: var(--sol-glass-heavy);
+                backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                z-index: 3000; display: flex; align-items: center; gap: 12px; max-width: 400px;
+            `;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html>
