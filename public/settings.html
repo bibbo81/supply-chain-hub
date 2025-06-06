@@ -1688,6 +1688,68 @@
                 showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
             }
         }
+            
+            try {
+                // Usa auth.js per ottenere il token
+                const user = window.auth ? window.auth.getCurrentUser() : null;
+                if (!user) {
+                    showNotification('Devi essere autenticato', 'error');
+                    return;
+                }
+                
+                // Ottieni il token dalla sessione
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    showNotification('Sessione scaduta, rieffettua il login', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Prepara le API settings con encoding base64
+                const apiSettings = {};
+                if (v1Key) {
+                    apiSettings.shipsgo_v1_key = btoa(v1Key);
+                }
+                if (v2Token) {
+                    apiSettings.shipsgo_v2_token = btoa(v2Token);
+                }
+                
+                console.log('Saving API settings:', { 
+                    hasV1: !!apiSettings.shipsgo_v1_key, 
+                    hasV2: !!apiSettings.shipsgo_v2_token 
+                });
+                
+                // Salva le API keys nel profilo utente
+                const response = await fetch('/.netlify/functions/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'update_api_settings',
+                        data: {
+                            api_settings: apiSettings
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Save response:', result);
+                
+                if (response.ok && result.success) {
+                    showNotification('Configurazione API salvata con successo!', 'success');
+                    
+                    // Salva anche in localStorage per uso immediato
+                    if (v1Key) localStorage.setItem('shipsgo_v1_key', v1Key);
+                    if (v2Token) localStorage.setItem('shipsgo_v2_token', v2Token);
+                } else {
+                    throw new Error(result.error || 'Errore salvataggio configurazione');
+                }
+            } catch (error) {
+                console.error('Error saving API settings:', error);
+                showNotification('Errore nel salvataggio delle API keys: ' + error.message, 'error');
+            }
 
         // Test ShipsGo connection
         async function testShipsGoConnection() {
@@ -1744,9 +1806,9 @@
             console.log('Loading ShipsGo settings...');
             
             try {
-                // Ottieni l'utente corrente
+                // Ottieni utente corrente
                 const user = window.auth ? window.auth.getCurrentUser() : null;
-                if (!user) {
+                if (!user || !user.id) {
                     console.log('No user logged in');
                     return;
                 }
@@ -1757,47 +1819,276 @@
                     return;
                 }
                 
-                // Usa l'ID utente per la query
-                const response = await fetch(`/.netlify/functions/get-profile?id=${user.id}`, {
+                // Usa ID utente dalla sessione
+                const response = await fetch('/.netlify/functions/get-profile?id=' + user.id, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': 'Bearer ' + token
                     }
                 });
                 
                 console.log('Profile response status:', response.status);
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log('Profile data:', data);
+                    const profileData = await response.json();
+                    console.log('Profile loaded, has api_settings:', !!profileData.api_settings);
                     
-                    if (data.api_settings) {
-                        // Decodifica e mostra le API keys
-                        if (data.api_settings.shipsgo_v1_key) {
+                    // Leggi SOLO da api_settings
+                    if (profileData.api_settings && typeof profileData.api_settings === 'object') {
+                        // ShipsGo v1 key
+                        if (profileData.api_settings.shipsgo_v1_key) {
                             try {
-                                const v1Key = atob(data.api_settings.shipsgo_v1_key);
-                                document.getElementById('shipsgoV1ApiKey').value = v1Key;
-                                localStorage.setItem('shipsgo_v1_key', v1Key);
+                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
+                                // Verifica che non sia una password
+                                var dollarSign = String.fromCharCode(36); // $
+                                var atSign = String.fromCharCode(64); // @
+                                if (v1Key && v1Key.indexOf(dollarSign) === -1 && v1Key.indexOf(atSign) === -1) {
+                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                                }
                             } catch (e) {
-                                console.error('Error decoding v1 key:', e);
+                                console.error('Error decoding v1 key');
                             }
                         }
                         
-                        if (data.api_settings.shipsgo_v2_token) {
+                        // ShipsGo v2 token
+                        if (profileData.api_settings.shipsgo_v2_token) {
                             try {
-                                const v2Token = atob(data.api_settings.shipsgo_v2_token);
+                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
                                 document.getElementById('shipsgoV2Token').value = v2Token;
-                                localStorage.setItem('shipsgo_v2_token', v2Token);
                             } catch (e) {
-                                console.error('Error decoding v2 token:', e);
+                                console.error('Error decoding v2 token');
                             }
                         }
                     }
+                    
+                    // NON leggere MAI da altri campi come password, email, etc
                 } else {
-                    console.error('Failed to load profile:', await response.text());
+                    console.error('Failed to load profile');
                 }
             } catch (error) {
                 console.error('Error loading API settings:', error);
             }
+        }
+                
+                console.log('Profile response status:', response.status);
+                
+                if (response.ok) {
+                    const profileData = await response.json();
+                    console.log('Profile loaded, has api_settings:', !!profileData.api_settings);
+                    
+                    // IMPORTANTE: Leggi SOLO da api_settings, MAI da altri campi!
+                            if (profileData.api_settings && typeof profileData.api_settings === 'object') {
+                        // ShipsGo v1 key
+                        if (profileData.api_settings.shipsgo_v1_key) {
+                            try {
+                                const v1Key = atob(profileData.api_settings.shipsgo_v1_key);
+                                // Verifica che non sia una password
+                                var dollarSign = String.fromCharCode(36); // $
+                                var atSign = String.fromCharCode(64); // @
+                                if (v1Key && v1Key.indexOf(dollarSign) === -1 && v1Key.indexOf(atSign) === -1) {
+                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                                }
+                            } catch (e) {
+                                console.error('Error decoding v1 key');
+                            }
+                        }
+                        
+                        // ShipsGo v2 token
+                        if (profileData.api_settings.shipsgo_v2_token) {
+                            try {
+                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
+                                document.getElementById('shipsgoV2Token').value = v2Token;
+                            } catch (e) {
+                                console.error('Error decoding v2 token');
+                            }
+                        }
+                    }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load ShipsGo settings
+            loadShipsGoSettings();
+            
+            // Menu toggle
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                backdrop.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            });
+
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // User dropdown - FIX APPLICATO
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                
+                // Previeni la chiusura del dropdown quando si clicca su un link
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                document.addEventListener('click', function() {
+                    userDropdown.style.display = 'none';
+                });
+            }
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.auth && window.auth.logout) {
+                    window.auth.logout();
+                } else {
+                    localStorage.removeItem('sb-access-token');
+                    localStorage.removeItem('supabase.auth.token');
+                    localStorage.removeItem('user');
+                    window.location.replace('/login.html');
+                }
+            });
+
+            // Form submissions
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showNotification('Impostazioni salvate con successo!', 'success');
+                });
+            });
+
+            // Toggle switches
+            document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const setting = this.id;
+                    const value = this.checked;
+                    console.log(`Setting ${setting} changed to ${value}`);
+                    // Qui salveresti l'impostazione nel database
+                });
+            });
+
+            // Dangerous zone buttons
+            document.querySelectorAll('.sol-btn[style*="rgba(255, 59, 48"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (confirm('Sei sicuro? Questa azione è irreversibile!')) {
+                        showNotification('Operazione completata', 'info');
+                    }
+                });
+            });
+            
+            // Carica le impostazioni ShipsGo
+            setTimeout(function() {
+                if (typeof loadShipsGoSettings === 'function') {
+                    loadShipsGoSettings();
+                }
+            }, 500);
+        });
+
+        // Helper function: Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `sol-notification sol-notification-${type} sol-animate-in`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 16px 24px;
+                background: var(--sol-glass-heavy);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                z-index: 3000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                max-width: 400px;
+            `;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+            icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
+            
+            const text = document.createElement('span');
+            text.textContent = message;
+            
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    }; // Chiusura del secondo DOMContentLoaded
+    </script>
+</body>
+</html>
+                ) && !v1Key.includes('@')) {
+                                    document.getElementById('shipsgoV1ApiKey').value = v1Key;
+                                }
+                            } catch (e) {
+                                console.error('Error decoding v1 key');
+                            }
+                        }
+                        
+                        // ShipsGo v2 token
+                        if (profileData.api_settings.shipsgo_v2_token) {
+                            try {
+                                const v2Token = atob(profileData.api_settings.shipsgo_v2_token);
+                                document.getElementById('shipsgoV2Token').value = v2Token;
+                            } catch (e) {
+                                console.error('Error decoding v2 token');
+                            }
+                        }
+                    }
+                    
+                    // NON leggere MAI da altri campi come password, email, etc!
+                } else {
+                    console.error('Failed to load profile');
+                }
+            } catch (error) {
+                console.error('Error loading API settings:', error);
+            }
+        }
+
+        // Funzione di verifica per debug
+        function debugCheckProfile() {
+            const user = window.auth ? window.auth.getCurrentUser() : null;
+            if (!user) {
+                console.log('No user');
+                return;
+            }
+            
+            const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+            
+            fetch('/.netlify/functions/get-profile?id=' + user.id, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('=== PROFILE DEBUG ===');
+                console.log('User ID:', user.id);
+                console.log('Has api_settings:', !!data.api_settings);
+                console.log('api_settings keys:', data.api_settings ? Object.keys(data.api_settings) : 'none');
+                console.log('Other profile keys:', Object.keys(data).filter(k => k !== 'api_settings'));
+                console.log('===================');
+            });
         }
 
         // Event Listeners
@@ -1935,3 +2226,4 @@
     </script>
 </body>
 </html>
+                
