@@ -1624,9 +1624,12 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        api_settings: {
-                            shipsgo_v1_key: v1Key ? btoa(v1Key) : null, // Base64 encode
-                            shipsgo_v2_token: v2Token ? btoa(v2Token) : null
+                        action: 'update_api_settings',  // IMPORTANTE!
+                        data: {
+                            api_settings: {
+                                shipsgo_v1_key: v1Key ? btoa(v1Key) : null, // Base64 encode
+                                shipsgo_v2_token: v2Token ? btoa(v2Token) : null
+                            }
                         }
                     })
                 });
