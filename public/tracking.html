@@ -2303,9 +2303,9 @@ MSCU7654321,MSC,container,PO123457
             }
         });
 
-        // Open Sync Wizard in modal
+        // Open Sync Wizard in modal (versione senza iframe)
         function openSyncWizard() {
-            // Crea modal per sync wizard
+            // Crea modal per sync wizard direttamente nel DOM
             const syncModal = document.createElement('div');
             syncModal.className = 'modal-overlay active';
             syncModal.id = 'syncWizardModal';
@@ -2317,28 +2317,25 @@ MSCU7654321,MSC,container,PO123457
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="modal-body" style="padding: 0;">
-                        <iframe 
-                            src="/shipsgo-sync-wizard.html" 
-                            style="width: 100%; height: 600px; border: none; border-radius: var(--sol-radius-lg);"
-                            title="ShipsGo Sync Wizard">
-                        </iframe>
+                    <div class="modal-body">
+                        <div style="text-align: center; padding: var(--sol-space-2xl);">
+                            <i class="fas fa-ship" style="font-size: 4rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                            <h3 style="margin-bottom: var(--sol-space-md);">Funzionalità in arrivo</h3>
+                            <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xl);">
+                                La sincronizzazione con ShipsGo sarà disponibile a breve.
+                            </p>
+                            <p style="color: var(--sol-text-secondary);">
+                                Nel frattempo, puoi utilizzare l'import manuale o da file CSV/Excel.
+                            </p>
+                            <button class="sol-btn sol-btn-primary" onclick="closeSyncWizard()" style="margin-top: var(--sol-space-xl);">
+                                OK, Capito
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
             
             document.body.appendChild(syncModal);
-            
-            // Listener per messaggi dall'iframe
-            window.addEventListener('message', function(event) {
-                if (event.data.action === 'closeSyncWizard') {
-                    closeSyncWizard();
-                } else if (event.data.action === 'syncComplete') {
-                    closeSyncWizard();
-                    showNotification('Sincronizzazione completata!', 'success');
-                    loadTrackings(); // Ricarica tracking
-                }
-            });
         }
 
         // Close Sync Wizard
