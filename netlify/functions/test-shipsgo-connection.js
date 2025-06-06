@@ -6,50 +6,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Funzione per ottenere configurazione ShipsGo dinamica
-async function getShipsGoConfig(userId) {
-  const config = {
-    v1: { 
-      apiKey: process.env.SHIPSGO_API_KEY,
-      configured: false 
-    },
-    v2: { 
-      token: process.env.SHIPSGO_V2_TOKEN,
-      configured: false 
-    }
-  };
-  
-  // Prova a prendere dal profilo utente
-  if (userId) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('api_settings')
-      .eq('id', userId)
-      .single();
-      
-    if (profile?.api_settings) {
-      if (profile.api_settings.shipsgo_v1_key) {
-        config.v1.apiKey = Buffer.from(profile.api_settings.shipsgo_v1_key, 'base64').toString();
-        config.v1.configured = true;
-      }
-      if (profile.api_settings.shipsgo_v2_token) {
-        config.v2.token = Buffer.from(profile.api_settings.shipsgo_v2_token, 'base64').toString();
-        config.v2.configured = true;
-      }
-    }
-  }
-  
-  // Fallback defaults
-  if (!config.v1.apiKey) {
-    config.v1.apiKey = '2dc0c6d92ccb59e7d903825c4ebeb521';
-  }
-  if (!config.v2.token) {
-    config.v2.token = '505751c2-2745-4d83-b4e7-d35ccddd0628';
-  }
-  
-  return config;
-}
-
 exports.handler = async (event, context) => {
   // Handle CORS
   if (event.httpMethod === 'OPTIONS') {
@@ -58,13 +14,13 @@ exports.handler = async (event, context) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS'
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
       body: ''
     };
   }
 
-  if (event.httpMethod !== 'GET') {
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers: { 'Access-Control-Allow-Origin': '*' },
@@ -73,69 +29,90 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Get user if authenticated
-    let userId = null;
-    const token = event.headers.authorization?.replace('Bearer ', '');
-    if (token) {
-      const { data: { user } } = await supabase.auth.getUser(token);
-      if (user) userId = user.id;
-    }
+    // Parse body per ottenere le keys da testare
+    const body = JSON.parse(event.body);
+    const { v1Key, v2Token } = body;
 
-    // Get configuration
-    const config = await getShipsGoConfig(userId);
     const results = {
-      v1: { status: '⏭️ Non configurato', configured: config.v1.configured },
-      v2: { status: '⏭️ Non configurato', configured: config.v2.configured }
+      v1: { 
+        success: false, 
+        message: v1Key ? 'Testing...' : 'No API key provided',
+        credits: null 
+      },
+      v2: { 
+        success: false, 
+        message: v2Token ? 'Testing...' : 'No API token provided',
+        shipments: null 
+      }
     };
 
-    // Test v1.2 API
-    if (config.v1.apiKey) {
+    // Test v1.2 API (Container tracking)
+    if (v1Key) {
       try {
+        // Test con GetMyCredits per verificare la validità
+        const formData = new URLSearchParams();
+        formData.append('authCode', v1Key);
+
         const v1Response = await fetch(
-          `https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo/?authCode=${config.v1.apiKey}`,
-          { method: 'GET' }
+          'https://shipsgo.com/api/v1.2/GetMyCredits',
+          { 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json'
+            },
+            body: formData.toString()
+          }
         );
         
-        if (v1Response.status === 401) {
-          results.v1.status = '❌ API Key non valida';
-        } else if (v1Response.status === 400 || v1Response.status === 404) {
-          results.v1.status = '✅ API Key valida (test richiede container ID)';
-        } else if (v1Response.ok) {
-          results.v1.status = '✅ Connessione OK';
+        const v1Data = await v1Response.json();
+        
+        if (v1Response.ok && (v1Data.success || v1Data.Credits !== undefined)) {
+          results.v1.success = true;
+          results.v1.message = '✅ API Key valida';
+          results.v1.credits = v1Data.Credits || v1Data.credits || 0;
         } else {
-          results.v1.status = '⚠️ Errore connessione';
+          results.v1.success = false;
+          results.v1.message = '❌ API Key non valida';
+          if (v1Data.message) {
+            results.v1.message += ': ' + v1Data.message;
+          }
         }
       } catch (error) {
-        results.v1.status = '❌ Errore di rete';
-        results.v1.error = error.message;
+        results.v1.success = false;
+        results.v1.message = '❌ Errore di connessione: ' + error.message;
       }
     }
 
-    // Test v2.0 API
-    if (config.v2.token) {
+    // Test v2.0 API (Air tracking)
+    if (v2Token) {
       try {
         const v2Response = await fetch(
-          'https://api.shipsgo.com/v2/air/shipments?take=1',
+          'https://shipsgo.com/api/v2.0/shipments/air?take=1',
           {
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${config.v2.token}`,
+              'Authorization': `Bearer ${v2Token}`,
               'Accept': 'application/json'
             }
           }
         );
         
-        if (v2Response.status === 401) {
-          results.v2.status = '❌ Bearer Token non valido';
-        } else if (v2Response.ok) {
-          results.v2.status = '✅ Connessione OK';
+        if (v2Response.ok) {
+          const v2Data = await v2Response.json();
+          results.v2.success = true;
+          results.v2.message = '✅ Token valido';
+          results.v2.shipments = v2Data.total || 0;
+        } else if (v2Response.status === 401) {
+          results.v2.success = false;
+          results.v2.message = '❌ Token non valido o scaduto';
         } else {
-          results.v2.status = '⚠️ Errore connessione';
-          const errorText = await v2Response.text();
-          results.v2.error = errorText;
+          results.v2.success = false;
+          results.v2.message = `❌ Errore API: ${v2Response.status}`;
         }
       } catch (error) {
-        results.v2.status = '❌ Errore di rete';
-        results.v2.error = error.message;
+        results.v2.success = false;
+        results.v2.message = '❌ Errore di connessione: ' + error.message;
       }
     }
 
@@ -145,11 +122,7 @@ exports.handler = async (event, context) => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        success: true,
-        results: results,
-        hasUserConfig: !!userId
-      })
+      body: JSON.stringify(results)
     };
 
   } catch (error) {
@@ -162,7 +135,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({ 
         error: 'Internal server error',
-        details: error.message 
+        message: error.message 
       })
     };
   }

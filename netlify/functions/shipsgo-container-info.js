@@ -38,9 +38,27 @@ async function getShipsGoV1Config(userId) {
 }
 
 exports.handler = async (event, context) => {
+  // Define CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  // Handle preflight OPTIONS request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
+      headers, // Add headers
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -66,6 +84,7 @@ exports.handler = async (event, context) => {
     if (!containerId && !containerNumber) {
       return {
         statusCode: 400,
+        headers, // Add headers
         body: JSON.stringify({ error: 'containerId o containerNumber richiesto' })
       };
     }
@@ -102,6 +121,7 @@ exports.handler = async (event, context) => {
       console.error('ShipsGo error:', data);
       return {
         statusCode: response.status,
+        headers, // Add headers
         body: JSON.stringify({ 
           error: 'ShipsGo API error',
           details: data 
@@ -114,6 +134,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers, // Add headers
       body: JSON.stringify({
         success: true,
         data: containerInfo,
@@ -125,6 +146,7 @@ exports.handler = async (event, context) => {
     console.error('Handler error:', error);
     return {
       statusCode: 500,
+      headers, // Add headers
       body: JSON.stringify({ error: error.message })
     };
   }

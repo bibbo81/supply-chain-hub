@@ -38,9 +38,27 @@ async function getShipsGoV2Config(userId) {
 }
 
 exports.handler = async (event, context) => {
+  // Definisci gli header CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  // Gestisci la richiesta preflight OPTIONS per CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: 'Preflight call successful' })
+    };
+  }
+
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -51,6 +69,7 @@ exports.handler = async (event, context) => {
     if (!token) {
       return {
         statusCode: 401,
+        headers,
         body: JSON.stringify({ error: 'Missing authorization token' })
       };
     }
@@ -59,6 +78,7 @@ exports.handler = async (event, context) => {
     if (authError || !user) {
       return {
         statusCode: 401,
+        headers,
         body: JSON.stringify({ error: 'Invalid token' })
       };
     }
@@ -105,6 +125,7 @@ exports.handler = async (event, context) => {
       console.error('ShipsGo v2 error:', data);
       return {
         statusCode: response.status,
+        headers,
         body: JSON.stringify({ 
           error: 'ShipsGo API error',
           details: data 
@@ -131,6 +152,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         success: true,
         data: normalizedShipments,
@@ -147,6 +169,7 @@ exports.handler = async (event, context) => {
     console.error('Handler error:', error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: error.message })
     };
   }

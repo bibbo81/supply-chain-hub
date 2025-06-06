@@ -1179,14 +1179,14 @@
                         <i class="fas fa-save"></i>
                         Salva Configurazione API
                     </button>
-                    <button class="sol-btn sol-btn-glass" onclick="testShipsGoConnection()">
+                    <button class="sol-btn sol-btn-glass" onclick="testShipsGoConnection(event)">
                         <i class="fas fa-plug"></i>
                         Test Connessione
                     </button>
                 </div>
                 
                 <div id="shipsgoTestResult" style="margin-top: var(--sol-space-md); display: none;">
-                    </div>
+                </div>
             </div>
 
             <div class="settings-card">
@@ -1727,7 +1727,7 @@
                 showNotification('Errore: ' + error.message, 'error');
             }
         }
-
+        
         // ==========================================
         // WEBHOOKS FUNCTIONS
         // ==========================================
@@ -1816,19 +1816,88 @@
             }
         }
 
-        function testShipsGoConnection() {
-            // Placeholder per la funzione di test
-            alert('Funzione Test Connessione da implementare');
+        async function testShipsGoConnection(event) {
+            // Ottieni i valori attuali dai campi
+            const v1Key = document.getElementById('shipsgoV1ApiKey').value.trim();
+            const v2Token = document.getElementById('shipsgoV2Token').value.trim();
+            
+            if (!v1Key && !v2Token) {
+                showNotification('Inserisci almeno una API key da testare', 'warning');
+                return;
+            }
+            
+            // Mostra loading
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+            button.disabled = true;
+            
+            try {
+                // Chiama la function con POST passando le keys
+                const response = await fetch('/.netlify/functions/test-shipsgo-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        v1Key: v1Key,
+                        v2Token: v2Token
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Test fallito');
+                }
+                
+                const results = await response.json();
+                
+                // Mostra risultati
+                let message = '';
+                
+                if (v1Key) {
+                    message += `Container API (v1.2): ${results.v1.message}`;
+                    if (results.v1.credits !== null && results.v1.credits !== undefined) {
+                        message += ` - Crediti: ${results.v1.credits}`;
+                    }
+                }
+                
+                if (v2Token) {
+                    if (message) message += '<br>';
+                    message += `Air Tracking API (v2.0): ${results.v2.message}`;
+                    if (results.v2.shipments !== null && results.v2.shipments !== undefined) {
+                        message += ` - Shipments: ${results.v2.shipments}`;
+                    }
+                }
+                
+                // Determina il tipo di notifica
+                const hasSuccess = (results.v1 && results.v1.success) || (results.v2 && results.v2.success);
+                const hasV1 = !!v1Key;
+                const hasV2 = !!v2Token;
+                const hasFailure = (hasV1 && (!results.v1 || !results.v1.success)) || (hasV2 && (!results.v2 || !results.v2.success));
+
+                if (hasSuccess && !hasFailure) {
+                    showNotification(message, 'success');
+                } else if (hasFailure && !hasSuccess) {
+                    showNotification(message, 'error');
+                } else {
+                    showNotification(message, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                showNotification('Errore durante il test di connessione. Controlla la console per i dettagli.', 'error');
+            } finally {
+                // Ripristina bottone
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
         }
 
         function debugCheckProfile() {
             // Placeholder per la funzione di debug
         }
 
-        function showNotification(message, type) {
-            if (!type) {
-                type = 'info';
-            }
+        function showNotification(message, type = 'info') {
             var notification = document.createElement('div');
             notification.className = 'sol-notification sol-notification-' + type + ' sol-animate-in';
             notification.style.cssText = 'position: fixed; top: 100px; right: 20px; padding: 16px 24px; background: var(--sol-glass-heavy); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); z-index: 3000; display: flex; align-items: center; gap: 12px; max-width: 400px;';
@@ -1836,7 +1905,7 @@
             icon.className = 'fas ' + (type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
             icon.style.color = type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF';
             var text = document.createElement('span');
-            text.textContent = message;
+            text.innerHTML = message; // Change to innerHTML to support <br> tags
             notification.appendChild(icon);
             notification.appendChild(text);
             document.body.appendChild(notification);
@@ -1846,7 +1915,7 @@
                 setTimeout(function() {
                     notification.remove();
                 }, 300);
-            }, 3000);
+            }, 5000); // Increased timeout for better readability of complex messages
         }
 
         // ==========================================
