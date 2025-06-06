@@ -1,4 +1,6 @@
 // netlify/functions/test-shipsgo-connection.js
+// SOLUZIONE PULITA - Niente workaround
+
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -29,7 +31,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Parse body per ottenere le keys da testare
     const body = JSON.parse(event.body);
     const { v1Key, v2Token } = body;
 
@@ -37,54 +38,23 @@ exports.handler = async (event, context) => {
       v1: { 
         success: false, 
         message: v1Key ? 'Testing...' : 'No API key provided',
-        credits: null 
+        info: null 
       },
       v2: { 
         success: false, 
         message: v2Token ? 'Testing...' : 'No API token provided',
-        shipments: null 
+        info: null 
       }
     };
 
-    // Test v1.2 API (Container tracking)
+    // Test v1.2 API - APPROCCIO ONESTO
     if (v1Key) {
-      try {
-        // Test con GetMyCredits per verificare la validità
-        const formData = new URLSearchParams();
-        formData.append('authCode', v1Key);
-
-        const v1Response = await fetch(
-          'https://shipsgo.com/api/v1.2/GetMyCredits',
-          { 
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Accept': 'application/json'
-            },
-            body: formData.toString()
-          }
-        );
-        
-        const v1Data = await v1Response.json();
-        
-        if (v1Response.ok && (v1Data.success || v1Data.Credits !== undefined)) {
-          results.v1.success = true;
-          results.v1.message = '✅ API Key valida';
-          results.v1.credits = v1Data.Credits || v1Data.credits || 0;
-        } else {
-          results.v1.success = false;
-          results.v1.message = '❌ API Key non valida';
-          if (v1Data.message) {
-            results.v1.message += ': ' + v1Data.message;
-          }
-        }
-      } catch (error) {
-        results.v1.success = false;
-        results.v1.message = '❌ Errore di connessione: ' + error.message;
-      }
+      results.v1.message = '⚠️ ShipsGo v1.2 non fornisce un endpoint di validazione';
+      results.v1.info = 'La chiave verrà validata al primo utilizzo effettivo';
+      results.v1.success = null; // Non false, ma null = non determinabile
     }
 
-    // Test v2.0 API (Air tracking)
+    // Test v2.0 API - Questo ha un endpoint reale
     if (v2Token) {
       try {
         const v2Response = await fetch(
@@ -102,7 +72,10 @@ exports.handler = async (event, context) => {
           const v2Data = await v2Response.json();
           results.v2.success = true;
           results.v2.message = '✅ Token valido';
-          results.v2.shipments = v2Data.total || 0;
+          results.v2.info = {
+            totalShipments: v2Data.total || 0,
+            accountActive: true
+          };
         } else if (v2Response.status === 401) {
           results.v2.success = false;
           results.v2.message = '❌ Token non valido o scaduto';
