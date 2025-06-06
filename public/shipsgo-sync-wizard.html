@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShipsGo Sync Wizard</title>
+    <style>
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .wizard-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 40px;
+        }
+        
+        .wizard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .wizard-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+        }
+        
+        .wizard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .wizard-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+        }
+        
+        .sync-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .sync-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .sync-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #007AFF;
+            transform: translateY(-4px);
+        }
+        
+        .sync-card i {
+            font-size: 3rem;
+            color: #007AFF;
+            margin-bottom: 20px;
+        }
+        
+        .sync-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .sync-card p {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+        
+        .sync-card ul {
+            text-align: left;
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+        
+        .sync-card li {
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+        
+        .manual-section {
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+        
+        .manual-section h3 {
+            color: #007AFF;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .process-steps {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .step-number {
+            background: #34C759;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .batch-info {
+            background: rgba(255, 149, 0, 0.1);
+            border: 1px solid rgba(255, 149, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .batch-info i {
+            color: #FF9500;
+            margin-right: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <div class="wizard-icon">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <h1 class="wizard-title">Sincronizzazione ShipsGo</h1>
+            <p class="wizard-subtitle">Importa tutto il tuo storico tracking in un click</p>
+        </div>
+        
+        <div class="sync-options">
+            <!-- Opzione 1: Auto Sync -->
+            <div class="sync-card">
+                <i class="fas fa-magic"></i>
+                <h3>Sincronizzazione Automatica</h3>
+                <p>Recupera automaticamente tutti i tracking attivi dal tuo account ShipsGo</p>
+                <ul>
+                    <li>✓ Importa tracking aerei (AWB)</li>
+                    <li>✓ Timeline eventi completa</li>
+                    <li>✓ Aggiornamento stato real-time</li>
+                    <li>✓ Zero configurazione</li>
+                </ul>
+                <button class="btn-primary">Avvia Sync Automatico</button>
+            </div>
+            
+            <!-- Opzione 2: Batch Import -->
+            <div class="sync-card">
+                <i class="fas fa-file-import"></i>
+                <h3>Import Batch Container</h3>
+                <p>Importa una lista di container marittime da sincronizzare</p>
+                <ul>
+                    <li>✓ Import da file Excel/CSV</li>
+                    <li>✓ Supporta migliaia di container</li>
+                    <li>✓ Recupera storico completo</li>
+                    <li>✓ Report errori dettagliato</li>
+                </ul>
+                <button class="btn-primary">Carica Lista Container</button>
+            </div>
+        </div>
+        
+        <div class="manual-section">
+            <h3><i class="fas fa-terminal"></i> Per Sviluppatori: API Sync</h3>
+            <p>Sincronizza programmaticamente usando la nostra API:</p>
+            <div class="code-block">
+POST /api/sync-shipsgo
+{
+  "mode": "full|incremental",
+  "types": ["awb", "container", "bl"],
+  "dateFrom": "2024-01-01",
+  "shipsgo_api_key": "your_key"
+}
+            </div>
+        </div>
+        
+        <div class="process-steps">
+            <h3 style="color: #34C759; margin-bottom: 25px;">
+                <i class="fas fa-check-circle"></i> Come Funziona
+            </h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>
+                    <strong>Connessione ShipsGo</strong><br>
+                    Utilizziamo le tue credenziali API esistenti per accedere ai dati
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>
+                    <strong>Recupero Tracking</strong><br>
+                    Scarichiamo tutti i tracking attivi (AWB) o processi la tua lista (Container)
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>
+                    <strong>Import nel Sistema</strong><br>
+                    Salviamo tracking e timeline eventi nel database locale
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div>
+                    <strong>Sync Continuo</strong><br>
+                    Aggiornamenti automatici ogni 4-6 ore per tracking attivi
+                </div>
+            </div>
+        </div>
+        
+        <div class="batch-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Import di Grandi Volumi:</strong> Per oltre 1000 tracking, il processo viene eseguito in background. 
+            Riceverai una notifica email al completamento con il report dettagliato.
+        </div>
+    </div>
+</body>
+</html>
