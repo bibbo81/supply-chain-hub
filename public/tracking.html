@@ -1410,6 +1410,7 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                         trackingNumber: parts[0].toUpperCase(),
                         carrierCode: parts[1] || detectCarrierFromNumber(parts[0]),
                         trackingType: parts[2] || detectTypeFromNumber(parts[0]),
+                        referenceNumber: parts[3] || null,
                         description: `Import batch ${new Date().toLocaleDateString()}`
                     });
                 }
@@ -1420,12 +1421,11 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                 return;
             }
             
-            // Start import
-            await importTrackingBatch(trackingList);
+            // USA LA NUOVA VERSIONE
+            await importTrackingBatchWithEvents(trackingList);
         }
 
         // Handle file import
-        let fileData = null;
         function handleFileImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1438,7 +1438,6 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                     const lines = text.split('\n');
                     const headers = lines[0].split(',').map(h => h.trim());
                     
-                    // Parse CSV to objects
                     const data = [];
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue;
@@ -1450,33 +1449,16 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                         data.push(row);
                     }
                     
-                    // Check if it's a ShipsGo export
-                    const isShipsGoExport = data.length > 0 && 
-                        'Container' in data[0] && 
-                        'Carrier' in data[0];
+                    // USA LA VERSIONE ENHANCED
+                    const { trackingList, errors, summary } = await processShipsGoFileEnhanced(data);
                     
-                    if (isShipsGoExport) {
-                        const { trackingList, errors } = await processShipsGoFile(data);
-                        if (errors.length > 0) {
-                            showNotification(`Import completato con ${errors.length} errori. Controlla la console.`, 'warning');
-                        }
-                        await importTrackingBatch(trackingList);
-                    } else {
-                        // Standard CSV processing
-                        const trackingList = [];
-                        for (let i = 0; i < data.length; i++) {
-                            const row = data[i];
-                            if (row.tracking_number || row['tracking number'] || row['Tracking Number']) {
-                                trackingList.push({
-                                    trackingNumber: row.tracking_number || row['tracking number'] || row['Tracking Number'] || '',
-                                    carrierCode: row.carrier_code || row.carrier || row.Carrier || '',
-                                    trackingType: row.tracking_type || row.type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
-                                    description: `Import da ${file.name}`
-                                });
-                            }
-                        }
-                        await importTrackingBatch(trackingList);
+                    if (errors.length > 0) {
+                        showNotification(`Import con ${errors.length} errori. Controlla la console.`, 'warning');
+                        console.error('Errori import:', errors);
                     }
+                    
+                    // USA LA VERSIONE CON EVENTI
+                    await importTrackingBatchWithEvents(trackingList);
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -1486,28 +1468,16 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
                     
-                    // Check if it's a ShipsGo export
-                    const isShipsGoExport = jsonData.length > 0 && 
-                        'Container' in jsonData[0] && 
-                        'Carrier' in jsonData[0];
+                    // USA LA VERSIONE ENHANCED
+                    const { trackingList, errors, summary } = await processShipsGoFileEnhanced(jsonData);
                     
-                    if (isShipsGoExport) {
-                        const { trackingList, errors } = await processShipsGoFile(jsonData);
-                        if (errors.length > 0) {
-                            showNotification(`Import completato con ${errors.length} errori. Controlla la console.`, 'warning');
-                        }
-                        await importTrackingBatch(trackingList);
-                    } else {
-                        // Standard Excel processing
-                        const trackingList = jsonData.map(row => ({
-                            trackingNumber: row.tracking_number || row['Tracking Number'] || '',
-                            carrierCode: row.carrier_code || row.Carrier || '',
-                            trackingType: row.tracking_type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
-                            description: `Import da ${file.name}`
-                        })).filter(item => item.trackingNumber);
-                        
-                        await importTrackingBatch(trackingList);
+                    if (errors.length > 0) {
+                        showNotification(`Import con ${errors.length} errori. Controlla la console.`, 'warning');
+                        console.error('Errori import:', errors);
                     }
+                    
+                    // USA LA VERSIONE CON EVENTI
+                    await importTrackingBatchWithEvents(trackingList);
                 };
                 reader.readAsArrayBuffer(file);
             }
@@ -1557,32 +1527,77 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
         }
 
-        // Funzione principale per processare file ShipsGo
-        async function processShipsGoFile(fileData) {
+        // Process ShipsGo file enhanced version
+        async function processShipsGoFileEnhanced(fileData) {
             const trackingList = [];
             const errors = [];
+            const stats = {
+                total: 0,
+                delivered: 0,
+                in_transit: 0,
+                registered: 0,
+                with_transit_time: 0,
+                with_co2_data: 0
+            };
             
-            console.log('Rilevato file ShipsGo, applicazione mappatura ottimizzata...');
+            // Identifica se è un export ShipsGo
+            const isShipsGoExport = fileData.length > 0 && 
+                'Container' in fileData[0] && 
+                'Carrier' in fileData[0];
+            
+            if (!isShipsGoExport) {
+                // Fallback al processo standard
+                return processStandardFile(fileData);
+            }
+            
+            console.log('Rilevato file ShipsGo Enhanced, processamento avanzato...');
             
             fileData.forEach((row, index) => {
                 try {
                     // Salta righe vuote
-                    if (!row.Container) return;
+                    if (!row.Container || row.Container === '-') return;
+                    
+                    stats.total++;
                     
                     // Determina il tipo di tracking
-                    let trackingType = 'container'; // Default per ShipsGo
+                    let trackingType = 'container';
                     const containerNum = row.Container.toUpperCase();
                     
-                    // Rileva se è un BL number (più lungo del normale container)
+                    // Rileva se è un BL number
                     if (containerNum.length > 11) {
                         trackingType = 'bl';
                     }
                     
                     // Mappa il carrier
-                    const carrierCode = SHIPSGO_CARRIER_MAPPING[row.Carrier] || row.Carrier;
+                    const carrierCode = SHIPSGO_CARRIER_MAPPING[row.Carrier] || 
+                                      Object.keys(SHIPSGO_CARRIER_MAPPING).find(key => 
+                                          row.Carrier.toUpperCase().includes(key.toUpperCase())
+                                      ) || row.Carrier;
                     
                     // Mappa lo status
                     const status = SHIPSGO_STATUS_MAPPING[row.Status] || 'registered';
+                    
+                    // Aggiorna stats
+                    if (status === 'delivered') stats.delivered++;
+                    else if (status === 'in_transit') stats.in_transit++;
+                    else stats.registered++;
+                    
+                    // Parse date
+                    const loadingDate = parseShipsGoDate(row['Date Of Loading']);
+                    const dischargeDate = parseShipsGoDate(row['Date Of Discharge']);
+                    
+                    // Calcola giorni di transito se disponibili
+                    let transitTimeDays = null;
+                    if (loadingDate && dischargeDate) {
+                        const diff = new Date(dischargeDate) - new Date(loadingDate);
+                        transitTimeDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        stats.with_transit_time++;
+                    }
+                    
+                    // CO2 data
+                    if (row['CO₂ Emission (Tons)'] && row['CO₂ Emission (Tons)'] !== '-') {
+                        stats.with_co2_data++;
+                    }
                     
                     // Costruisci oggetto tracking
                     const tracking = {
@@ -1590,32 +1605,143 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                         trackingType: trackingType,
                         carrierCode: carrierCode,
                         referenceNumber: row.Reference !== '-' ? row.Reference : null,
-                        description: `Import ShipsGo - ${row.Carrier}`
+                        description: `Import ShipsGo - ${row.Carrier}`,
+                        // Dati aggiuntivi per timeline eventi
+                        metadata: {
+                            source: 'shipsgo_export',
+                            import_date: new Date().toISOString(),
+                            booking_number: row.Booking !== '-' ? row.Booking : null,
+                            co2_emissions: row['CO₂ Emission (Tons)'] !== '-' ? parseFloat(row['CO₂ Emission (Tons)']) : null,
+                            pol: row['Port Of Loading'],
+                            pod: row['Port Of Discharge'],
+                            pol_country: row['POL Country'],
+                            pod_country: row['POD Country'],
+                            loading_date: loadingDate,
+                            discharge_date: dischargeDate,
+                            transit_time_days: transitTimeDays,
+                            tags: row.Tags !== '-' ? row.Tags : null,
+                            container_count: parseInt(row['Container Count']) || 1,
+                            status: status,
+                            last_status: row.Status
+                        }
                     };
                     
                     trackingList.push(tracking);
                     
                 } catch (error) {
                     errors.push({
-                        row: index + 2, // +2 per header e indice 0-based
+                        row: index + 2,
                         container: row.Container || 'UNKNOWN',
                         error: error.message
                     });
                 }
             });
             
+            // Calcola tempo medio di transito
+            const avgTransitTime = calculateAverageTransitTime(trackingList);
+            
+            const summary = {
+                total: stats.total,
+                delivered: stats.delivered,
+                in_transit: stats.in_transit,
+                registered: stats.registered,
+                avg_transit_time: avgTransitTime,
+                with_co2_data: stats.with_co2_data
+            };
+            
             // Mostra riepilogo
-            console.log(`ShipsGo Import completato: ${trackingList.length} tracking pronti, ${errors.length} errori`);
+            console.log(`ShipsGo Enhanced Import:
+                - Totale: ${stats.total}
+                - Consegnati: ${stats.delivered}
+                - In Transito: ${stats.in_transit}
+                - Con dati CO2: ${stats.with_co2_data}
+                - Tempo medio transito: ${avgTransitTime || 'N/A'} giorni
+                - Errori: ${errors.length}`);
             
             if (errors.length > 0) {
                 console.warn('Errori durante import:', errors);
             }
             
-            return { trackingList, errors };
+            // Mostra riepilogo visuale
+            showImportSummary(summary);
+            
+            return { trackingList, errors, summary };
+        }
+        
+        // Calcola tempo medio di transito
+        function calculateAverageTransitTime(trackingList) {
+            const withTransitTime = trackingList.filter(t => t.metadata && t.metadata.transit_time_days);
+            if (withTransitTime.length === 0) return null;
+            
+            const total = withTransitTime.reduce((sum, t) => sum + t.metadata.transit_time_days, 0);
+            return Math.round(total / withTransitTime.length);
+        }
+        
+        // Mostra riepilogo import
+        function showImportSummary(summary) {
+            const summaryHtml = `
+                <div style="background: var(--sol-glass-medium); padding: var(--sol-space-lg); border-radius: var(--sol-radius-lg); margin-bottom: var(--sol-space-lg);">
+                    <h4 style="margin-bottom: var(--sol-space-md);">📊 Riepilogo Import ShipsGo</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sol-space-md);">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--sol-text-primary);">${summary.total}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Tracking Totali</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #34C759;">${summary.delivered}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Consegnati</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #FF9500;">${summary.in_transit}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">In Transito</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #007AFF;">${summary.avg_transit_time || 'N/A'}</div>
+                            <div style="font-size: 0.875rem; color: var(--sol-text-secondary);">Giorni Medi Transito</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const importProgress = document.getElementById('importProgress');
+            if (importProgress && importProgress.parentElement) {
+                // Inserisci prima del progress div
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = summaryHtml;
+                importProgress.parentElement.insertBefore(tempDiv.firstChild, importProgress);
+            }
+        }
+        
+        // Process standard file (fallback)
+        function processStandardFile(fileData) {
+            const trackingList = [];
+            
+            fileData.forEach(row => {
+                if (row.tracking_number || row['tracking number'] || row['Tracking Number']) {
+                    trackingList.push({
+                        trackingNumber: (row.tracking_number || row['tracking number'] || row['Tracking Number']).toUpperCase(),
+                        carrierCode: row.carrier_code || row.carrier || row.Carrier || '',
+                        trackingType: row.tracking_type || row.type || row.Type || detectTypeFromNumber(row.tracking_number || ''),
+                        referenceNumber: row.reference || row.Reference || null,
+                        description: 'Import standard'
+                    });
+                }
+            });
+            
+            return { 
+                trackingList, 
+                errors: [], 
+                summary: { 
+                    total: trackingList.length,
+                    delivered: 0,
+                    in_transit: 0,
+                    registered: trackingList.length
+                }
+            };
         }
 
-        // Import tracking batch
-        async function importTrackingBatch(trackingList) {
+        // Import tracking batch with events generation
+        async function importTrackingBatchWithEvents(trackingList) {
             const progressDiv = document.getElementById('importProgress');
             const progressBar = document.getElementById('importProgressBar');
             const importedCount = document.getElementById('importedCount');
@@ -1644,19 +1770,31 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                 
                 await Promise.all(batch.map(async (tracking) => {
                     try {
+                        // Prepara il payload con eventi se disponibili
+                        const payload = {
+                            ...tracking,
+                            // Se abbiamo metadata con date, genera eventi
+                            generateEvents: tracking.metadata && (tracking.metadata.loading_date || tracking.metadata.discharge_date)
+                        };
+                        
                         const response = await fetch('/.netlify/functions/add-tracking', {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(tracking)
+                            body: JSON.stringify(payload)
                         });
                         
                         const result = await response.json();
                         
                         if (response.ok) {
                             successCount++;
+                            
+                            // Se abbiamo eventi da creare e il tracking è stato creato
+                            if (tracking.metadata && result.tracking && result.tracking.id) {
+                                await createEventsFromMetadata(result.tracking.id, tracking.metadata, token);
+                            }
                         } else {
                             errorCount++;
                             errors.push({
@@ -1708,7 +1846,74 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             // Hide progress after 3 seconds
             setTimeout(() => {
                 progressDiv.style.display = 'none';
+                // Rimuovi anche il summary
+                const summaryDiv = progressDiv.previousElementSibling;
+                if (summaryDiv && summaryDiv.innerHTML.includes('Riepilogo Import')) {
+                    summaryDiv.remove();
+                }
             }, 3000);
+        }
+        
+        // Create events from ShipsGo metadata
+        async function createEventsFromMetadata(trackingId, metadata, token) {
+            const events = [];
+            
+            // Evento di carico
+            if (metadata.loading_date) {
+                events.push({
+                    tracking_id: trackingId,
+                    event_date: metadata.loading_date,
+                    event_type: 'LOADED_ON_VESSEL',
+                    event_code: 'LOD',
+                    description: 'Container loaded on vessel',
+                    location_name: metadata.pol || 'Loading Port',
+                    location_code: metadata.pol_country_code || ''
+                });
+            }
+            
+            // Evento di scarico (se già avvenuto)
+            if (metadata.discharge_date && new Date(metadata.discharge_date) < new Date()) {
+                events.push({
+                    tracking_id: trackingId,
+                    event_date: metadata.discharge_date,
+                    event_type: 'DISCHARGED_FROM_VESSEL',
+                    event_code: 'DIS',
+                    description: 'Container discharged from vessel',
+                    location_name: metadata.pod || 'Discharge Port',
+                    location_code: metadata.pod_country_code || ''
+                });
+                
+                // Se è stato scaricato, probabilmente è stato consegnato
+                if (metadata.status === 'delivered') {
+                    const deliveryDate = new Date(metadata.discharge_date);
+                    deliveryDate.setDate(deliveryDate.getDate() + 2); // Stima 2 giorni dopo scarico
+                    
+                    events.push({
+                        tracking_id: trackingId,
+                        event_date: deliveryDate.toISOString(),
+                        event_type: 'DELIVERED',
+                        event_code: 'DEL',
+                        description: 'Container delivered to consignee',
+                        location_name: metadata.pod || 'Delivery Location'
+                    });
+                }
+            }
+            
+            // Crea eventi nel database
+            for (const event of events) {
+                try {
+                    await fetch('/.netlify/functions/add-tracking-event', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(event)
+                    });
+                } catch (error) {
+                    console.error('Errore creazione evento:', error);
+                }
+            }
         }
 
         // Helper: Detect carrier from number
