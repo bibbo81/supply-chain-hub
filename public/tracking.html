@@ -2303,12 +2303,14 @@ MSCU7654321,MSC,container,PO123457
             }
         });
 
-        // Open Sync Wizard in modal (versione senza iframe)
+        // Open Sync Wizard in modal
         function openSyncWizard() {
-            // Crea modal per sync wizard direttamente nel DOM
+            // Crea modal per sync wizard
             const syncModal = document.createElement('div');
             syncModal.className = 'modal-overlay active';
             syncModal.id = 'syncWizardModal';
+            
+            // Invece di iframe, integriamo direttamente il contenuto
             syncModal.innerHTML = `
                 <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                     <div class="modal-header">
@@ -2317,19 +2319,65 @@ MSCU7654321,MSC,container,PO123457
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="modal-body">
-                        <div style="text-align: center; padding: var(--sol-space-2xl);">
-                            <i class="fas fa-ship" style="font-size: 4rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
-                            <h3 style="margin-bottom: var(--sol-space-md);">Funzionalità in arrivo</h3>
-                            <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-xl);">
-                                La sincronizzazione con ShipsGo sarà disponibile a breve.
-                            </p>
-                            <p style="color: var(--sol-text-secondary);">
-                                Nel frattempo, puoi utilizzare l'import manuale o da file CSV/Excel.
-                            </p>
-                            <button class="sol-btn sol-btn-primary" onclick="closeSyncWizard()" style="margin-top: var(--sol-space-xl);">
-                                OK, Capito
-                            </button>
+                    <div class="modal-body" style="padding: 0;">
+                        <div class="sync-wizard-container">
+                            <div class="wizard-header" style="text-align: center; padding: var(--sol-space-2xl);">
+                                <div style="width: 80px; height: 80px; background: var(--sol-gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem;">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <h3 style="font-size: 1.5rem; margin-bottom: var(--sol-space-sm);">Importa tutto il tuo storico tracking</h3>
+                                <p style="color: var(--sol-text-secondary);">Recupera automaticamente i tracking dal tuo account ShipsGo</p>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sol-space-lg); padding: var(--sol-space-xl);">
+                                <!-- Opzione 1: Auto Sync -->
+                                <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
+                                     onclick="startAutoSync()">
+                                    <i class="fas fa-magic" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Sincronizzazione Automatica</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Recupera automaticamente tutti i tracking attivi dal tuo account ShipsGo</p>
+                                    <ul style="text-align: left; list-style: none; padding: 0;">
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import tracking aerei (AWB)</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Timeline eventi completa</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Aggiornamento real-time</li>
+                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Zero configurazione</li>
+                                    </ul>
+                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
+                                        <i class="fas fa-cloud-download-alt"></i> Avvia Sync Automatico
+                                    </button>
+                                </div>
+                                
+                                <!-- Opzione 2: Batch Import -->
+                                <div class="sync-card" style="background: var(--sol-glass-light); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--sol-radius-lg); padding: var(--sol-space-xl); text-align: center; cursor: pointer; transition: var(--sol-transition-base);" 
+                                     onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#007AFF';" 
+                                     onmouseout="this.style.transform=''; this.style.borderColor='rgba(255, 255, 255, 0.1)';"
+                                     onclick="startBatchImport()">
+                                    <i class="fas fa-file-import" style="font-size: 3rem; color: #007AFF; margin-bottom: var(--sol-space-lg);"></i>
+                                    <h4 style="font-size: 1.25rem; margin-bottom: var(--sol-space-md);">Import Batch Container</h4>
+                                    <p style="color: var(--sol-text-secondary); margin-bottom: var(--sol-space-lg);">Importa una lista di container marittime da sincronizzare</p>
+                                    <ul style="text-align: left; list-style: none; padding: 0;">
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Import da Excel/CSV</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Migliaia di container</li>
+                                        <li style="margin-bottom: var(--sol-space-xs);"><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Storico completo</li>
+                                        <li><i class="fas fa-check" style="color: #34C759; margin-right: var(--sol-space-xs);"></i> Report dettagliato</li>
+                                    </ul>
+                                    <button class="sol-btn sol-btn-primary" style="margin-top: var(--sol-space-lg); width: 100%;">
+                                        <i class="fas fa-upload"></i> Carica Lista Container
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(0, 122, 255, 0.1); border: 1px solid rgba(0, 122, 255, 0.3); border-radius: var(--sol-radius-lg); padding: var(--sol-space-lg); margin: var(--sol-space-xl); margin-top: 0;">
+                                <h4 style="color: #007AFF; margin-bottom: var(--sol-space-md);"><i class="fas fa-info-circle"></i> Come Funziona</h4>
+                                <ol style="margin: 0; padding-left: var(--sol-space-lg); color: var(--sol-text-secondary);">
+                                    <li style="margin-bottom: var(--sol-space-sm);">Utilizziamo le tue credenziali API ShipsGo esistenti</li>
+                                    <li style="margin-bottom: var(--sol-space-sm);">Recuperiamo tutti i tracking attivi o la lista fornita</li>
+                                    <li style="margin-bottom: var(--sol-space-sm);">Salviamo tracking e timeline nel database locale</li>
+                                    <li>Aggiornamenti automatici ogni 4-6 ore per tracking attivi</li>
+                                </ol>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2344,6 +2392,55 @@ MSCU7654321,MSC,container,PO123457
             if (modal) {
                 modal.remove();
             }
+        }
+
+        // Start Auto Sync
+        async function startAutoSync() {
+            closeSyncWizard();
+            
+            // Show progress modal
+            showNotification('Avvio sincronizzazione automatica...', 'info');
+            
+            try {
+                const token = localStorage.getItem('sb-access-token') || sessionStorage.getItem('sb-access-token');
+                if (!token) {
+                    throw new Error('Token di autenticazione non trovato');
+                }
+                
+                const response = await fetch('/.netlify/functions/sync-shipsgo-bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mode: 'auto',
+                        types: ['awb', 'container', 'bl']
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`Sincronizzazione completata! ${result.imported} tracking importati.`, 'success');
+                    loadTrackings(); // Ricarica la lista
+                } else {
+                    throw new Error(result.error || 'Errore durante la sincronizzazione');
+                }
+                
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Funzionalità in arrivo. Nel frattempo usa l\'import manuale.', 'warning');
+            }
+        }
+
+        // Start Batch Import
+        function startBatchImport() {
+            closeSyncWizard();
+            // Apri direttamente il tab di import multiplo
+            toggleAddForm();
+            switchFormTab('import');
+            showNotification('Usa il tab "Import Multiplo" per caricare la tua lista', 'info');
         }
     </script>
 </body>
