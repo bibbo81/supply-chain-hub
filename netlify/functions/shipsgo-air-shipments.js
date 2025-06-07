@@ -114,7 +114,7 @@ exports.handler = async (event, context) => {
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${SHIPSGO_V2_API.authToken}`,
+        'X-Shipsgo-User-Token': SHIPSGO_V2_API.authToken,  // ✅ CORRETTO
         'Accept': 'application/json'
       }
     });

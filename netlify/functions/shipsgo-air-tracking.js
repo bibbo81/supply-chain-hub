@@ -167,7 +167,7 @@ async function handleCreateAirShipment(body, user, organizationId) {
     const response = await fetch(`${SHIPSGO_V2_API.baseUrl}/air/shipments`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SHIPSGO_V2_API.authToken}`,
+        'X-Shipsgo-User-Token': SHIPSGO_V2_API.authToken, // ✅ CORRETTO
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
@@ -303,7 +303,7 @@ async function handleDeleteAirShipment(body, user, organizationId) {
     const response = await fetch(`${SHIPSGO_V2_API.baseUrl}/air/shipments/${shipsgoShipmentId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${SHIPSGO_V2_API.authToken}`,
+        'X-Shipsgo-User-Token': SHIPSGO_V2_API.authToken, // ✅ CORRETTO
         'Accept': 'application/json'
       }
     });

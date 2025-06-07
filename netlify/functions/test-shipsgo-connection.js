@@ -58,11 +58,11 @@ exports.handler = async (event, context) => {
     if (v2Token) {
       try {
         const v2Response = await fetch(
-          'https://shipsgo.com/api/v2.0/shipments/air?take=1',
+          'https://api.shipsgo.com/v2/air/shipments?take=1', // ✅ URL CORRETTO
           {
             method: 'GET',
             headers: {
-              'Authorization': `Bearer ${v2Token}`,
+              'X-Shipsgo-User-Token': v2Token, // ✅ HEADER CORRETTO
               'Accept': 'application/json'
             }
           }
