@@ -294,41 +294,76 @@ exports.handler = async (event, context) => {
             metadata.transit_time_days = Math.floor(diff / (1000 * 60 * 60 * 24));
           }
 
-          // Controlla se esiste già (solo attivi)
-          const { data: existing } = await supabase
+          // Controlla se esiste già (anche inattivi)
+          const { data: existingActive } = await supabase
             .from('trackings')
             .select('id, status, metadata')
             .eq('tracking_number', containerNum)
             .eq('organizzazione_id', profile.organizzazione_id)
-            .eq('active', true)  // IMPORTANTE: controlla solo tracking attivi
+            .eq('active', true)
+            .single();
+            
+          // Controlla anche se esiste inattivo
+          const { data: existingInactive } = await supabase
+            .from('trackings')
+            .select('id, status, metadata')
+            .eq('tracking_number', containerNum)
+            .eq('organizzazione_id', profile.organizzazione_id)
+            .eq('active', false)
             .single();
 
-          if (existing && skipDuplicates && !updateExisting) {
+          let trackingId;
+          
+          if (existingActive && skipDuplicates && !updateExisting) {
             stats.skipped++;
             console.log(`Skipped duplicate: ${containerNum}`);
             return;
           }
 
-          // Prepara dati tracking
-          const trackingData = {
-            organizzazione_id: profile.organizzazione_id,
-            tracking_number: containerNum,
-            tracking_type: trackingType,
-            reference_number: row.Reference !== '-' ? row.Reference : null,
-            carrier_code: carrierCode,
-            carrier_name: carrierName,
-            origin_port: extractPortCode(row['Port Of Loading']),
-            origin_name: extractPortName(row['Port Of Loading']),
-            destination_port: extractPortCode(row['Port Of Discharge']),
-            destination_name: extractPortName(row['Port Of Discharge']),
-            status: SHIPSGO_STATUS_MAPPING[row.Status] || 'registered',
-            eta: eta,
-            metadata: metadata
-          };
+          if (existingActive && updateExisting) {
+            // Aggiorna tracking attivo esistente
+            const { error: updateError } = await supabase
+              .from('trackings')
+              .update({
+                ...trackingData,
+                metadata: {
+                  ...existingActive.metadata,
+                  ...metadata,
+                  last_csv_update: new Date().toISOString()
+                },
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingActive.id);
 
-          let trackingId;
-          
-          if (existing && updateExisting) {
+            if (updateError) throw updateError;
+            
+            trackingId = existingActive.id;
+            stats.updated++;
+            console.log(`Updated: ${containerNum}`);
+            
+          } else if (existingInactive) {
+            // Riattiva tracking inattivo
+            const { error: reactivateError } = await supabase
+              .from('trackings')
+              .update({
+                ...trackingData,
+                active: true,
+                metadata: {
+                  ...metadata,
+                  reactivated_at: new Date().toISOString(),
+                  reactivated_from: 'csv_import'
+                },
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingInactive.id);
+
+            if (reactivateError) throw reactivateError;
+            
+            trackingId = existingInactive.id;
+            stats.imported++; // Conta come nuovo
+            console.log(`Reactivated: ${containerNum}`);
+            
+          } else if (!existingActive) {
             // Aggiorna tracking esistente
             const { error: updateError } = await supabase
               .from('trackings')
