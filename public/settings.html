@@ -2002,12 +2002,23 @@
                 });
             });
 
-            // Carica settings ShipsGo dopo auth check
-            setTimeout(() => {
-                if (window.auth && window.auth.isAuthenticated()) {
-                    loadShipsGoSettings();
-                }
-            }, 1000);
+            let loadRetries = 0;
+const tryLoadSettings = setInterval(() => {
+    loadRetries++;
+    
+    // Controlla se auth è pronto
+    if (window.auth && window.auth.isAuthenticated()) {
+        console.log('Auth ready, loading ShipsGo settings...');
+        loadShipsGoSettings();
+        clearInterval(tryLoadSettings);
+    } 
+    // Se dopo 20 tentativi (10 secondi) non funziona, prova comunque
+    else if (loadRetries >= 20) {
+        console.log('Auth timeout, trying to load settings anyway...');
+        loadShipsGoSettings();
+        clearInterval(tryLoadSettings);
+    }
+}, 500); // Prova ogni 500ms
             
             // API Keys buttons
             document.querySelectorAll('.api-key-item .sol-btn').forEach(btn => {
