@@ -294,12 +294,13 @@ exports.handler = async (event, context) => {
             metadata.transit_time_days = Math.floor(diff / (1000 * 60 * 60 * 24));
           }
 
-          // Controlla se esiste già
+          // Controlla se esiste già (solo attivi)
           const { data: existing } = await supabase
             .from('trackings')
             .select('id, status, metadata')
             .eq('tracking_number', containerNum)
             .eq('organizzazione_id', profile.organizzazione_id)
+            .eq('active', true)  // IMPORTANTE: controlla solo tracking attivi
             .single();
 
           if (existing && skipDuplicates && !updateExisting) {
