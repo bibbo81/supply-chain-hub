@@ -1788,15 +1788,18 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             if (progressBar) progressBar.style.width = `${percent}%`;
         }
 
-        // Chiudi progress modal
+        // Modifica anche closeImportProgressModal per fare reset
         function closeImportProgressModal(modal) {
             if (modal) {
                 modal.classList.add('fade-out');
-                setTimeout(() => modal.remove(), 300);
+                setTimeout(() => {
+                    modal.remove();
+                    resetImportForm(); // Reset dopo chiusura
+                }, 300);
             }
         }
 
-        // Mostra riepilogo dettagliato post-import
+        // Modifica showImportSummaryModal per chiamare reset dopo chiusura
         function showImportSummaryModal(result) {
             const { stats, errors } = result;
             
@@ -1806,7 +1809,7 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                 <div class="modal-content" style="max-width: 700px;">
                     <div class="modal-header">
                         <h2>✅ Import CSV Completato</h2>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove(); resetImportForm();">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -1857,7 +1860,7 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
                         ` : ''}
                         
                         <div style="text-align: center; margin-top: var(--sol-space-xl);">
-                            <button class="sol-btn sol-btn-primary" onclick="this.closest('.modal-overlay').remove()">
+                            <button class="sol-btn sol-btn-primary" onclick="this.closest('.modal-overlay').remove(); resetImportForm();">
                                 <i class="fas fa-check"></i> Chiudi
                             </button>
                         </div>
@@ -1866,6 +1869,36 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
             `;
             
             document.body.appendChild(modal);
+        }
+
+        // Reset completo del form import
+        function resetImportForm() {
+            // Reset file input
+            const fileInput = document.getElementById('importFile');
+            if (fileInput) {
+                fileInput.value = '';
+                // Crea nuovo input per forzare reset completo
+                const newInput = fileInput.cloneNode(true);
+                fileInput.parentNode.replaceChild(newInput, fileInput);
+                // Riattacca event listener
+                newInput.addEventListener('change', handleFileImport);
+            }
+            
+            // Reset textarea
+            const textarea = document.getElementById('importTextarea');
+            if (textarea) {
+                textarea.value = '';
+            }
+            
+            // Nascondi progress se visibile
+            const progressDiv = document.getElementById('importProgress');
+            if (progressDiv) {
+                progressDiv.style.display = 'none';
+            }
+            
+            // Rimuovi eventuali summary
+            const summaries = document.querySelectorAll('[id*="summary"]');
+            summaries.forEach(s => s.remove());
         }
 
         // --- END OF NEW AND UPDATED IMPORT FUNCTIONS ---
