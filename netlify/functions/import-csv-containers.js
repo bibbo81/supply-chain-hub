@@ -1,0 +1,484 @@
+// netlify/functions/import-csv-containers.js
+const { createClient } = require('@supabase/supabase-js');
+const Papa = require('papaparse');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Mappatura carrier names ShipsGo → nostri codici
+const SHIPSGO_CARRIER_MAPPING = {
+  'MAERSK LINE': 'MAERSK',
+  'MSC': 'MSC',
+  'CMA CGM': 'CMA-CGM',
+  'COSCO': 'COSCO',
+  'HAPAG-LLOYD': 'HAPAG-LLOYD',
+  'ONE': 'ONE',
+  'EVERGREEN': 'EVERGREEN',
+  'YANG MING': 'YANG-MING',
+  'ZIM': 'ZIM',
+  'HMM': 'HMM',
+  'OOCL': 'OOCL',
+  'APL': 'APL',
+  'NYK': 'NYK',
+  'MOL': 'MOL',
+  'K LINE': 'K-LINE'
+};
+
+// Mappatura status ShipsGo → nostri status
+const SHIPSGO_STATUS_MAPPING = {
+  'Gate In': 'in_transit',
+  'Gate Out': 'in_transit', 
+  'Loaded': 'in_transit',
+  'Discharged': 'in_transit',
+  'In Transit': 'in_transit',
+  'Delivered': 'delivered',
+  'Empty': 'delivered',
+  'Registered': 'registered',
+  'Pending': 'registered'
+};
+
+// Mappatura eventi da status ShipsGo
+const STATUS_TO_EVENT_MAPPING = {
+  'Gate In': { type: 'GATE_IN', code: 'GIN', description: 'Container entered terminal' },
+  'Gate Out': { type: 'GATE_OUT', code: 'GOUT', description: 'Container left terminal' },
+  'Loaded': { type: 'LOADED_ON_VESSEL', code: 'LOD', description: 'Container loaded on vessel' },
+  'Discharged': { type: 'DISCHARGED_FROM_VESSEL', code: 'DIS', description: 'Container discharged from vessel' },
+  'Delivered': { type: 'DELIVERED', code: 'DEL', description: 'Container delivered to consignee' },
+  'Empty': { type: 'EMPTY_RETURNED', code: 'ERT', description: 'Empty container returned' },
+  'In Transit': { type: 'DEPARTED', code: 'DEP', description: 'Vessel departed' }
+};
+
+// Parse data ShipsGo formato DD/MM/YYYY o DD/MM/YYYY HH:MM:SS
+function parseShipsGoDate(dateStr) {
+  if (!dateStr || dateStr === '-' || dateStr === '') return null;
+  
+  try {
+    // Rimuovi eventuale orario
+    const cleanDate = dateStr.split(' ')[0];
+    const [day, month, year] = cleanDate.split('/');
+    
+    if (!day || !month || !year) return null;
+    
+    // Crea data in formato ISO
+    const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const date = new Date(isoDate);
+    
+    // Verifica che sia una data valida
+    if (isNaN(date.getTime())) return null;
+    
+    return date.toISOString();
+  } catch (error) {
+    console.error('Error parsing date:', dateStr, error);
+    return null;
+  }
+}
+
+// Estrai codice porto da stringa tipo "SHANGHAI, CN"
+function extractPortCode(portString) {
+  if (!portString || portString === '-') return null;
+  
+  // Se già un codice porto (5 caratteri maiuscoli)
+  if (/^[A-Z]{5}$/.test(portString)) return portString;
+  
+  // Altrimenti prendi prime 5 lettere e uppercase
+  return portString.replace(/[^A-Z]/gi, '').substring(0, 5).toUpperCase() || null;
+}
+
+// Estrai nome pulito del porto
+function extractPortName(portString) {
+  if (!portString || portString === '-') return null;
+  
+  // Rimuovi codice paese se presente
+  const parts = portString.split(',');
+  return parts[0].trim();
+}
+
+exports.handler = async (event, context) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    // Verifica autenticazione
+    const token = event.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ error: 'Missing authorization token' })
+      };
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ error: 'Invalid token' })
+      };
+    }
+
+    // Get user's organization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('organizzazione_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.organizzazione_id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'User profile not found' })
+      };
+    }
+
+    // Parse request body
+    const { csvData, options = {} } = JSON.parse(event.body);
+    
+    if (!csvData) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'CSV data required' })
+      };
+    }
+
+    // Opzioni di import
+    const {
+      skipDuplicates = true,
+      updateExisting = false,
+      importEvents = true,
+      batchSize = 50
+    } = options;
+
+    // Parse CSV
+    const parseResult = Papa.parse(csvData, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim()
+    });
+
+    if (parseResult.errors.length > 0) {
+      console.error('CSV parse errors:', parseResult.errors);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ 
+          error: 'CSV parsing failed', 
+          details: parseResult.errors 
+        })
+      };
+    }
+
+    const rows = parseResult.data;
+    console.log(`Processing ${rows.length} rows from CSV`);
+
+    // Statistiche
+    const stats = {
+      total: 0,
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+      events_created: 0
+    };
+    const errors = [];
+
+    // Processa in batch
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (row, batchIndex) => {
+        const rowIndex = i + batchIndex + 2; // +2 per header e indice 0
+        
+        try {
+          // Salta righe vuote
+          if (!row.Container || row.Container === '-' || row.Container === '') {
+            stats.skipped++;
+            return;
+          }
+
+          stats.total++;
+
+          // Prepara dati tracking
+          const containerNum = row.Container.trim().toUpperCase();
+          
+          // Determina il tipo
+          let trackingType = 'container';
+          if (containerNum.length > 11 && /^[A-Z]{4}\d{8,}$/.test(containerNum)) {
+            trackingType = 'bl';
+          }
+
+          // Mappa il carrier
+          const carrierName = row.Carrier || row['Shipping Line'] || '';
+          const carrierCode = SHIPSGO_CARRIER_MAPPING[carrierName] || 
+                            Object.keys(SHIPSGO_CARRIER_MAPPING).find(key => 
+                              carrierName.toUpperCase().includes(key.toUpperCase())
+                            ) || carrierName.substring(0, 10);
+
+          // Parse date
+          const loadingDate = parseShipsGoDate(row['Date Of Loading']);
+          const dischargeDate = parseShipsGoDate(row['Date Of Discharge']);
+          
+          // Calcola ETA se discharge date è nel futuro
+          let eta = null;
+          if (dischargeDate && new Date(dischargeDate) > new Date()) {
+            eta = dischargeDate;
+          }
+
+          // Prepara metadata con tutti i dati extra
+          const metadata = {
+            source: 'shipsgo_csv_import',
+            import_date: new Date().toISOString(),
+            import_user: user.email,
+            shipsgo_status: row.Status,
+            booking_number: row.Booking !== '-' ? row.Booking : null,
+            co2_emissions_tons: row['CO₂ Emission (Tons)'] && row['CO₂ Emission (Tons)'] !== '-' 
+              ? parseFloat(row['CO₂ Emission (Tons)']) : null,
+            pol_full: row['Port Of Loading'],
+            pod_full: row['Port Of Discharge'],
+            pol_country: row['POL Country'],
+            pod_country: row['POD Country'],
+            loading_date: loadingDate,
+            discharge_date: dischargeDate,
+            transit_time_days: null,
+            tags: row.Tags !== '-' ? row.Tags : null,
+            container_count: parseInt(row['Container Count']) || 1,
+            container_size: row['Container Size'] || null,
+            container_type: row['Container Type'] || null
+          };
+
+          // Calcola transit time se abbiamo entrambe le date
+          if (loadingDate && dischargeDate) {
+            const diff = new Date(dischargeDate) - new Date(loadingDate);
+            metadata.transit_time_days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          }
+
+          // Controlla se esiste già
+          const { data: existing } = await supabase
+            .from('trackings')
+            .select('id, status, metadata')
+            .eq('tracking_number', containerNum)
+            .eq('organizzazione_id', profile.organizzazione_id)
+            .single();
+
+          if (existing && skipDuplicates && !updateExisting) {
+            stats.skipped++;
+            console.log(`Skipped duplicate: ${containerNum}`);
+            return;
+          }
+
+          // Prepara dati tracking
+          const trackingData = {
+            organizzazione_id: profile.organizzazione_id,
+            tracking_number: containerNum,
+            tracking_type: trackingType,
+            reference_number: row.Reference !== '-' ? row.Reference : null,
+            carrier_code: carrierCode,
+            carrier_name: carrierName,
+            origin_port: extractPortCode(row['Port Of Loading']),
+            origin_name: extractPortName(row['Port Of Loading']),
+            destination_port: extractPortCode(row['Port Of Discharge']),
+            destination_name: extractPortName(row['Port Of Discharge']),
+            status: SHIPSGO_STATUS_MAPPING[row.Status] || 'registered',
+            eta: eta,
+            metadata: metadata
+          };
+
+          let trackingId;
+          
+          if (existing && updateExisting) {
+            // Aggiorna tracking esistente
+            const { error: updateError } = await supabase
+              .from('trackings')
+              .update({
+                ...trackingData,
+                metadata: {
+                  ...existing.metadata,
+                  ...metadata,
+                  last_csv_update: new Date().toISOString()
+                },
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existing.id);
+
+            if (updateError) throw updateError;
+            
+            trackingId = existing.id;
+            stats.updated++;
+            console.log(`Updated: ${containerNum}`);
+            
+          } else if (!existing) {
+            // Crea nuovo tracking
+            const { data: newTracking, error: insertError } = await supabase
+              .from('trackings')
+              .insert([trackingData])
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+            
+            trackingId = newTracking.id;
+            stats.imported++;
+            console.log(`Imported: ${containerNum}`);
+          }
+
+          // Crea eventi se richiesto e abbiamo un tracking
+          if (importEvents && trackingId && row.Status && row.Status !== '-') {
+            const events = [];
+            
+            // Evento basato sullo status corrente
+            const statusEvent = STATUS_TO_EVENT_MAPPING[row.Status];
+            if (statusEvent) {
+              // Determina la data dell'evento
+              let eventDate = new Date().toISOString();
+              
+              if (row.Status === 'Loaded' && loadingDate) {
+                eventDate = loadingDate;
+              } else if (row.Status === 'Discharged' && dischargeDate) {
+                eventDate = dischargeDate;
+              } else if (row.Status === 'Delivered' && dischargeDate) {
+                // Delivered solitamente qualche giorno dopo discharge
+                const deliveryDate = new Date(dischargeDate);
+                deliveryDate.setDate(deliveryDate.getDate() + 2);
+                eventDate = deliveryDate.toISOString();
+              }
+
+              events.push({
+                tracking_id: trackingId,
+                event_date: eventDate,
+                event_type: statusEvent.type,
+                event_code: statusEvent.code,
+                description: statusEvent.description,
+                location_name: row.Status.includes('Load') ? 
+                  extractPortName(row['Port Of Loading']) : 
+                  extractPortName(row['Port Of Discharge']),
+                location_code: row.Status.includes('Load') ? 
+                  extractPortCode(row['Port Of Loading']) : 
+                  extractPortCode(row['Port Of Discharge']),
+                data_source: 'shipsgo_csv',
+                confidence_score: 0.9,
+                raw_data: { csv_row: row }
+              });
+            }
+
+            // Aggiungi eventi di loading/discharge se abbiamo le date
+            if (loadingDate && new Date(loadingDate) < new Date()) {
+              events.push({
+                tracking_id: trackingId,
+                event_date: loadingDate,
+                event_type: 'LOADED_ON_VESSEL',
+                event_code: 'LOD',
+                description: 'Container loaded on vessel',
+                location_name: extractPortName(row['Port Of Loading']),
+                location_code: extractPortCode(row['Port Of Loading']),
+                data_source: 'shipsgo_csv',
+                confidence_score: 0.95
+              });
+            }
+
+            if (dischargeDate && new Date(dischargeDate) < new Date()) {
+              events.push({
+                tracking_id: trackingId,
+                event_date: dischargeDate,
+                event_type: 'DISCHARGED_FROM_VESSEL', 
+                event_code: 'DIS',
+                description: 'Container discharged from vessel',
+                location_name: extractPortName(row['Port Of Discharge']),
+                location_code: extractPortCode(row['Port Of Discharge']),
+                data_source: 'shipsgo_csv',
+                confidence_score: 0.95
+              });
+            }
+
+            if (events.length > 0) {
+              // Rimuovi duplicati per tracking_id + event_type + event_date
+              const uniqueEvents = [];
+              const eventKeys = new Set();
+              
+              for (const event of events) {
+                const key = `${event.tracking_id}-${event.event_type}-${event.event_date}`;
+                if (!eventKeys.has(key)) {
+                  eventKeys.add(key);
+                  uniqueEvents.push(event);
+                }
+              }
+
+              // Inserisci eventi
+              const { error: eventsError } = await supabase
+                .from('tracking_events')
+                .insert(uniqueEvents);
+
+              if (eventsError) {
+                console.error('Error creating events:', eventsError);
+              } else {
+                stats.events_created += uniqueEvents.length;
+              }
+
+              // Aggiorna il tracking con l'ultimo evento
+              const lastEvent = uniqueEvents.sort((a, b) => 
+                new Date(b.event_date) - new Date(a.event_date)
+              )[0];
+
+              if (lastEvent) {
+                await supabase
+                  .from('trackings')
+                  .update({
+                    last_event_date: lastEvent.event_date,
+                    last_event_location: lastEvent.location_name,
+                    last_event_description: lastEvent.description,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', trackingId);
+              }
+            }
+          }
+
+        } catch (error) {
+          console.error(`Error processing row ${rowIndex}:`, error);
+          stats.errors++;
+          errors.push({
+            row: rowIndex,
+            container: row.Container || 'UNKNOWN',
+            error: error.message
+          });
+        }
+      }));
+
+      // Piccola pausa tra batch per non sovraccaricare
+      if (i + batchSize < rows.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+
+    // Prepara response
+    const response = {
+      success: true,
+      stats: stats,
+      message: `Import completato: ${stats.imported} nuovi, ${stats.updated} aggiornati, ${stats.skipped} saltati, ${stats.errors} errori`,
+      errors: errors.length > 0 ? errors.slice(0, 10) : [] // Ritorna max 10 errori
+    };
+
+    if (stats.events_created > 0) {
+      response.message += `, ${stats.events_created} eventi creati`;
+    }
+
+    console.log('Import completed:', stats);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(response)
+    };
+
+  } catch (error) {
+    console.error('Handler error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      })
+    };
+  }
+};
