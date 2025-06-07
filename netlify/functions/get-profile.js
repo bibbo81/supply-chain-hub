@@ -23,21 +23,37 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // INIZIALIZZA SUPABASE QUI!
+    // INIZIALIZZA SUPABASE
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    const userId = event.queryStringParameters?.id;
+    // OTTIENI USER ID DAL TOKEN DI AUTORIZZAZIONE
+    const token = event.headers.authorization?.replace('Bearer ', '');
     
-    if (!userId) {
+    if (!token) {
       return {
-        statusCode: 400,
+        statusCode: 401,
         headers: corsHeaders,
-        body: JSON.stringify({ error: 'User ID required' })
+        body: JSON.stringify({ error: 'Authorization token required' })
       };
     }
+
+    // Verifica il token e ottieni l'utente
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return {
+        statusCode: 401,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Invalid token' })
+      };
+    }
+
+    // Usa l'ID dell'utente autenticato
+    const userId = user.id;
 
     // Get profile
     const { data: profile, error } = await supabase
