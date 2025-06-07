@@ -36,8 +36,12 @@ const SHIPSGO_STATUS_MAPPING = {
   'In Transit': 'in_transit',
   'Delivered': 'delivered',
   'Empty': 'delivered',
+  'Empty Returned': 'delivered',  // Aggiungi varianti
+  'Empty Container Returned': 'delivered',
   'Registered': 'registered',
-  'Pending': 'registered'
+  'Pending': 'registered',
+  'Arrived': 'in_transit',  // Arrivato al porto ma non ancora consegnato
+  'Arrival': 'in_transit'
 };
 
 // Mappatura eventi da status ShipsGo
@@ -359,12 +363,13 @@ exports.handler = async (event, context) => {
             console.log(`Updated: ${containerNum}`);
             
           } else if (existingInactive) {
-            // Riattiva tracking inattivo
+            // Riattiva tracking inattivo con TUTTI i nuovi dati
             const { error: reactivateError } = await supabase
               .from('trackings')
               .update({
                 ...trackingData,
                 active: true,
+                status: trackingData.status, // IMPORTANTE: usa il nuovo status dal CSV
                 metadata: {
                   ...metadata,
                   reactivated_at: new Date().toISOString(),
@@ -375,6 +380,13 @@ exports.handler = async (event, context) => {
               .eq('id', existingInactive.id);
 
             if (reactivateError) throw reactivateError;
+            
+            // IMPORTANTE: Rimuovi vecchi eventi DELETED quando riattivi
+            await supabase
+              .from('tracking_events')
+              .delete()
+              .eq('tracking_id', existingInactive.id)
+              .eq('event_type', 'DELETED');
             
             trackingId = existingInactive.id;
             stats.imported++; // Conta come nuovo

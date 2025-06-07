@@ -73,11 +73,12 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Get events
+    // Get events - ESCLUDI EVENTI DELETED
     const { data: events, error: eventsError } = await supabase
       .from('tracking_events')
       .select('*')
       .eq('tracking_id', trackingId)
+      .neq('event_type', 'DELETED') // Exclude DELETED events
       .order('event_date', { ascending: false });
 
     if (eventsError) {
