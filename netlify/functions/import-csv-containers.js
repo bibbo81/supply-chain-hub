@@ -1,6 +1,7 @@
 // netlify/functions/import-csv-containers.js
 const { createClient } = require('@supabase/supabase-js');
 const Papa = require('papaparse');
+const XLSX = require('xlsx');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -136,12 +137,12 @@ exports.handler = async (event, context) => {
     }
 
     // Parse request body
-    const { csvData, options = {} } = JSON.parse(event.body);
+    const { csvData, xlsxData, options = {} } = JSON.parse(event.body);
     
-    if (!csvData) {
+    if (!csvData && !xlsxData) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'CSV data required' })
+        body: JSON.stringify({ error: 'CSV or XLSX data required' })
       };
     }
 
@@ -153,26 +154,60 @@ exports.handler = async (event, context) => {
       batchSize = 50
     } = options;
 
-    // Parse CSV
-    const parseResult = Papa.parse(csvData, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim()
-    });
+    // Parse CSV or Excel
+    let rows = [];
+    
+    if (xlsxData) {
+      // Parse Excel data (base64 encoded)
+      console.log('Processing Excel file...');
+      try {
+        const buffer = Buffer.from(xlsxData, 'base64');
+        const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        rows = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+        console.log(`Parsed ${rows.length} rows from Excel`);
+      } catch (error) {
+        console.error('Excel parse error:', error);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ 
+            error: 'Excel parsing failed', 
+            details: error.message 
+          })
+        };
+      }
+    } else {
+      // Parse CSV
+      const parseResult = Papa.parse(csvData, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim()
+      });
 
-    if (parseResult.errors.length > 0) {
-      console.error('CSV parse errors:', parseResult.errors);
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ 
-          error: 'CSV parsing failed', 
-          details: parseResult.errors 
-        })
-      };
+      if (parseResult.errors.length > 0) {
+        console.error('CSV parse errors:', parseResult.errors);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ 
+            error: 'CSV parsing failed', 
+            details: parseResult.errors 
+          })
+        };
+      }
+      
+      rows = parseResult.data;
     }
+    
+    console.log(`Processing ${rows.length} rows from ${xlsxData ? 'Excel' : 'CSV'}`);
 
-    const rows = parseResult.data;
-    console.log(`Processing ${rows.length} rows from CSV`);
+    // Rileva formato ShipsGo
+    const isShipsGoFormat = rows.length > 0 && (
+      'Container' in rows[0] || 
+      'container' in rows[0] ||
+      'CONTAINER' in rows[0] ||
+      'Container Number' in rows[0]
+    );
 
     // Statistiche
     const stats = {
@@ -193,8 +228,12 @@ exports.handler = async (event, context) => {
         const rowIndex = i + batchIndex + 2; // +2 per header e indice 0
         
         try {
-          // Salta righe vuote
-          if (!row.Container || row.Container === '-' || row.Container === '') {
+          // Salta righe vuote - gestisci vari formati di nome colonna
+          const containerValue = row.Container || row.container || row.CONTAINER || 
+                               row['Container Number'] || row['container number'] || 
+                               row['CONTAINER NUMBER'] || '';
+                               
+          if (!containerValue || containerValue === '-' || containerValue === '') {
             stats.skipped++;
             return;
           }
@@ -202,7 +241,7 @@ exports.handler = async (event, context) => {
           stats.total++;
 
           // Prepara dati tracking
-          const containerNum = row.Container.trim().toUpperCase();
+          const containerNum = containerValue.trim().toUpperCase();
           
           // Determina il tipo
           let trackingType = 'container';
@@ -437,11 +476,17 @@ exports.handler = async (event, context) => {
 
         } catch (error) {
           console.error(`Error processing row ${rowIndex}:`, error);
+          console.error('Full error details:', {
+            row: row,
+            error: error.message,
+            stack: error.stack
+          });
           stats.errors++;
           errors.push({
             row: rowIndex,
             container: row.Container || 'UNKNOWN',
-            error: error.message
+            error: error.message,
+            details: error.response?.data || error.stack
           });
         }
       }));
