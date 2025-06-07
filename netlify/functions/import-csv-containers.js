@@ -294,6 +294,23 @@ exports.handler = async (event, context) => {
             metadata.transit_time_days = Math.floor(diff / (1000 * 60 * 60 * 24));
           }
 
+          // Prepara dati tracking PRIMA di controllare esistenza
+          const trackingData = {
+            organizzazione_id: profile.organizzazione_id,
+            tracking_number: containerNum,
+            tracking_type: trackingType,
+            reference_number: row.Reference !== '-' ? row.Reference : null,
+            carrier_code: carrierCode,
+            carrier_name: carrierName,
+            origin_port: extractPortCode(row['Port Of Loading']),
+            origin_name: extractPortName(row['Port Of Loading']),
+            destination_port: extractPortCode(row['Port Of Discharge']),
+            destination_name: extractPortName(row['Port Of Discharge']),
+            status: SHIPSGO_STATUS_MAPPING[row.Status] || 'registered',
+            eta: eta,
+            metadata: metadata
+          };
+
           // Controlla se esiste già (anche inattivi)
           const { data: existingActive } = await supabase
             .from('trackings')
