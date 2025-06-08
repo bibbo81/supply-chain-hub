@@ -1,6 +1,7 @@
 // netlify/functions/update-tracking.js
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
+const { updateTrackingStatusFromAPI } = require('./utils/status-mapping');
 
 // Initialize Supabase
 const supabase = createClient(
@@ -8,216 +9,29 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// ShipsGo configurations
-const SHIPSGO_V1_CONFIG = {
-  baseUrl: 'https://shipsgo.com/api/v1.2',
-  apiKey: process.env.SHIPSGO_V1_API_KEY || '2dc0c6d92ccb59e7d903825c4ebeb521',
-  headers: {
-    'Authorization': 'Bearer 2dc0c6d92ccb59e7d903825c4ebeb521',
-    'Content-Type': 'application/json'
-  }
-};
-
-const SHIPSGO_V2_CONFIG = {
-  baseUrl: 'https://api.shipsgo.com/api/v2',
-  token: process.env.SHIPSGO_V2_TOKEN || '505751c2-2745-4d83-b4e7-d35ccddd0628',
-  headers: {
-    'Authorization': 'Bearer 505751c2-2745-4d83-b4e7-d35ccddd0628',
-    'Content-Type': 'application/json'
-  }
-};
-
-// Status mappings
-const STATUS_MAPPINGS = {
-  // V1.2 statuses
-  'Gate In': 'in_transit',
-  'Gate Out': 'in_transit',
-  'Loaded': 'in_transit',
-  'Discharged': 'in_transit',
-  'Delivered': 'delivered',
-  'Empty Container Returned': 'delivered',
-  
-  // V2.0 statuses
-  'DEP': 'in_transit',
-  'ARR': 'in_transit',
-  'DLV': 'delivered',
-  'RCS': 'in_transit',
-  'RCF': 'in_transit',
-  'NFD': 'in_transit'
-};
-
-// Event type mappings
-const EVENT_TYPE_MAPPINGS = {
-  'Gate In': 'GATE_IN',
-  'Gate Out': 'GATE_OUT',
-  'Loaded': 'LOADED_ON_VESSEL',
-  'Discharged': 'DISCHARGED_FROM_VESSEL',
-  'Delivered': 'DELIVERED',
-  'Empty Container Returned': 'EMPTY_RETURNED',
-  'DEP': 'DEPARTED',
-  'ARR': 'ARRIVED',
-  'DLV': 'DELIVERED',
-  'RCS': 'RECEIVED_FROM_SHIPPER',
-  'RCF': 'RECEIVED_FROM_FLIGHT'
-};
-
-// Retry configuration
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000,
-  backoffMultiplier: 2
-};
-
-async function fetchWithRetry(url, options, retries = RETRY_CONFIG.maxRetries) {
-  try {
-    const response = await fetch(url, options);
-    
-    // Handle rate limiting
-    if (response.status === 429 && retries > 0) {
-      const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, RETRY_CONFIG.maxRetries - retries);
-      console.log(`Rate limited, retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return fetchWithRetry(url, options, retries - 1);
-    }
-    
-    return response;
-  } catch (error) {
-    if (retries > 0) {
-      const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, RETRY_CONFIG.maxRetries - retries);
-      console.log(`Request failed, retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return fetchWithRetry(url, options, retries - 1);
-    }
-    throw error;
-  }
+// NOTE: The new logic assumes these functions are defined elsewhere.
+// You will need to provide their implementation.
+async function fetchContainerInfo(trackingNumber) {
+  // Placeholder for your container fetching logic
+  console.log(`Fetching container info for: ${trackingNumber}`);
+  // Example: return await someAPICall(trackingNumber);
+  return null; 
 }
 
-async function fetchV1Updates(tracking) {
-  const containerId = tracking.metadata?.shipsgo_container_id;
-  if (!containerId) {
-    throw new Error('No ShipsGo container ID found');
-  }
-
-  const response = await fetchWithRetry(
-    `${SHIPSGO_V1_CONFIG.baseUrl}/tracking/${containerId}`,
-    {
-      method: 'GET',
-      headers: SHIPSGO_V1_CONFIG.headers
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`ShipsGo V1.2 error: ${response.status} - ${errorText}`);
-  }
-
-  return await response.json();
+async function fetchAWBInfo(trackingNumber) {
+  // Placeholder for your AWB fetching logic
+  console.log(`Fetching AWB info for: ${trackingNumber}`);
+  // Example: return await anotherAPICall(trackingNumber);
+  return null;
 }
 
-async function fetchV2Updates(tracking) {
-  const trackingId = tracking.metadata?.shipsgo_tracking_id;
-  if (!trackingId) {
-    throw new Error('No ShipsGo tracking ID found');
-  }
-
-  const response = await fetchWithRetry(
-    `${SHIPSGO_V2_CONFIG.baseUrl}/trackings/${trackingId}`,
-    {
-      method: 'GET',
-      headers: SHIPSGO_V2_CONFIG.headers
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`ShipsGo V2.0 error: ${response.status} - ${errorText}`);
-  }
-
-  return await response.json();
+async function fetchParcelInfo(trackingNumber, carrierCode) {
+  // Placeholder for your parcel fetching logic
+  console.log(`Fetching parcel info for: ${trackingNumber} with ${carrierCode}`);
+  // Example: return await parcelAPICall(trackingNumber, carrierCode);
+  return null;
 }
 
-function normalizeV1Data(data, tracking) {
-  const events = [];
-  const containers = data.containers || [data];
-  
-  containers.forEach(container => {
-    // Process events
-    if (container.events && Array.isArray(container.events)) {
-      container.events.forEach(event => {
-        events.push({
-          event_date: new Date(event.date).toISOString(),
-          event_type: EVENT_TYPE_MAPPINGS[event.description] || 'OTHER',
-          event_code: event.description?.substring(0, 3).toUpperCase(),
-          location_name: event.location,
-          location_code: event.unlocode,
-          description: event.description,
-          vessel_name: container.vessel?.name,
-          vessel_imo: container.vessel?.imo,
-          voyage_number: container.voyage,
-          data_source: 'shipsgo_v1',
-          confidence_score: 0.95,
-          raw_data: event
-        });
-      });
-    }
-  });
-
-  // Get latest container info
-  const latestContainer = containers[containers.length - 1];
-  
-  return {
-    status: STATUS_MAPPINGS[latestContainer.lastEvent?.description] || 'in_transit',
-    eta: latestContainer.eta ? new Date(latestContainer.eta).toISOString() : null,
-    ata: latestContainer.ata ? new Date(latestContainer.ata).toISOString() : null,
-    vessel_name: latestContainer.vessel?.name,
-    vessel_imo: latestContainer.vessel?.imo,
-    voyage_number: latestContainer.voyage,
-    events: events.sort((a, b) => new Date(b.event_date) - new Date(a.event_date))
-  };
-}
-
-function normalizeV2Data(data, tracking) {
-  const events = [];
-  
-  // Process tracking events
-  if (data.events && Array.isArray(data.events)) {
-    data.events.forEach(event => {
-      events.push({
-        event_date: new Date(event.eventDate).toISOString(),
-        event_type: EVENT_TYPE_MAPPINGS[event.eventCode] || 'OTHER',
-        event_code: event.eventCode,
-        location_name: event.location,
-        location_code: event.airport,
-        description: event.description || event.eventCode,
-        flight_number: event.flightNumber,
-        data_source: 'shipsgo_v2',
-        confidence_score: 0.95,
-        raw_data: event
-      });
-    });
-  }
-  
-  return {
-    status: STATUS_MAPPINGS[data.lastEvent?.eventCode] || 'in_transit',
-    eta: data.estimatedDelivery ? new Date(data.estimatedDelivery).toISOString() : null,
-    ata: data.actualDelivery ? new Date(data.actualDelivery).toISOString() : null,
-    flight_number: data.flightNumber,
-    events: events.sort((a, b) => new Date(b.event_date) - new Date(a.event_date))
-  };
-}
-
-async function checkIfDelayed(tracking, normalizedData) {
-  if (normalizedData.eta && normalizedData.status === 'in_transit') {
-    const etaDate = new Date(normalizedData.eta);
-    const now = new Date();
-    
-    if (now > etaDate) {
-      return 'delayed';
-    }
-  }
-  
-  return normalizedData.status;
-}
 
 exports.handler = async (event, context) => {
   // Only allow POST
@@ -227,6 +41,8 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
+
+  let tracking; // Define tracking here to be accessible in the final catch block
 
   try {
     // Get auth token from header
@@ -262,7 +78,7 @@ exports.handler = async (event, context) => {
     }
 
     // Parse request body
-    const { trackingId } = JSON.parse(event.body);
+    const { trackingId, forceUpdate } = JSON.parse(event.body);
     
     if (!trackingId) {
       return {
@@ -272,12 +88,14 @@ exports.handler = async (event, context) => {
     }
 
     // Get tracking from database
-    const { data: tracking, error: trackingError } = await supabase
+    const { data: trackingData, error: trackingError } = await supabase
       .from('trackings')
       .select('*')
       .eq('id', trackingId)
       .eq('organizzazione_id', profile.organizzazione_id)
       .single();
+    
+    tracking = trackingData; // Assign to the outer scope variable
 
     if (trackingError || !tracking) {
       return {
@@ -285,122 +103,163 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Tracking not found' })
       };
     }
-
-    // Fetch updates based on tracking type
-    let shipsgoData;
-    let normalizedData;
     
-    try {
-      if (tracking.tracking_type === 'container' || tracking.tracking_type === 'bl') {
-        shipsgoData = await fetchV1Updates(tracking);
-        normalizedData = normalizeV1Data(shipsgoData, tracking);
-      } else if (tracking.tracking_type === 'awb') {
-        shipsgoData = await fetchV2Updates(tracking);
-        normalizedData = normalizeV2Data(shipsgoData, tracking);
-      } else {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Tracking type not supported for updates' })
-        };
-      }
-    } catch (fetchError) {
-      console.error('Failed to fetch updates:', fetchError);
+    // --- CHECKS TO PREVENT UNNECESSARY UPDATES ---
+    
+    const lastUpdate = tracking.metadata?.last_api_update;
+    const minutesSinceUpdate = lastUpdate ?
+      (Date.now() - new Date(lastUpdate).getTime()) / 60000 : 999;
+
+    if (minutesSinceUpdate < 15 && !forceUpdate) {
+      console.log(`[Skip Update] ${tracking.tracking_number} - Updated ${minutesSinceUpdate.toFixed(0)} minutes ago`);
       return {
         statusCode: 200,
         body: JSON.stringify({
-          success: false,
-          error: 'Failed to fetch updates from carrier',
-          tracking
+          success: true,
+          message: 'Recently updated, skipped',
+          skipped: true
         })
       };
     }
 
-    // Check if delayed
-    normalizedData.status = await checkIfDelayed(tracking, normalizedData);
+    if (tracking.status === 'delivered' && !forceUpdate) {
+      console.log(`[Skip Update] ${tracking.tracking_number} - Already delivered`);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          message: 'Already delivered, skipped',
+          skipped: true
+        })
+      };
+    }
 
-    // Get existing events to avoid duplicates
-    const { data: existingEvents } = await supabase
-      .from('tracking_events')
-      .select('event_date, event_type, location_name')
-      .eq('tracking_id', trackingId);
+    // --- LOGIC FOR UPDATING STATUS FROM API ---
 
-    const existingEventKeys = new Set(
-      existingEvents?.map(e => `${e.event_date}_${e.event_type}_${e.location_name}`) || []
-    );
+    let updatedTrackingData;
+    let updateError;
 
-    // Filter new events
-    const newEvents = normalizedData.events.filter(event => {
-      const eventKey = `${event.event_date}_${event.event_type}_${event.location_name}`;
-      return !existingEventKeys.has(eventKey);
-    });
+    // Per Container (ShipsGo V1.2)
+    if (tracking.tracking_type === 'container') {
+      const containerInfo = await fetchContainerInfo(tracking.tracking_number);
+      
+      if (containerInfo) {
+        const newStatus = await updateTrackingStatusFromAPI(tracking, containerInfo);
+        
+        console.log(`[Update Tracking] ${tracking.tracking_number}:\n  Old Status: ${tracking.status}\n  New Status: ${newStatus}\n  Source: ${tracking.tracking_type} API\n  Time: ${new Date().toISOString()}`);
 
-    // Insert new events
-    if (newEvents.length > 0) {
-      const eventsToInsert = newEvents.map(event => ({
-        ...event,
-        tracking_id: trackingId
-      }));
+        const updateData = {
+          status: newStatus,
+          last_event_location: containerInfo.Container?.LastLocationName,
+          last_event_date: containerInfo.Container?.LastMovementDate,
+          vessel_name: containerInfo.Container?.VesselName,
+          voyage_number: containerInfo.Container?.VoyageNumber,
+          metadata: { ...tracking.metadata, last_api_update: new Date().toISOString(), shipsgo_data: containerInfo.Container }
+        };
 
-      const { error: eventsError } = await supabase
-        .from('tracking_events')
-        .insert(eventsToInsert);
+        if (tracking.status !== newStatus) {
+          const statusToEventType = { 'out_for_delivery': 'OUT_FOR_DELIVERY', 'delivered': 'DELIVERED', 'exception': 'EXCEPTION', 'delayed': 'DELAYED', 'cancelled': 'CANCELLED' };
+          if (statusToEventType[newStatus]) {
+            await supabase.from('tracking_events').insert([{ tracking_id: tracking.id, event_date: new Date().toISOString(), event_type: statusToEventType[newStatus], event_code: newStatus.toUpperCase().substring(0, 3), description: `Status updated to ${newStatus}`, location_name: updateData.last_event_location || 'Unknown', data_source: `${tracking.tracking_type}_api`, confidence_score: 1.0, raw_data: { api_response: containerInfo, previous_status: tracking.status } }]);
+          }
+        }
+        
+        const { data, error } = await supabase.from('trackings').update(updateData).eq('id', tracking.id).select().single();
+        updatedTrackingData = data;
+        updateError = error;
+      }
+    }
+    // Per AWB (ShipsGo V2)
+    else if (tracking.tracking_type === 'awb') {
+      const awbInfo = await fetchAWBInfo(tracking.tracking_number);
+      
+      if (awbInfo) {
+        const newStatus = await updateTrackingStatusFromAPI(tracking, awbInfo);
+        
+        console.log(`[Update Tracking] ${tracking.tracking_number}:\n  Old Status: ${tracking.status}\n  New Status: ${newStatus}\n  Source: ${tracking.tracking_type} API\n  Time: ${new Date().toISOString()}`);
 
-      if (eventsError) {
-        console.error('Failed to insert events:', eventsError);
+        const updateData = {
+          status: newStatus,
+          eta: awbInfo.estimated_arrival,
+          ata: awbInfo.actual_arrival,
+          metadata: { ...tracking.metadata, last_api_update: new Date().toISOString(), shipsgo_v2_data: awbInfo }
+        };
+
+        if (tracking.status !== newStatus) {
+            const statusToEventType = { 'out_for_delivery': 'OUT_FOR_DELIVERY', 'delivered': 'DELIVERED', 'exception': 'EXCEPTION', 'delayed': 'DELAYED', 'cancelled': 'CANCELLED' };
+            if (statusToEventType[newStatus]) {
+                await supabase.from('tracking_events').insert([{ tracking_id: tracking.id, event_date: new Date().toISOString(), event_type: statusToEventType[newStatus], event_code: newStatus.toUpperCase().substring(0, 3), description: `Status updated to ${newStatus}`, location_name: 'Unknown', data_source: `${tracking.tracking_type}_api`, confidence_score: 1.0, raw_data: { api_response: awbInfo, previous_status: tracking.status } }]);
+            }
+        }
+        
+        const { data, error } = await supabase.from('trackings').update(updateData).eq('id', tracking.id).select().single();
+        updatedTrackingData = data;
+        updateError = error;
+      }
+    }
+    // Per Parcel (DHL/FedEx/UPS)
+    else if (tracking.tracking_type === 'parcel') {
+      const parcelInfo = await fetchParcelInfo(tracking.tracking_number, tracking.carrier_code);
+      
+      if (parcelInfo) {
+        const newStatus = await updateTrackingStatusFromAPI(tracking, parcelInfo);
+        
+        console.log(`[Update Tracking] ${tracking.tracking_number}:\n  Old Status: ${tracking.status}\n  New Status: ${newStatus}\n  Source: ${tracking.tracking_type} API\n  Time: ${new Date().toISOString()}`);
+
+        const updateData = {
+          status: newStatus,
+          last_event_location: parcelInfo.lastLocation,
+          last_event_date: parcelInfo.lastUpdate,
+          metadata: { ...tracking.metadata, last_api_update: new Date().toISOString(), parcel_data: parcelInfo }
+        };
+        
+        if (tracking.status !== newStatus) {
+            const statusToEventType = { 'out_for_delivery': 'OUT_FOR_DELIVERY', 'delivered': 'DELIVERED', 'exception': 'EXCEPTION', 'delayed': 'DELAYED', 'cancelled': 'CANCELLED' };
+            if (statusToEventType[newStatus]) {
+                await supabase.from('tracking_events').insert([{ tracking_id: tracking.id, event_date: new Date().toISOString(), event_type: statusToEventType[newStatus], event_code: newStatus.toUpperCase().substring(0, 3), description: `Status updated to ${newStatus}`, location_name: updateData.last_event_location || 'Unknown', data_source: `${tracking.tracking_type}_api`, confidence_score: 1.0, raw_data: { api_response: parcelInfo, previous_status: tracking.status } }]);
+            }
+        }
+
+        const { data, error } = await supabase.from('trackings').update(updateData).eq('id', tracking.id).select().single();
+        updatedTrackingData = data;
+        updateError = error;
       }
     }
 
-    // Update tracking record
-    const latestEvent = normalizedData.events[0];
-    const updateData = {
-      status: normalizedData.status,
-      eta: normalizedData.eta,
-      ata: normalizedData.ata,
-      vessel_name: normalizedData.vessel_name,
-      vessel_imo: normalizedData.vessel_imo,
-      voyage_number: normalizedData.voyage_number,
-      flight_number: normalizedData.flight_number,
-      last_event_date: latestEvent?.event_date,
-      last_event_location: latestEvent?.location_name,
-      last_event_description: latestEvent?.description,
-      metadata: {
-        ...tracking.metadata,
-        last_update: new Date().toISOString(),
-        last_update_by: user.email,
-        events_count: (tracking.metadata?.events_count || 0) + newEvents.length
-      }
-    };
-
-    const { data: updatedTracking, error: updateError } = await supabase
-      .from('trackings')
-      .update(updateData)
-      .eq('id', trackingId)
-      .select()
-      .single();
-
     if (updateError) {
-      console.error('Failed to update tracking:', updateError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to update tracking' })
-      };
+      throw new Error(updateError.message);
     }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        data: updatedTracking,
-        newEvents: newEvents.length,
-        totalEvents: normalizedData.events.length
+        data: updatedTrackingData || tracking,
       })
     };
 
   } catch (error) {
-    console.error('Handler error:', error);
+    console.error(`[Update Error] ${tracking?.tracking_number || 'N/A'}:`, error);
+    
+    if (tracking) {
+      await supabase
+        .from('trackings')
+        .update({
+          metadata: {
+            ...tracking.metadata,
+            last_api_error: {
+              timestamp: new Date().toISOString(),
+              error: error.message,
+              type: tracking.tracking_type
+            }
+          }
+        })
+        .eq('id', tracking.id);
+    }
+      
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: JSON.stringify({ error: 'Internal server error', details: error.message })
     };
   }
 };

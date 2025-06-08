@@ -1,6 +1,7 @@
 // netlify/functions/add-tracking.js
 const { createClient } = require('@supabase/supabase-js');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { determineSystemStatus } = require('./utils/status-mapping');
 
 
 // Initialize Supabase
@@ -20,13 +21,15 @@ const SHIPSGO_V1_CONFIG = {
 };
 
 const SHIPSGO_V2_CONFIG = {
-  baseUrl: 'https://api.shipsgo.com/api/v2',
+  baseUrl: 'https://api.shipsgo.com/v2', // NOTA: api.shipsgo.com, non shipsgo.com!
   token: process.env.SHIPSGO_V2_TOKEN || '505751c2-2745-4d83-b4e7-d35ccddd0628',
   headers: {
-    'Authorization': 'Bearer 505751c2-2745-4d83-b4e7-d35ccddd0628',
-    'Content-Type': 'application/json'
+    'X-Shipsgo-User-Token': '505751c2-2745-4d83-b4e7-d35ccddd0628', // NOTA: X-Shipsgo-User-Token, non Authorization!
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 };
+
 
 // Tracking type detection patterns
 const TRACKING_PATTERNS = {
@@ -119,6 +122,13 @@ exports.handler = async (event, context) => {
       }
     }
 
+    // Determina status iniziale usando mapping centralizzato
+    let initialStatus = 'registered';
+    if (referenceNumber && referenceNumber.includes('import')) {
+      // Se viene da un import, potrebbe avere uno status specifico
+      initialStatus = determineSystemStatus(detectedType, 'Registered');
+    }
+
     // Prepare tracking data
     const trackingData = {
       organizzazione_id: profile.organizzazione_id,
@@ -127,11 +137,12 @@ exports.handler = async (event, context) => {
       carrier_code: carrierCode,
       carrier_name: CARRIER_MAPPINGS[carrierCode]?.shipsgo || carrierCode,
       reference_number: referenceNumber,
-      status: 'registered',
+      status: initialStatus,
       active: true,
       metadata: {
         added_by: user.email,
-        added_at: new Date().toISOString()
+        added_at: new Date().toISOString(),
+        source: referenceNumber?.includes('import') ? 'csv_import' : 'manual_add'
       }
     };
 
@@ -157,7 +168,7 @@ exports.handler = async (event, context) => {
     if (detectedType === 'container' || detectedType === 'bl') {
       // Use ShipsGo V1.2 for maritime
       try {
-        const response = await fetch(`${SHIPSGO_V1_CONFIG.baseUrl}/tracking`, {
+        const response = await fetch(`${SHIPSGO_V1_CONFIG.baseUrl}/trackContainer`, {
           method: 'POST',
           headers: SHIPSGO_V1_CONFIG.headers,
           body: JSON.stringify({
@@ -165,6 +176,8 @@ exports.handler = async (event, context) => {
             shippingLine: CARRIER_MAPPINGS[carrierCode]?.scac || carrierCode
           })
         });
+        
+        console.log(`[ShipsGo ${detectedType}] ${trackingNumber}: ${response.ok ? 'Success' : 'Failed'} - Status ${response.status}`);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -181,7 +194,7 @@ exports.handler = async (event, context) => {
     } else if (detectedType === 'awb') {
       // Use ShipsGo V2.0 for air cargo
       try {
-        const response = await fetch(`${SHIPSGO_V2_CONFIG.baseUrl}/trackings`, {
+        const response = await fetch(`${SHIPSGO_V2_CONFIG.baseUrl}/air/trackings`, {
           method: 'POST',
           headers: SHIPSGO_V2_CONFIG.headers,
           body: JSON.stringify({
@@ -189,6 +202,8 @@ exports.handler = async (event, context) => {
             airline: carrierCode
           })
         });
+        
+        console.log(`[ShipsGo ${detectedType}] ${trackingNumber}: ${response.ok ? 'Success' : 'Failed'} - Status ${response.status}`);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -219,20 +234,22 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Create initial event
-    await supabase
-      .from('tracking_events')
-      .insert([{
-        tracking_id: savedTracking.id,
-        event_date: new Date().toISOString(),
-        event_type: 'REGISTERED',
-        event_code: 'REG',
-        location_name: 'System',
-        description: 'Tracking registered in system',
-        data_source: 'system',
-        confidence_score: 1.0,
-        raw_data: { user: user.email, shipsgo_error: shipsgoError }
-      }]);
+    // Create initial event only if not from an import
+    if (!savedTracking.metadata?.source?.includes('import')) {
+      await supabase
+        .from('tracking_events')
+        .insert([{
+          tracking_id: savedTracking.id,
+          event_date: new Date().toISOString(),
+          event_type: 'REGISTERED',
+          event_code: 'REG',
+          location_name: 'System',
+          description: 'Tracking registered in system',
+          data_source: 'system',
+          confidence_score: 1.0,
+          raw_data: { user: user.email, shipsgo_error: shipsgoError }
+        }]);
+    }
 
     // Return success with warning if ShipsGo failed
     return {
@@ -240,7 +257,8 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         success: true,
         data: savedTracking,
-        warning: shipsgoError ? 'Tracking saved but ShipsGo registration failed' : null
+        warning: shipsgoError ? `Tracking salvato localmente. ShipsGo: ${shipsgoError}` : null,
+        shipsgo_registered: !shipsgoError
       })
     };
 

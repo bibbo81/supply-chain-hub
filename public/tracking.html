@@ -626,6 +626,18 @@
             border-color: rgba(0, 122, 255, 0.5);
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
+
+        .sol-badge-primary {
+            background: rgba(0, 122, 255, 0.15);
+            color: #007AFF;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+        }
+
+        .sol-badge-dark {
+            background: rgba(0, 0, 0, 0.15);
+            color: #666;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -933,6 +945,11 @@
                 <div class="sol-stat-value" id="inTransit">0</div>
                 <div class="sol-stat-label">In Transito</div>
             </div>
+            <div class="sol-stat-card" data-id="outForDelivery">
+                <i class="fas fa-grip-vertical card-drag-handle"></i>
+                <div class="sol-stat-value" id="outForDelivery">0</div>
+                <div class="sol-stat-label">In Consegna Oggi</div>
+            </div>
             <div class="sol-stat-card" data-id="delivered">
                 <i class="fas fa-grip-vertical card-drag-handle"></i>
                 <div class="sol-stat-value" id="delivered">0</div>
@@ -1125,8 +1142,11 @@ MSCU7654321, MSC
                         <option value="">Tutti gli stati</option>
                         <option value="registered">Registrato</option>
                         <option value="in_transit">In Transito</option>
+                        <option value="out_for_delivery">In Consegna</option>
                         <option value="delivered">Consegnato</option>
                         <option value="delayed">In Ritardo</option>
+                        <option value="exception">Eccezione</option>
+                        <option value="cancelled">Cancellato</option>
                     </select>
                     <select class="filter-select" id="typeFilter" onchange="filterTrackings()">
                         <option value="">Tutti i tipi</option>
@@ -3048,14 +3068,18 @@ HLCU9876543,HAPAG-LLOYD,Registered,ORD789012,-,SINGAPORE,HAMBURG,25/06/2025,20/0
 
         function getStatusBadge(status) {
             const statuses = {
-                registered: { class: 'info', text: 'Registrato' },
-                in_transit: { class: 'warning', text: 'In Transito' },
-                delivered: { class: 'success', text: 'Consegnato' },
-                delayed: { class: 'error', text: 'In Ritardo' }
+                registered: { class: 'info', text: 'Registrato', icon: 'fa-clock' },
+                in_transit: { class: 'warning', text: 'In Transito', icon: 'fa-ship' },
+                out_for_delivery: { class: 'primary', text: 'In Consegna', icon: 'fa-truck' }, // NUOVO!
+                delivered: { class: 'success', text: 'Consegnato', icon: 'fa-check-circle' },
+                delayed: { class: 'error', text: 'In Ritardo', icon: 'fa-exclamation-triangle' },
+                exception: { class: 'error', text: 'Eccezione', icon: 'fa-times-circle' }, // NUOVO!
+                cancelled: { class: 'dark', text: 'Cancellato', icon: 'fa-ban' } // NUOVO!
             };
-            const { class: statusClass, text } = statuses[status] || { class: 'info', text: status };
-            return `<span class="sol-badge sol-badge-${statusClass}">${text}</span>`;
+            const { class: statusClass, text, icon } = statuses[status] || { class: 'info', text: status, icon: 'fa-question' };
+            return `<span class="sol-badge sol-badge-${statusClass}"><i class="fas ${icon}"></i> ${text}</span>`;
         }
+
 
         function formatDate(date) {
             if (!date) return '-';

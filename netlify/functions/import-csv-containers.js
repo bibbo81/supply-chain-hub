@@ -27,21 +27,82 @@ const SHIPSGO_CARRIER_MAPPING = {
   'K LINE': 'K-LINE'
 };
 
-// Mappatura status ShipsGo → nostri status
+// Mappatura COMPLETA status (TUTTI dal tuo Google Sheets IFS)
 const SHIPSGO_STATUS_MAPPING = {
-  'Gate In': 'in_transit',
-  'Gate Out': 'in_transit', 
-  'Loaded': 'in_transit',
-  'Discharged': 'in_transit',
-  'In Transit': 'in_transit',
-  'Delivered': 'delivered',
-  'Empty': 'delivered',
-  'Empty Returned': 'delivered',  // Aggiungi varianti
-  'Empty Container Returned': 'delivered',
-  'Registered': 'registered',
-  'Pending': 'registered',
-  'Arrived': 'in_transit',  // Arrivato al porto ma non ancora consegnato
-  'Arrival': 'in_transit'
+  // STATI MARITTIMI
+  'Sailing': 'in_transit',
+  'Arrived': 'in_transit',
+  'Delivered': 'delivered',
+  'Discharged': 'delivered',
+  
+  // STATI FEDEX
+  'On FedEx vehicle for delivery': 'out_for_delivery',
+  'At local FedEx facility': 'in_transit',
+  'Departed FedEx hub': 'in_transit',
+  'On the way': 'in_transit',
+  'Arrived at FedEx hub': 'in_transit',
+  'International shipment release - Import': 'in_transit',
+  'At destination sort facility': 'in_transit',
+  'Left FedEx origin facility': 'in_transit',
+  'Picked up': 'in_transit',
+  'Shipment information sent to FedEx': 'registered',
+  
+  // STATI GLS
+  'Consegnata.': 'delivered',
+  'Consegna prevista nel corso della giornata odierna.': 'out_for_delivery',
+  'Arrivata nella Sede GLS locale.': 'in_transit',
+  'In transito.': 'in_transit',
+  'Partita dalla sede mittente. In transito.': 'in_transit',
+  "La spedizione e' stata creata dal mittente, attendiamo che ci venga affidata per l'invio a destinazione.": 'registered',
+  
+  // STATI GENERICI ITALIANI (TUTTI DAL TUO IFS)
+  'LA spedizione è stata consegnata': 'delivered',
+  'La spedizione è stata consegnata': 'delivered',
+  'La spedizione è in consegna': 'out_for_delivery',
+  'La spedizione è in transito': 'in_transit',
+  
+  // ALTRI STATI "IN CONSEGNA"
+  'Out for Delivery': 'out_for_delivery',
+  'With delivery courier': 'out_for_delivery',
+  'On UPS vehicle for delivery': 'out_for_delivery',
+  'On DHL vehicle for delivery': 'out_for_delivery',
+  
+  // STATI SHIPSGO ORIGINALI
+  'Gate In': 'in_transit',
+  'Gate Out': 'in_transit',
+  'Loaded': 'in_transit',
+  'Loaded on Vessel': 'in_transit',
+  'Vessel Departed': 'in_transit',
+  'Vessel Arrived': 'in_transit',
+  'Empty': 'delivered',
+  'Empty Returned': 'delivered',
+  'Empty Container Returned': 'delivered',
+  'Registered': 'registered',
+  'Pending': 'registered',
+  'In Transit': 'in_transit',
+  'Transhipment': 'in_transit',
+  'Rail Departed': 'in_transit',
+  'Customs Hold': 'delayed',
+  'Rolled': 'delayed',
+  'Cancelled': 'cancelled',
+  
+  // STATI DHL
+  'Shipment information received': 'registered',
+  'Shipment picked up': 'in_transit',
+  'Processed': 'in_transit',
+  'Departed Facility': 'in_transit',
+  'Arrived Facility': 'in_transit',
+  'Delivered': 'delivered',
+  'Signed': 'delivered',
+  
+  // STATI UPS  
+  'Order Processed': 'registered',
+  'Out For Delivery': 'out_for_delivery',
+  'Exception': 'exception',
+  'Returned to Sender': 'exception',
+  'Delivery Attempted': 'delayed',
+  'Customer not Available': 'delayed',
+  'Incorrect Address': 'exception'
 };
 
 // Mappatura eventi da status ShipsGo
@@ -298,6 +359,26 @@ exports.handler = async (event, context) => {
             metadata.transit_time_days = Math.floor(diff / (1000 * 60 * 60 * 24));
           }
 
+          // IMPORTANTE: Usa SEMPRE lo status dal CSV come fonte primaria
+          let finalStatus = 'registered'; // default
+          
+          // Prima controlla il mapping diretto dello status CSV
+          if (row.Status && row.Status !== '-') {
+            finalStatus = SHIPSGO_STATUS_MAPPING[row.Status] || 'in_transit';
+          }
+          
+          // Override solo se non c'è status nel CSV
+          if (!row.Status || row.Status === '-') {
+            // Logica basata su date solo come fallback
+            if (dischargeDate && new Date(dischargeDate) < new Date()) {
+              finalStatus = 'delivered';
+            } else if (loadingDate && new Date(loadingDate) < new Date()) {
+              finalStatus = 'in_transit';
+            }
+          }
+          
+          console.log(`Container ${containerNum}: CSV Status='${row.Status}' → System Status='${finalStatus}'`);
+
           // Prepara dati tracking PRIMA di controllare esistenza
           const trackingData = {
             organizzazione_id: profile.organizzazione_id,
@@ -310,7 +391,7 @@ exports.handler = async (event, context) => {
             origin_name: extractPortName(row['Port Of Loading']),
             destination_port: extractPortCode(row['Port Of Discharge']),
             destination_name: extractPortName(row['Port Of Discharge']),
-            status: SHIPSGO_STATUS_MAPPING[row.Status] || 'registered',
+            status: finalStatus,
             eta: eta,
             metadata: metadata
           };
@@ -392,28 +473,7 @@ exports.handler = async (event, context) => {
             stats.imported++; // Conta come nuovo
             console.log(`Reactivated: ${containerNum}`);
             
-          } else if (!existingActive) {
-            // Aggiorna tracking esistente
-            const { error: updateError } = await supabase
-              .from('trackings')
-              .update({
-                ...trackingData,
-                metadata: {
-                  ...existing.metadata,
-                  ...metadata,
-                  last_csv_update: new Date().toISOString()
-                },
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', existing.id);
-
-            if (updateError) throw updateError;
-            
-            trackingId = existing.id;
-            stats.updated++;
-            console.log(`Updated: ${containerNum}`);
-            
-          } else if (!existing) {
+          } else if (!existingActive && !existingInactive) {
             // Crea nuovo tracking
             const { data: newTracking, error: insertError } = await supabase
               .from('trackings')
@@ -426,6 +486,9 @@ exports.handler = async (event, context) => {
             trackingId = newTracking.id;
             stats.imported++;
             console.log(`Imported: ${containerNum}`);
+            
+            // NON creare evento REGISTERED per import CSV
+            // Gli eventi verranno creati sotto basati sui dati CSV
           }
 
           // Crea eventi se richiesto e abbiamo un tracking
